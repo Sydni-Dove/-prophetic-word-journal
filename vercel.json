@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/prophetic-word-journal.html" }
+  ]
+}
