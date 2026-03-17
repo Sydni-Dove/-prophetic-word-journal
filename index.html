@@ -579,12 +579,23 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 
 /* ── PAGE STYLE: DOTTED ───────────────────────────────── */
+/* One seamless dot grid on the full writing body — header/meta are outside journal-body so unaffected */
+.ps-dotted .journal-body {
+  background-image: radial-gradient(circle, var(--pg-accent) 1px, transparent 1px);
+  background-size: 18px 18px;
+  background-position: 0 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+/* Clear individual element backgrounds so dots show through uninterrupted */
 .ps-dotted .j-word-area,
 .ps-dotted .j-prose,
 .ps-dotted .j-scripture {
-  background-image: radial-gradient(circle, rgba(144,115,174,0.15) 1px, transparent 1px);
-  background-size: 18px 18px;
-  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  background-image: none;
+  background-color: transparent;
+}
+/* Mask structured metadata rows so dots don't bleed into header fields */
+.ps-dotted .meta-row {
+  background: var(--pg-bg);
 }
 
 /* Save to Journal button in output controls */
