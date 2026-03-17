@@ -131,7 +131,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   border: none; border-radius: 8px; padding: 0.95rem 2.8rem;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
-.btn-generate:hover { background: #7a5c9e; transform: translateY(-1px); }
+.btn-generate:hover { background: var(--pg-primary); filter: brightness(0.85); transform: translateY(-1px); }
 .btn-ghost {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--text-soft); background: transparent;
@@ -141,11 +141,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-ghost:hover { border-color: var(--pg-primary); color: var(--pg-primary); }
 .btn-save {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--indigo); background: transparent;
-  border: 1px solid var(--indigo);
+  color: var(--pg-primary); background: transparent;
+  border: 1px solid var(--pg-primary);
   border-radius: 8px; padding: 0.95rem 2rem; cursor: pointer; transition: background 0.2s, color 0.2s;
 }
-.btn-save:hover { background: var(--indigo); color: var(--white); }
+.btn-save:hover { background: var(--pg-primary); color: var(--white); }
 
 /* ── HOW IT WORKS ─────────────────────────────────────── */
 .how-it-works {
@@ -186,7 +186,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .hiw-label {
   font-family: 'Playfair Display', serif; font-size: 0.8rem;
-  color: var(--indigo); font-weight: 600; letter-spacing: 0.02em;
+  color: var(--pg-primary); font-weight: 600; letter-spacing: 0.02em;
 }
 .hiw-desc {
   font-family: 'Lora', serif; font-size: 0.8rem;
@@ -212,7 +212,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   border: none; border-radius: 8px; padding: 0.95rem 2.4rem;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
-.btn-print:hover { background: #7a5c9e; transform: translateY(-1px); }
+.btn-print:hover { background: var(--pg-primary); filter: brightness(0.85); transform: translateY(-1px); }
 
 /* ══════════════════════════════════════════════════════
    JOURNAL PAGE  —  8.5 × 11
@@ -1787,7 +1787,7 @@ window.addEventListener('afterprint', () => {
 // ── CLEAR ───────────────────────────────────────────────
 // ── THEME PRESETS ─────────────────────────────────────
 const PRESETS = {
-  purple:    { primary:'#6B3FA0', text:'#2b2b2b', accent:'#C5A44D', panel:'#F0EBF8', decor:'#EDE5F5', bg:'#ffffff' },
+  purple:    { primary:'#7E4C21', text:'#2b2b2b', accent:'#C5A44D', panel:'#F5EDE0', decor:'#F2E4CC', bg:'#ffffff' },
   dove:      { primary:'#630000', text:'#1B1717', accent:'#E6A742', panel:'#F2DFD8', decor:'#F9E8DC', bg:'#FDFDFD' },
   neutral:   { primary:'#4A4A4A', text:'#1B1717', accent:'#C9A46C', panel:'#F7F5F2', decor:'#F0EDE8', bg:'#FFFFFF' },
   gold:      { primary:'#5A2A27', text:'#1B1717', accent:'#D4A24C', panel:'#F7F1E8', decor:'#F5EDD8', bg:'#FFFFFF' },
