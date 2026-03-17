@@ -30,6 +30,7 @@
   --pg-primary:    #6B3FA0;
   --pg-accent:     #C5A44D;
   --pg-panel:      #F0EBF8;
+  --pg-decor:      #EDE5F5;
   --pg-text:       #2b2b2b;
   --pg-bg:         #ffffff;
 }
@@ -229,13 +230,13 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   print-color-adjust: exact;
 }
 
-/* Top-left tint — driven by --pg-panel so it changes with every preset */
+/* Top-left tint — driven by --pg-decor, separate from panel color */
 .journal-page::before {
   content: '';
   position: absolute;
   top: 0; left: 0;
   width: 200px; height: 200px;
-  background: radial-gradient(ellipse at top left, var(--pg-panel) 0%, rgba(255,255,255,0) 75%);
+  background: radial-gradient(ellipse at top left, var(--pg-decor) 0%, rgba(255,255,255,0) 75%);
   opacity: 0.6;
   pointer-events: none;
   z-index: 0;
@@ -399,6 +400,8 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 /* Blank: just open space */
 .notes-body.blank { /* intentionally empty */ }
+/* Dotted grid */
+.notes-body.dotted { background-image: radial-gradient(circle, var(--pg-accent) 1.2px, transparent 1.2px); background-size: 0.25in 0.25in; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
 /* ── THEME CUSTOMIZER ─────────────────────────────────── */
 .theme-presets { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
@@ -715,7 +718,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
       <div class="f-group">
         <label for="pageStyle">Writing Area Style</label>
         <select id="pageStyle">
-          <option value="clean">Clean</option>
+          <option value="clean">Blank</option>
           <option value="lined">Lined</option>
           <option value="dotted">Dotted</option>
         </select>
@@ -744,6 +747,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
       <div class="color-picker-group"><label for="cpText">Body Text</label><input type="color" id="cpText" value="#2b2b2b" oninput="applyCustomColors()"></div>
       <div class="color-picker-group"><label for="cpAccent">Divider / Accent</label><input type="color" id="cpAccent" value="#C5A44D" oninput="applyCustomColors()"></div>
       <div class="color-picker-group"><label for="cpPanel">Panel Background</label><input type="color" id="cpPanel" value="#F0EBF8" oninput="applyCustomColors()"></div>
+      <div class="color-picker-group"><label for="cpDecor">Corner Tint</label><input type="color" id="cpDecor" value="#EDE5F5" oninput="applyCustomColors()"></div>
       <div class="color-picker-group"><label for="cpBg">Page Background</label><input type="color" id="cpBg" value="#ffffff" oninput="applyCustomColors()"></div>
     </div>
   </div>
@@ -757,6 +761,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
         <select id="notesStyle" onchange="onNotesStyleChange()">
           <option value="none">None</option>
           <option value="lined">Lined</option>
+          <option value="dotted">Dotted</option>
           <option value="blank">Blank</option>
         </select>
       </div>
@@ -1623,6 +1628,8 @@ function createNotesPage(style) {
   if (style === 'lined') {
     const lines = Array.from({ length: 32 }, () => '<div class="notes-line"></div>').join('');
     notesBodyHTML = `<div class="notes-body lined">${lines}</div>`;
+  } else if (style === 'dotted') {
+    notesBodyHTML = `<div class="notes-body dotted"></div>`;
   } else {
     notesBodyHTML = `<div class="notes-body blank"></div>`;
   }
@@ -1771,17 +1778,17 @@ window.addEventListener('afterprint', () => {
 // ── CLEAR ───────────────────────────────────────────────
 // ── THEME PRESETS ─────────────────────────────────────
 const PRESETS = {
-  purple:    { primary:'#6B3FA0', text:'#2b2b2b', accent:'#C5A44D', panel:'#F0EBF8', bg:'#ffffff' },
-  dove:      { primary:'#630000', text:'#1B1717', accent:'#E6A742', panel:'#F2DFD8', bg:'#FDFDFD' },
-  neutral:   { primary:'#4A4A4A', text:'#1B1717', accent:'#C9A46C', panel:'#F7F5F2', bg:'#FFFFFF' },
-  gold:      { primary:'#5A2A27', text:'#1B1717', accent:'#D4A24C', panel:'#F7F1E8', bg:'#FFFFFF' },
-  pink:      { primary:'#8B2252', text:'#1B1717', accent:'#E8A0C0', panel:'#FDF0F5', bg:'#FFFFFF' },
-  orange:    { primary:'#A83E10', text:'#1B1717', accent:'#E09060', panel:'#FDF0E6', bg:'#FFFFFF' },
-  blue:      { primary:'#1A4A7A', text:'#1B1717', accent:'#5C9ED6', panel:'#EEF4FB', bg:'#FFFFFF' },
-  green:     { primary:'#2A5C3A', text:'#1B1717', accent:'#7CBF8A', panel:'#EEF5EF', bg:'#FFFFFF' },
-  brown:     { primary:'#5C3317', text:'#1B1717', accent:'#C9A46C', panel:'#F5ECD9', bg:'#FFFFFF' },
-  black:     { primary:'#1A1A1A', text:'#1A1A1A', accent:'#888888', panel:'#F2F2F2', bg:'#FFFFFF' },
-  masculine: { primary:'#1E3A4A', text:'#1B1717', accent:'#7E9BAA', panel:'#EDF1F3', bg:'#FFFFFF' },
+  purple:    { primary:'#6B3FA0', text:'#2b2b2b', accent:'#C5A44D', panel:'#F0EBF8', decor:'#EDE5F5', bg:'#ffffff' },
+  dove:      { primary:'#630000', text:'#1B1717', accent:'#E6A742', panel:'#F2DFD8', decor:'#F9E8DC', bg:'#FDFDFD' },
+  neutral:   { primary:'#4A4A4A', text:'#1B1717', accent:'#C9A46C', panel:'#F7F5F2', decor:'#F0EDE8', bg:'#FFFFFF' },
+  gold:      { primary:'#5A2A27', text:'#1B1717', accent:'#D4A24C', panel:'#F7F1E8', decor:'#F5EDD8', bg:'#FFFFFF' },
+  pink:      { primary:'#8B2252', text:'#1B1717', accent:'#E8A0C0', panel:'#FDF0F5', decor:'#FCEAF3', bg:'#FFFFFF' },
+  orange:    { primary:'#A83E10', text:'#1B1717', accent:'#E09060', panel:'#FDF0E6', decor:'#FDE8D8', bg:'#FFFFFF' },
+  blue:      { primary:'#1A4A7A', text:'#1B1717', accent:'#5C9ED6', panel:'#EEF4FB', decor:'#E5EFF8', bg:'#FFFFFF' },
+  green:     { primary:'#2A5C3A', text:'#1B1717', accent:'#7CBF8A', panel:'#EEF5EF', decor:'#E5F0E8', bg:'#FFFFFF' },
+  brown:     { primary:'#5C3317', text:'#1B1717', accent:'#C9A46C', panel:'#F5ECD9', decor:'#F5E8D0', bg:'#FFFFFF' },
+  black:     { primary:'#1A1A1A', text:'#1A1A1A', accent:'#888888', panel:'#F2F2F2', decor:'#EBEBEB', bg:'#FFFFFF' },
+  masculine: { primary:'#1E3A4A', text:'#1B1717', accent:'#7E9BAA', panel:'#EDF1F3', decor:'#E5EDF2', bg:'#FFFFFF' },
 };
 function applyPreset(key) {
   const p = PRESETS[key]; if (!p) return;
@@ -1789,6 +1796,7 @@ function applyPreset(key) {
   document.getElementById('cpText').value    = p.text;
   document.getElementById('cpAccent').value  = p.accent;
   document.getElementById('cpPanel').value   = p.panel;
+  document.getElementById('cpDecor').value   = p.decor;
   document.getElementById('cpBg').value      = p.bg;
   applyCustomColors();
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -1800,6 +1808,7 @@ function applyCustomColors() {
   r.style.setProperty('--pg-text',    document.getElementById('cpText').value);
   r.style.setProperty('--pg-accent',  document.getElementById('cpAccent').value);
   r.style.setProperty('--pg-panel',   document.getElementById('cpPanel').value);
+  r.style.setProperty('--pg-decor',   document.getElementById('cpDecor').value);
   r.style.setProperty('--pg-bg',      document.getElementById('cpBg').value);
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
 }
@@ -1860,7 +1869,7 @@ async function saveAsPDF() {
     const rawCSS = document.querySelector('style').textContent;
     // Inject current --pg-* variable values so print window matches chosen theme
     const cs = getComputedStyle(document.documentElement);
-    const pgVars = ['--pg-primary','--pg-text','--pg-accent','--pg-panel','--pg-bg']
+    const pgVars = ['--pg-primary','--pg-text','--pg-accent','--pg-panel','--pg-decor','--pg-bg']
       .map(v => `${v}: ${cs.getPropertyValue(v).trim()};`).join(' ');
     const css = rawCSS
       .replace(/url\('watercolor-corner-top-left\.png[^']*'\)/g,    `url('${tlData}')`)
