@@ -16,6 +16,8 @@
   /* UI shell — fixed */
   --purple:        #9073AE;
   --purple-light:  #B89ECC;
+  /* Dynamic theme RGB triplet — updated by applyCustomColors() for rgba() usage */
+  --pg-primary-rgb: 107, 63, 160;
   --indigo:        #243A74;
   --gold:          #C5A44D;
   --soft-bg:       #F6F3FA;
@@ -46,12 +48,12 @@ body {
   text-align: center;
   padding: 2.8rem 2rem 2.2rem;
   background: var(--white);
-  border-bottom: 1px solid rgba(144,115,174,0.2);
+  border-bottom: 1px solid rgba(var(--pg-primary-rgb),0.2);
 }
 .site-header .brand-tag {
   font-family: 'Playfair Display', serif;
   font-size: 0.68rem; letter-spacing: 0.4em; text-transform: uppercase;
-  color: var(--purple); margin-bottom: 0.6rem;
+  color: var(--pg-primary); margin-bottom: 0.6rem;
 }
 .site-header h1 {
   font-family: 'Playfair Display', serif;
@@ -67,7 +69,7 @@ body {
 .editor-section { max-width: 820px; margin: 2.5rem auto; padding: 0 1.5rem; }
 .section-eyebrow {
   font-family: 'Playfair Display', serif; font-size: 0.62rem;
-  letter-spacing: 0.32em; text-transform: uppercase; color: var(--purple);
+  letter-spacing: 0.32em; text-transform: uppercase; color: var(--pg-primary);
   margin-bottom: 1.2rem; margin-top: 2.2rem;
   display: flex; align-items: center; gap: 0.8rem;
 }
@@ -80,14 +82,14 @@ body {
 .form-block { margin-bottom: 2.2rem; }
 .upload-zone {
   position: relative;
-  border: 1.5px dashed rgba(144,115,174,0.45);
+  border: 1.5px dashed rgba(var(--pg-primary-rgb),0.45);
   border-radius: 14px; padding: 2.2rem 1.5rem; text-align: center;
   background: linear-gradient(140deg, rgba(238,233,248,0.18), rgba(246,243,250,0.25));
   cursor: pointer; transition: border-color 0.2s, background 0.2s;
 }
-.upload-zone:hover { border-color: var(--purple); }
+.upload-zone:hover { border-color: var(--pg-primary); }
 .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.upload-zone .upload-glyph { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--purple); }
+.upload-zone .upload-glyph { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--pg-primary); }
 .upload-zone p { font-size: 0.88rem; color: var(--text-soft); }
 .upload-zone p.upload-hint { font-size: 0.76rem; color: var(--text-light); font-style: italic; margin-top: 0.3rem; }
 .upload-msg { margin-top: 0.75rem; font-size: 0.8rem; font-style: italic; min-height: 1.2em; text-align: center; color: var(--text-light); }
@@ -99,7 +101,7 @@ body {
 .f-group { display: flex; flex-direction: column; gap: 0.35rem; }
 label {
   font-family: 'Playfair Display', serif; font-size: 0.65rem;
-  letter-spacing: 0.2em; text-transform: uppercase; color: var(--purple);
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--pg-primary);
 }
 input[type="text"], select {
   font-family: 'Lora', serif; font-size: 0.88rem; color: var(--text);
@@ -109,7 +111,7 @@ input[type="text"], select {
   outline: none; transition: border-color 0.2s;
   -webkit-appearance: none; appearance: none;
 }
-input[type="text"]:focus, select:focus { border-color: var(--purple); }
+input[type="text"]:focus, select:focus { border-color: var(--pg-primary); }
 textarea {
   font-family: Georgia, serif; font-size: 0.88rem; color: var(--text);
   background: white; border: 1px solid var(--line);
@@ -118,14 +120,14 @@ textarea {
   resize: vertical; line-height: 1.6;
 }
 textarea:focus {
-  border-color: var(--purple);
-  box-shadow: 0 0 0 2px rgba(144,115,174,0.15);
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 2px rgba(var(--pg-primary-rgb),0.15);
 }
 select:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-row { display: flex; gap: 0.9rem; justify-content: center; margin-top: 2.8rem; flex-wrap: wrap; }
 .btn-generate {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--white); background: var(--purple);
+  color: var(--white); background: var(--pg-primary);
   border: none; border-radius: 8px; padding: 0.95rem 2.8rem;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
@@ -136,7 +138,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   border: 1px solid var(--line);
   border-radius: 8px; padding: 0.95rem 1.8rem; cursor: pointer; transition: border-color 0.2s, color 0.2s;
 }
-.btn-ghost:hover { border-color: var(--purple); color: var(--purple); }
+.btn-ghost:hover { border-color: var(--pg-primary); color: var(--pg-primary); }
 .btn-save {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--indigo); background: transparent;
@@ -147,8 +149,8 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── HOW IT WORKS ─────────────────────────────────────── */
 .how-it-works {
-  background: linear-gradient(135deg, rgba(144,115,174,0.07), rgba(197,164,77,0.05));
-  border: 1px solid rgba(144,115,174,0.18);
+  background: linear-gradient(135deg, rgba(var(--pg-primary-rgb),0.07), rgba(197,164,77,0.05));
+  border: 1px solid rgba(var(--pg-primary-rgb),0.18);
   border-radius: 14px;
   padding: 1.6rem 2rem;
   margin-top: 2.8rem;
@@ -156,7 +158,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .how-it-works .hiw-title {
   font-family: 'Playfair Display', serif;
   font-size: 0.62rem; letter-spacing: 0.3em; text-transform: uppercase;
-  color: var(--purple); margin-bottom: 1.2rem;
+  color: var(--pg-primary); margin-bottom: 1.2rem;
 }
 .how-it-works ol {
   list-style: none; counter-reset: steps;
@@ -172,7 +174,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .how-it-works ol li .hiw-num {
   grid-column: 1;
   font-family: 'Playfair Display', serif; font-size: 0.68rem;
-  color: var(--white); background: var(--purple);
+  color: var(--white); background: var(--pg-primary);
   border-radius: 50%; width: 1.6rem; height: 1.6rem;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; margin-top: 0.1rem;
@@ -194,7 +196,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   grid-column: 1 / -1;
   font-family: 'Lora', serif; font-size: 0.75rem; font-style: italic;
   color: var(--text-light); margin-top: 0.4rem;
-  border-top: 1px solid rgba(144,115,174,0.15); padding-top: 0.8rem;
+  border-top: 1px solid rgba(var(--pg-primary-rgb),0.15); padding-top: 0.8rem;
 }
 
 /* ── OUTPUT ───────────────────────────────────────────── */
@@ -206,7 +208,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .btn-print {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--white); background: var(--purple);
+  color: var(--white); background: var(--pg-primary);
   border: none; border-radius: 8px; padding: 0.95rem 2.4rem;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
@@ -406,7 +408,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 /* ── THEME CUSTOMIZER ─────────────────────────────────── */
 .theme-presets { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
 .preset-btn { font-family: 'Playfair Display', serif; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid var(--line); border-radius: 20px; padding: 0.38rem 0.9rem; cursor: pointer; background: white; color: var(--text-soft); transition: all 0.2s; }
-.preset-btn:hover, .preset-btn.active { border-color: var(--purple); color: var(--purple); background: rgba(144,115,174,0.06); }
+.preset-btn:hover, .preset-btn.active { border-color: var(--pg-primary); color: var(--pg-primary); background: rgba(var(--pg-primary-rgb),0.06); }
 .color-pickers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
 @media (max-width: 620px) { .color-pickers-grid { grid-template-columns: 1fr 1fr; } }
 .color-picker-group { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -477,7 +479,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .auth-email-label {
   font-family: 'Lora', serif; font-size: 0.78rem;
-  color: var(--purple); font-style: italic; flex-shrink: 0;
+  color: var(--pg-primary); font-style: italic; flex-shrink: 0;
 }
 .auth-input {
   font-family: 'Lora', serif; font-size: 0.78rem; color: var(--text);
@@ -486,25 +488,25 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   padding: 0.28rem 0.2rem; outline: none;
   transition: border-color 0.2s; width: 155px;
 }
-.auth-input:focus { border-bottom-color: var(--purple); }
+.auth-input:focus { border-bottom-color: var(--pg-primary); }
 .auth-input::placeholder { color: var(--text-light); }
 .auth-btn {
   font-family: 'Playfair Display', serif; font-size: 0.7rem;
   letter-spacing: 0.12em; text-transform: uppercase;
-  background: var(--purple); color: var(--white);
+  background: var(--pg-primary); color: var(--white);
   border: none; border-radius: 6px;
   padding: 0.35rem 0.85rem; cursor: pointer;
   transition: opacity 0.2s; flex-shrink: 0;
 }
 .auth-btn:hover { opacity: 0.85; }
 .auth-btn.ghost {
-  background: transparent; color: var(--purple);
-  border: 1px solid rgba(144,115,174,0.4);
+  background: transparent; color: var(--pg-primary);
+  border: 1px solid rgba(var(--pg-primary-rgb),0.4);
 }
-.auth-btn.ghost:hover { background: rgba(144,115,174,0.06); }
+.auth-btn.ghost:hover { background: rgba(var(--pg-primary-rgb),0.06); }
 .auth-link {
   font-family: 'Lora', serif; font-size: 0.75rem;
-  color: var(--purple); cursor: pointer;
+  color: var(--pg-primary); cursor: pointer;
   border: none; background: none; padding: 0; flex-shrink: 0;
 }
 .auth-link:hover { text-decoration: underline; }
@@ -529,11 +531,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   background: var(--soft-bg); border: 1px solid var(--line);
   border-radius: 10px; transition: border-color 0.2s;
 }
-.saved-entry-card:hover { border-color: var(--purple-light); }
+.saved-entry-card:hover { border-color: rgba(var(--pg-primary-rgb),0.5); }
 .sec-date {
   font-family: 'Playfair Display', serif; font-size: 0.7rem;
   letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--purple); flex-shrink: 0; min-width: 4.5rem; margin-top: 0.1rem;
+  color: var(--pg-primary); flex-shrink: 0; min-width: 4.5rem; margin-top: 0.1rem;
 }
 .sec-body { flex: 1; min-width: 0; }
 .sec-word {
@@ -551,10 +553,10 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   font-family: 'Playfair Display', serif; font-size: 0.65rem;
   letter-spacing: 0.1em; text-transform: uppercase;
   padding: 0.28rem 0.65rem; border-radius: 5px; cursor: pointer;
-  border: 1px solid rgba(144,115,174,0.4);
-  background: transparent; color: var(--purple); transition: all 0.2s;
+  border: 1px solid rgba(var(--pg-primary-rgb),0.4);
+  background: transparent; color: var(--pg-primary); transition: all 0.2s;
 }
-.sec-btn:hover { background: var(--purple); color: var(--white); }
+.sec-btn:hover { background: var(--pg-primary); color: var(--white); }
 .sec-btn.del { color: #b87070; border-color: rgba(184,112,112,0.3); }
 .sec-btn.del:hover { background: #b87070; color: var(--white); border-color: #b87070; }
 .saved-entries-empty {
@@ -571,7 +573,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     to bottom,
     transparent 0,
     transparent calc(1.82em - 1px),
-    rgba(144,115,174,0.13) calc(1.82em - 1px),
+    rgba(var(--pg-primary-rgb),0.13) calc(1.82em - 1px),
     transparent 1.82em
   );
   background-size: 100% 1.82em;
@@ -598,12 +600,12 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-save-journal {
   font-family: 'Playfair Display', serif; font-size: 0.72rem;
   letter-spacing: 0.1em; text-transform: uppercase;
-  background: transparent; color: var(--purple);
-  border: 1.5px solid rgba(144,115,174,0.55);
+  background: transparent; color: var(--pg-primary);
+  border: 1.5px solid rgba(var(--pg-primary-rgb),0.55);
   border-radius: 8px; padding: 0.55rem 1.1rem;
   cursor: pointer; transition: all 0.2s;
 }
-.btn-save-journal:hover { background: rgba(144,115,174,0.08); }
+.btn-save-journal:hover { background: rgba(var(--pg-primary-rgb),0.08); }
 
 </style>
 </head>
@@ -851,6 +853,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <button class="btn-print" id="printBtn" onclick="handlePrint()">🖨️ Print / Save as PDF</button>
     <button class="btn-save" onclick="saveAsPDF()">💾 Save as PDF</button>
     <button class="btn-save-journal" id="saveJournalBtn" onclick="saveToJournal()">💜 Save to Journal</button>
+    <button class="btn-ghost" onclick="window.open('https://dreamjournaltemplategenerator-fez9.vercel.app/','_blank','noopener,noreferrer')" title="Open Dream Journal Generator">✦ Dream Journal Generator</button>
     <button class="btn-ghost" onclick="scrollToForm()">← Back to Editor</button>
   </div>
   <!-- Journal pages are dynamically inserted here -->
@@ -1807,9 +1810,15 @@ function applyPreset(key) {
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('preset-' + key); if (btn) btn.classList.add('active');
 }
+function hexToRgb(hex) {
+  const h = hex.replace('#','');
+  return parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16);
+}
 function applyCustomColors() {
   const r = document.documentElement;
-  r.style.setProperty('--pg-primary', document.getElementById('cpPrimary').value);
+  const primary = document.getElementById('cpPrimary').value;
+  r.style.setProperty('--pg-primary',     primary);
+  r.style.setProperty('--pg-primary-rgb', hexToRgb(primary));
   r.style.setProperty('--pg-text',    document.getElementById('cpText').value);
   r.style.setProperty('--pg-accent',  document.getElementById('cpAccent').value);
   r.style.setProperty('--pg-panel',   document.getElementById('cpPanel').value);
@@ -1874,7 +1883,7 @@ async function saveAsPDF() {
     const rawCSS = document.querySelector('style').textContent;
     // Inject current --pg-* variable values so print window matches chosen theme
     const cs = getComputedStyle(document.documentElement);
-    const pgVars = ['--pg-primary','--pg-text','--pg-accent','--pg-panel','--pg-decor','--pg-bg']
+    const pgVars = ['--pg-primary','--pg-primary-rgb','--pg-text','--pg-accent','--pg-panel','--pg-decor','--pg-bg']
       .map(v => `${v}: ${cs.getPropertyValue(v).trim()};`).join(' ');
     const css = rawCSS
       .replace(/url\('watercolor-corner-top-left\.png[^']*'\)/g,    `url('${tlData}')`)
