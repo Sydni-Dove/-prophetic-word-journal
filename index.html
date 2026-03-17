@@ -318,7 +318,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   font-family: 'Lora', serif; font-size: 0.92rem; font-style: italic;
   color: var(--pg-text); line-height: 1.82;
   padding: 0.04in 0 0.04in 14px;
-  min-height: 0.45in; height: auto;
+  min-height: 2in; height: auto;
   border-left: 3px solid var(--pg-primary);
   word-wrap: break-word; overflow-wrap: break-word;
   overflow: visible; display: block;
@@ -579,24 +579,20 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 
 /* ── PAGE STYLE: DOTTED ───────────────────────────────── */
-/* One seamless dot grid on the full writing body — header/meta are outside journal-body so unaffected */
-.ps-dotted .journal-body {
+/* Dots applied per writing section — header, metadata, and titles stay clean */
+.ps-dotted .j-word-area,
+.ps-dotted .j-prose,
+.ps-dotted .j-panel-body,
+.ps-dotted .j-interpretation {
   background-image: radial-gradient(circle, var(--pg-accent) 1px, transparent 1px);
   background-size: 18px 18px;
   background-position: 0 0;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
-/* Clear individual element backgrounds so dots show through uninterrupted */
-.ps-dotted .j-word-area,
-.ps-dotted .j-prose,
-.ps-dotted .j-scripture {
-  background-image: none;
-  background-color: transparent;
-}
-/* Mask structured metadata rows so dots don't bleed into header fields */
-.ps-dotted .meta-row {
-  background: var(--pg-bg);
-}
+.ps-dotted .j-word-area   { min-height: 2in; }
+.ps-dotted .j-prose        { min-height: 1.5in; }
+.ps-dotted .j-panel-body   { min-height: 1.5in; }
+.ps-dotted .j-interpretation { min-height: 1.5in; }
 
 /* Save to Journal button in output controls */
 .btn-save-journal {
@@ -2175,6 +2171,34 @@ async function fetchAsDataURL(src) {
     return src; // fallback to original path
   }
 }
+
+// ── URL PARAM LOADER ──────────────────────────────────────
+// Detects entry data passed from the Dove Expressions journal app via URL params.
+// Supported params: date, by, type, theme, word, interpretation, scripture, response, notes
+(function loadFromURLParams() {
+  const params = new URLSearchParams(window.location.search);
+  const textFields = ['date','by','theme','word','interpretation','scripture','response','notes'];
+  let loaded = 0;
+  textFields.forEach(id => {
+    const val = params.get(id);
+    if (val) {
+      const el = document.getElementById(id);
+      if (el) { el.value = val; loaded++; }
+    }
+  });
+  // Handle select field
+  const typeVal = params.get('type');
+  if (typeVal) {
+    const sel = document.getElementById('type');
+    if (sel) {
+      const opt = [...sel.options].find(o => o.value.toLowerCase() === typeVal.toLowerCase());
+      if (opt) { sel.value = opt.value; loaded++; }
+    }
+  }
+  if (loaded > 0) {
+    setMsg('Entry loaded from journal app — review fields then click Generate Template.', 'ok');
+  }
+})();
 
 // ── INIT ──────────────────────────────────────────────
 applyPreset('purple');
