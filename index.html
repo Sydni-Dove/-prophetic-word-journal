@@ -739,8 +739,8 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   <div class="form-block">
     <div class="section-eyebrow">Theme Customizer</div>
     <div class="theme-presets">
+      <button class="preset-btn active" onclick="applyPreset('dove')" id="preset-dove">Burgundy</button>
       <button class="preset-btn" onclick="applyPreset('purple')" id="preset-purple">Purple</button>
-      <button class="preset-btn" onclick="applyPreset('dove')" id="preset-dove">Burgundy</button>
       <button class="preset-btn" onclick="applyPreset('neutral')" id="preset-neutral">Neutral</button>
       <button class="preset-btn" onclick="applyPreset('gold')" id="preset-gold">Gold</button>
       <button class="preset-btn" onclick="applyPreset('pink')" id="preset-pink">Pink</button>
@@ -2210,7 +2210,7 @@ async function fetchAsDataURL(src) {
 })();
 
 // ── INIT ──────────────────────────────────────────────
-applyPreset('purple');
+applyPreset('dove');
 </script>
 </body>
 </html>
