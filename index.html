@@ -13,12 +13,9 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* UI shell — fixed */
-  --purple:        #9073AE;
-  --purple-light:  #B89ECC;
-  /* Dynamic theme RGB triplet — updated by applyCustomColors() for rgba() usage */
-  --pg-primary-rgb: 107, 63, 160;
-  --indigo:        #243A74;
+  /* UI shell — fixed, never changed by presets */
+  --ui-accent:     #630000;
+  --ui-accent-rgb: 99, 0, 0;
   --gold:          #C5A44D;
   --soft-bg:       #F8F7F5;
   --line:          #E8E2EF;
@@ -29,12 +26,13 @@
   --text-light:    #999999;
 
   /* Page template — updated by applyPreset / applyCustomColors */
-  --pg-primary:    #6B3FA0;
-  --pg-accent:     #C5A44D;
-  --pg-panel:      #F0EBF8;
-  --pg-decor:      #EDE5F5;
-  --pg-text:       #2b2b2b;
-  --pg-bg:         #ffffff;
+  --pg-primary:    #630000;
+  --pg-primary-rgb: 99, 0, 0;
+  --pg-accent:     #E6A742;
+  --pg-panel:      #F2DFD8;
+  --pg-decor:      #F9E8DC;
+  --pg-text:       #1B1717;
+  --pg-bg:         #FDFDFD;
 }
 body {
   font-family: 'Lora', serif;
@@ -48,12 +46,12 @@ body {
   text-align: center;
   padding: 2.8rem 2rem 2.2rem;
   background: var(--white);
-  border-bottom: 1px solid rgba(var(--pg-primary-rgb),0.2);
+  border-bottom: 1px solid rgba(var(--ui-accent-rgb),0.15);
 }
 .site-header .brand-tag {
   font-family: 'Playfair Display', serif;
   font-size: 0.68rem; letter-spacing: 0.4em; text-transform: uppercase;
-  color: var(--pg-primary); margin-bottom: 0.6rem;
+  color: var(--ui-accent); margin-bottom: 0.6rem;
 }
 .site-header h1 {
   font-family: 'Playfair Display', serif;
@@ -69,7 +67,7 @@ body {
 .editor-section { max-width: 820px; margin: 2.5rem auto; padding: 0 1.5rem; }
 .section-eyebrow {
   font-family: 'Playfair Display', serif; font-size: 0.62rem;
-  letter-spacing: 0.32em; text-transform: uppercase; color: var(--pg-primary);
+  letter-spacing: 0.32em; text-transform: uppercase; color: var(--ui-accent);
   margin-bottom: 1.2rem; margin-top: 2.2rem;
   display: flex; align-items: center; gap: 0.8rem;
 }
@@ -82,14 +80,14 @@ body {
 .form-block { margin-bottom: 2.2rem; }
 .upload-zone {
   position: relative;
-  border: 1.5px dashed rgba(var(--pg-primary-rgb),0.45);
+  border: 1.5px dashed rgba(var(--ui-accent-rgb),0.35);
   border-radius: 14px; padding: 2.2rem 1.5rem; text-align: center;
   background: rgba(255,255,255,0.65);
   cursor: pointer; transition: border-color 0.2s, background 0.2s;
 }
-.upload-zone:hover { border-color: var(--pg-primary); }
+.upload-zone:hover { border-color: var(--ui-accent); }
 .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.upload-zone .upload-glyph { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--pg-primary); }
+.upload-zone .upload-glyph { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--ui-accent); }
 .upload-zone p { font-size: 0.88rem; color: var(--text-soft); }
 .upload-zone p.upload-hint { font-size: 0.76rem; color: var(--text-light); font-style: italic; margin-top: 0.3rem; }
 .upload-msg { margin-top: 0.75rem; font-size: 0.8rem; font-style: italic; min-height: 1.2em; text-align: center; color: var(--text-light); }
@@ -101,7 +99,7 @@ body {
 .f-group { display: flex; flex-direction: column; gap: 0.35rem; }
 label {
   font-family: 'Playfair Display', serif; font-size: 0.65rem;
-  letter-spacing: 0.2em; text-transform: uppercase; color: var(--pg-primary);
+  letter-spacing: 0.2em; text-transform: uppercase; color: var(--ui-accent);
 }
 input[type="text"], select {
   font-family: 'Lora', serif; font-size: 0.88rem; color: var(--text);
@@ -111,7 +109,7 @@ input[type="text"], select {
   outline: none; transition: border-color 0.2s;
   -webkit-appearance: none; appearance: none;
 }
-input[type="text"]:focus, select:focus { border-color: var(--pg-primary); }
+input[type="text"]:focus, select:focus { border-color: var(--ui-accent); }
 textarea {
   font-family: Georgia, serif; font-size: 0.88rem; color: var(--text);
   background: white; border: 1px solid var(--line);
@@ -120,37 +118,37 @@ textarea {
   resize: vertical; line-height: 1.6;
 }
 textarea:focus {
-  border-color: var(--pg-primary);
-  box-shadow: 0 0 0 2px rgba(var(--pg-primary-rgb),0.15);
+  border-color: var(--ui-accent);
+  box-shadow: 0 0 0 2px rgba(var(--ui-accent-rgb),0.12);
 }
 select:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-row { display: flex; gap: 0.9rem; justify-content: center; margin-top: 2.8rem; flex-wrap: wrap; }
 .btn-generate {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--white); background: var(--pg-primary);
+  color: var(--white); background: var(--ui-accent);
   border: none; border-radius: 8px; padding: 0.95rem 2.8rem;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
-.btn-generate:hover { background: var(--pg-primary); filter: brightness(0.85); transform: translateY(-1px); }
+.btn-generate:hover { background: var(--ui-accent); filter: brightness(0.85); transform: translateY(-1px); }
 .btn-ghost {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--text-soft); background: transparent;
   border: 1px solid var(--line);
   border-radius: 8px; padding: 0.95rem 1.8rem; cursor: pointer; transition: border-color 0.2s, color 0.2s;
 }
-.btn-ghost:hover { border-color: var(--pg-primary); color: var(--pg-primary); }
+.btn-ghost:hover { border-color: var(--ui-accent); color: var(--ui-accent); }
 .btn-save {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--pg-primary); background: transparent;
-  border: 1px solid var(--pg-primary);
+  color: var(--ui-accent); background: transparent;
+  border: 1px solid var(--ui-accent);
   border-radius: 8px; padding: 0.95rem 2rem; cursor: pointer; transition: background 0.2s, color 0.2s;
 }
-.btn-save:hover { background: var(--pg-primary); color: var(--white); }
+.btn-save:hover { background: var(--ui-accent); color: var(--white); }
 
 /* ── HOW IT WORKS ─────────────────────────────────────── */
 .how-it-works {
-  background: linear-gradient(135deg, rgba(var(--pg-primary-rgb),0.07), rgba(197,164,77,0.05));
-  border: 1px solid rgba(var(--pg-primary-rgb),0.18);
+  background: linear-gradient(135deg, rgba(var(--ui-accent-rgb),0.05), rgba(197,164,77,0.04));
+  border: 1px solid rgba(var(--ui-accent-rgb),0.14);
   border-radius: 14px;
   padding: 1.6rem 2rem;
   margin-top: 2.8rem;
@@ -158,7 +156,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .how-it-works .hiw-title {
   font-family: 'Playfair Display', serif;
   font-size: 0.62rem; letter-spacing: 0.3em; text-transform: uppercase;
-  color: var(--pg-primary); margin-bottom: 1.2rem;
+  color: var(--ui-accent); margin-bottom: 1.2rem;
 }
 .how-it-works ol {
   list-style: none; counter-reset: steps;
@@ -174,7 +172,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .how-it-works ol li .hiw-num {
   grid-column: 1;
   font-family: 'Playfair Display', serif; font-size: 0.68rem;
-  color: var(--white); background: var(--pg-primary);
+  color: var(--white); background: var(--ui-accent);
   border-radius: 50%; width: 1.6rem; height: 1.6rem;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; margin-top: 0.1rem;
@@ -186,7 +184,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .hiw-label {
   font-family: 'Playfair Display', serif; font-size: 0.8rem;
-  color: var(--pg-primary); font-weight: 600; letter-spacing: 0.02em;
+  color: var(--ui-accent); font-weight: 600; letter-spacing: 0.02em;
 }
 .hiw-desc {
   font-family: 'Lora', serif; font-size: 0.8rem;
@@ -196,7 +194,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   grid-column: 1 / -1;
   font-family: 'Lora', serif; font-size: 0.75rem; font-style: italic;
   color: var(--text-light); margin-top: 0.4rem;
-  border-top: 1px solid rgba(var(--pg-primary-rgb),0.15); padding-top: 0.8rem;
+  border-top: 1px solid rgba(var(--ui-accent-rgb),0.12); padding-top: 0.8rem;
 }
 
 /* ── OUTPUT ───────────────────────────────────────────── */
@@ -208,26 +206,46 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .btn-print {
   font-family: 'Playfair Display', serif; font-size: 0.78rem; letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--white); background: var(--pg-primary);
+  color: var(--white); background: var(--ui-accent);
   border: none; border-radius: 8px; padding: 0.95rem 2.4rem;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
-.btn-print:hover { background: var(--pg-primary); filter: brightness(0.85); transform: translateY(-1px); }
+.btn-print:hover { background: var(--ui-accent); filter: brightness(0.85); transform: translateY(-1px); }
 
 /* ══════════════════════════════════════════════════════
-   JOURNAL PAGE  —  8.5 × 11
+   JOURNAL SHEET — always 8.5 × 11 US Letter (print container)
+   Centers the inner journal page for smaller layout sizes.
+══════════════════════════════════════════════════════ */
+.journal-sheet {
+  width: 8.5in;
+  height: 11in;
+  background: white;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  page-break-after: always;
+  break-after: page;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.journal-sheet:last-child { page-break-after: avoid; break-after: avoid; }
+
+/* ══════════════════════════════════════════════════════
+   JOURNAL PAGE  —  inner layout (default 8.5 × 11, resized by updateLayoutSize)
    Watercolor corners use ::before (top-left) and ::after (bottom-right)
    so each can have its own opacity.
 ══════════════════════════════════════════════════════ */
 .journal-page {
   width: 8.5in;
-  min-height: 11in;
+  height: 11in;
   background: #ffffff;
-  margin: 0 auto;
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 60px rgba(36,58,116,0.1);
-  page-break-after: always;
+  flex-shrink: 0;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -408,11 +426,17 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 /* ── THEME CUSTOMIZER ─────────────────────────────────── */
 .theme-presets { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
 .preset-btn { font-family: 'Playfair Display', serif; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; border: 1px solid var(--line); border-radius: 20px; padding: 0.38rem 0.9rem; cursor: pointer; background: white; color: var(--text-soft); transition: all 0.2s; }
-.preset-btn:hover, .preset-btn.active { border-color: var(--pg-primary); color: var(--pg-primary); background: rgba(var(--pg-primary-rgb),0.06); }
+.preset-btn:hover, .preset-btn.active { border-color: var(--ui-accent); color: var(--ui-accent); background: rgba(var(--ui-accent-rgb),0.06); }
 .color-pickers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
 @media (max-width: 620px) { .color-pickers-grid { grid-template-columns: 1fr 1fr; } }
 .color-picker-group { display: flex; flex-direction: column; gap: 0.4rem; }
 .color-picker-group label { font-size: 0.58rem; }
+
+/* ── GENERATOR NAV ────────────────────────────────────── */
+.gen-nav { display: flex; justify-content: center; gap: 0.55rem; padding: 0.65rem 1.5rem; background: var(--white); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.gen-nav-link { font-family: 'Playfair Display', serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-soft); text-decoration: none; padding: 0.38rem 1rem; border-radius: 20px; border: 1px solid transparent; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+.gen-nav-link:hover { color: var(--ui-accent); border-color: rgba(var(--ui-accent-rgb),0.28); background: rgba(var(--ui-accent-rgb),0.04); }
+.gen-nav-link.is-active { color: var(--ui-accent); border-color: rgba(var(--ui-accent-rgb),0.4); background: rgba(var(--ui-accent-rgb),0.07); font-weight: 600; }
 
 /* ── RESPONSIVE ───────────────────────────────────────── */
 @media (max-width: 680px) {
@@ -427,6 +451,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── PRINT ────────────────────────────────────────────── */
 @media print {
+  /* Always print on US Letter — inner page size is set by updateLayoutSize() */
   @page { size: 8.5in 11in; margin: 0; }
   body { background: white !important; }
   /* Hide all UI chrome — editor, header, auth bar, journal panel, controls */
@@ -434,20 +459,23 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   .auth-bar, .my-journal-section { display: none !important; }
   .page-spacer { display: none !important; }
   .output-section { display: block !important; max-width: none; margin: 0; padding: 0; overflow: visible; }
-  .journal-page {
-    width: 8.5in !important; min-height: 11in !important;
+  .journal-sheet {
+    width: 8.5in !important; height: 11in !important;
     box-shadow: none !important; margin: 0 !important;
-    transform: none !important; margin-bottom: 0 !important;
+    background: white !important;
     page-break-after: always; break-after: page;
     page-break-inside: avoid; break-inside: avoid;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  .journal-page:last-child { page-break-after: avoid; break-after: avoid; }
+  .journal-sheet:last-child { page-break-after: avoid; break-after: avoid; }
+  .journal-page {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
   .journal-page::before { -webkit-print-color-adjust: exact; print-color-adjust: exact; opacity: 0.4; }
   .journal-page::after  { display: none !important; content: none !important; background: none !important; }
-  /* Lock page-inner to exactly 11in so the footer can never spill to a new page */
+  /* Lock page-inner to the layout height so footer never spills to a new page */
   .page-inner {
-    height: 11in !important;
     min-height: unset !important;
     overflow: hidden !important;
   }
@@ -479,7 +507,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .auth-email-label {
   font-family: 'Lora', serif; font-size: 0.78rem;
-  color: var(--pg-primary); font-style: italic; flex-shrink: 0;
+  color: var(--ui-accent); font-style: italic; flex-shrink: 0;
 }
 .auth-input {
   font-family: 'Lora', serif; font-size: 0.78rem; color: var(--text);
@@ -488,25 +516,25 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   padding: 0.28rem 0.2rem; outline: none;
   transition: border-color 0.2s; width: 155px;
 }
-.auth-input:focus { border-bottom-color: var(--pg-primary); }
+.auth-input:focus { border-bottom-color: var(--ui-accent); }
 .auth-input::placeholder { color: var(--text-light); }
 .auth-btn {
   font-family: 'Playfair Display', serif; font-size: 0.7rem;
   letter-spacing: 0.12em; text-transform: uppercase;
-  background: var(--pg-primary); color: var(--white);
+  background: var(--ui-accent); color: var(--white);
   border: none; border-radius: 6px;
   padding: 0.35rem 0.85rem; cursor: pointer;
   transition: opacity 0.2s; flex-shrink: 0;
 }
 .auth-btn:hover { opacity: 0.85; }
 .auth-btn.ghost {
-  background: transparent; color: var(--pg-primary);
-  border: 1px solid rgba(var(--pg-primary-rgb),0.4);
+  background: transparent; color: var(--ui-accent);
+  border: 1px solid rgba(var(--ui-accent-rgb),0.4);
 }
-.auth-btn.ghost:hover { background: rgba(var(--pg-primary-rgb),0.06); }
+.auth-btn.ghost:hover { background: rgba(var(--ui-accent-rgb),0.06); }
 .auth-link {
   font-family: 'Lora', serif; font-size: 0.75rem;
-  color: var(--pg-primary); cursor: pointer;
+  color: var(--ui-accent); cursor: pointer;
   border: none; background: none; padding: 0; flex-shrink: 0;
 }
 .auth-link:hover { text-decoration: underline; }
@@ -531,11 +559,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   background: var(--soft-bg); border: 1px solid var(--line);
   border-radius: 10px; transition: border-color 0.2s;
 }
-.saved-entry-card:hover { border-color: rgba(var(--pg-primary-rgb),0.5); }
+.saved-entry-card:hover { border-color: rgba(var(--ui-accent-rgb),0.4); }
 .sec-date {
   font-family: 'Playfair Display', serif; font-size: 0.7rem;
   letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--pg-primary); flex-shrink: 0; min-width: 4.5rem; margin-top: 0.1rem;
+  color: var(--ui-accent); flex-shrink: 0; min-width: 4.5rem; margin-top: 0.1rem;
 }
 .sec-body { flex: 1; min-width: 0; }
 .sec-word {
@@ -553,10 +581,10 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   font-family: 'Playfair Display', serif; font-size: 0.65rem;
   letter-spacing: 0.1em; text-transform: uppercase;
   padding: 0.28rem 0.65rem; border-radius: 5px; cursor: pointer;
-  border: 1px solid rgba(var(--pg-primary-rgb),0.4);
-  background: transparent; color: var(--pg-primary); transition: all 0.2s;
+  border: 1px solid rgba(var(--ui-accent-rgb),0.4);
+  background: transparent; color: var(--ui-accent); transition: all 0.2s;
 }
-.sec-btn:hover { background: var(--pg-primary); color: var(--white); }
+.sec-btn:hover { background: var(--ui-accent); color: var(--white); }
 .sec-btn.del { color: #b87070; border-color: rgba(184,112,112,0.3); }
 .sec-btn.del:hover { background: #b87070; color: var(--white); border-color: #b87070; }
 .saved-entries-empty {
@@ -600,12 +628,12 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-save-journal {
   font-family: 'Playfair Display', serif; font-size: 0.72rem;
   letter-spacing: 0.1em; text-transform: uppercase;
-  background: transparent; color: var(--pg-primary);
-  border: 1.5px solid rgba(var(--pg-primary-rgb),0.55);
+  background: transparent; color: var(--ui-accent);
+  border: 1.5px solid rgba(var(--ui-accent-rgb),0.45);
   border-radius: 8px; padding: 0.55rem 1.1rem;
   cursor: pointer; transition: all 0.2s;
 }
-.btn-save-journal:hover { background: rgba(var(--pg-primary-rgb),0.08); }
+.btn-save-journal:hover { background: rgba(var(--ui-accent-rgb),0.06); }
 
 </style>
 </head>
@@ -622,7 +650,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 <nav class="gen-nav">
   <a class="gen-nav-link" href="https://dreamjournaltemplategenerator-fez9.vercel.app/" target="_blank" rel="noopener">Dream Journal</a>
   <span class="gen-nav-link is-active">Prophetic Word</span>
-  <a class="gen-nav-link" href="https://doveexpressions.org" target="_blank" rel="noopener">← Back to App</a>
+  <a class="gen-nav-link" href="https://dove-expressions-journal-app.vercel.app/my-journal" target="_blank" rel="noopener">← Back to App</a>
 </nav>
 <!-- AUTH BAR -->
 <div class="auth-bar" id="authBar">
@@ -739,12 +767,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     </div>
 
     <div class="f-group">
-      <label for="printSize">Print Size</label>
-      <select id="printSize" onchange="updatePrintSize()">
+      <label for="printSize">Inner Page Layout</label>
+      <select id="printSize" onchange="updateLayoutSize()">
         <option value="letter">Letter (8.5 × 11 in)</option>
-        <option value="a4">A4 (210 × 297 mm)</option>
-        <option value="a5">A5 (148 × 210 mm)</option>
         <option value="halfletter">Half Letter (5.5 × 8.5 in)</option>
+        <option value="a5">A5 (5.83 × 8.27 in)</option>
       </select>
     </div>
   </div>
@@ -1534,6 +1561,8 @@ function generateFromForm() {
 // textContent is used for all user data (XSS-safe).
 // ──────────────────────────────────────────────────────
 function buildJournalPageElement(data) {
+  const sheet = document.createElement('div');
+  sheet.className = 'journal-sheet';
   const page = document.createElement('div');
   page.className = 'journal-page';
   page.innerHTML = `
@@ -1615,7 +1644,8 @@ function buildJournalPageElement(data) {
       el.textContent = val;
     }
   });
-  return page;
+  sheet.appendChild(page);
+  return sheet;
 }
 
 // ── PARAGRAPH TEXT RENDERER ───────────────────────────
@@ -1644,13 +1674,17 @@ function setParaText(el, text) {
 // Uses flexbox so lines are evenly distributed across the full page height.
 // ──────────────────────────────────────────────────────
 function createNotesPage(style) {
+  const sheet = document.createElement('div');
+  sheet.className = 'journal-sheet';
   const page = document.createElement('div');
   page.className = 'journal-page';
 
-  // Build the line elements for a lined page (32 college-ruled lines)
+  // Build the line elements — count based on selected layout size
+  const layoutKey = document.getElementById('printSize')?.value || 'letter';
+  const lineCount = (LAYOUT_SIZES[layoutKey] || LAYOUT_SIZES.letter).lines;
   let notesBodyHTML = '';
   if (style === 'lined') {
-    const lines = Array.from({ length: 32 }, () => '<div class="notes-line"></div>').join('');
+    const lines = Array.from({ length: lineCount }, () => '<div class="notes-line"></div>').join('');
     notesBodyHTML = `<div class="notes-body lined">${lines}</div>`;
   } else if (style === 'dotted') {
     notesBodyHTML = `<div class="notes-body dotted"></div>`;
@@ -1671,7 +1705,8 @@ function createNotesPage(style) {
         <div class="footer-brand">Dove Expressions<br>doveexpressions.org</div>
       </div>
     </div>`;
-  return page;
+  sheet.appendChild(page);
+  return sheet;
 }
 
 // ──────────────────────────────────────────────────────
@@ -1759,19 +1794,19 @@ function showPages(dataArray) {
 // Scales each .journal-page down on narrow viewports (681–816px)
 // so nothing gets cut off. No scaling needed on larger screens.
 function scaleJournalToFit() {
-  const pages    = [...document.querySelectorAll('.journal-page')];
+  const sheets   = [...document.querySelectorAll('.journal-sheet')];
   const sec      = document.getElementById('outputSection');
   const available = sec.clientWidth;
 
-  pages.forEach(page => {
-    page.style.transform    = '';
-    page.style.marginBottom = '';
-    if (available > 0 && available < page.offsetWidth) {
-      const scale   = available / page.offsetWidth;
-      page.style.transformOrigin = 'top left';
-      page.style.transform       = `scale(${scale})`;
-      const scaledH = page.offsetHeight * scale;
-      page.style.marginBottom = `${scaledH - page.offsetHeight}px`;
+  sheets.forEach(sheet => {
+    sheet.style.transform    = '';
+    sheet.style.marginBottom = '';
+    if (available > 0 && available < sheet.offsetWidth) {
+      const scale   = available / sheet.offsetWidth;
+      sheet.style.transformOrigin = 'top left';
+      sheet.style.transform       = `scale(${scale})`;
+      const scaledH = sheet.offsetHeight * scale;
+      sheet.style.marginBottom = `${scaledH - sheet.offsetHeight}px`;
     }
   });
 }
@@ -1798,46 +1833,35 @@ window.addEventListener('afterprint', () => {
     if (!currentUser) journalSec.style.display = 'none';
   }
 });
-const PRINT_SIZES = {
-  letter: { page: '8.5in 11in', w: '8.5in', h: '11in' },
-  a4: { page: '210mm 297mm', w: '210mm', h: '297mm' },
-  a5: { page: '148mm 210mm', w: '148mm', h: '210mm' },
-  halfletter: { page: '5.5in 8.5in', w: '5.5in', h: '8.5in' },
+// Inner page layout sizes — @page always stays US Letter (8.5×11).
+const LAYOUT_SIZES = {
+  letter:     { w: '8.5in',  h: '11in',   lines: 32 },
+  halfletter: { w: '5.5in',  h: '8.5in',  lines: 24 },
+  a5:         { w: '5.83in', h: '8.27in', lines: 24 },
 };
-
-let _printSizeStyleEl = null;
-
-function updatePrintSize()
-
-{
-  const key = (document.getElementById('printSize')?.value) || 'letter';
-  const s = PRINT_SIZES[key] || PRINT_SIZES.letter;
-
-  document.body.setAttribute('data-print-size', key);
-  document.documentElement.style.setProperty('--page-width', s.w);
-  document.documentElement.style.setProperty('--page-height', s.h);
-
-  if (!_printSizeStyleEl) {
-    _printSizeStyleEl = document.createElement('style');
-    _printSizeStyleEl.id = 'dynamic-print-size';
-    document.head.appendChild(_printSizeStyleEl);
-  }
-
-  _printSizeStyleEl.textContent = `
-    @media print { @page { size: ${s.page}; margin: 0; } }
-    .journal-page { width: ${s.w} !important; min-height: ${s.h} !important; }
-    .page-inner { min-height: ${s.h} !important; }
-    @media print {
-      .journal-page { width: ${s.w} !important; min-height: ${s.h} !important; }
-      .page-inner { min-height: ${s.h} !important; }
-    }
-  `;
+let _layoutStyleEl = null;
+function updateLayoutSize() {
+  const key = (document.getElementById('printSize')?.value) || 'letter';
+  const s = LAYOUT_SIZES[key] || LAYOUT_SIZES.letter;
+  if (!_layoutStyleEl) {
+    _layoutStyleEl = document.createElement('style');
+    _layoutStyleEl.id = 'dynamic-layout-size';
+    document.head.appendChild(_layoutStyleEl);
+  }
+  _layoutStyleEl.textContent = `
+    .journal-page { width: ${s.w} !important; height: ${s.h} !important; min-height: ${s.h} !important; }
+    .page-inner { min-height: ${s.h} !important; }
+    @media print {
+      .journal-page { width: ${s.w} !important; height: ${s.h} !important; }
+      .page-inner { height: ${s.h} !important; min-height: unset !important; overflow: hidden !important; }
+    }
+  `;
 }
-
+function updatePrintSize() { updateLayoutSize(); }
 // ── CLEAR ───────────────────────────────────────────────
 // ── THEME PRESETS ─────────────────────────────────────
 const PRESETS = {
-  purple:    { primary:'#7D3F7C', text:'#2b2b2b', accent:'#B68A2E', panel:'#F4EDF6', decor:'#EADDEE', bg:'#ffffff' },
+  purple:    { primary:'#7E4C21', text:'#2b2b2b', accent:'#C5A44D', panel:'#F5EDE0', decor:'#F2E4CC', bg:'#ffffff' },
   dove:      { primary:'#630000', text:'#1B1717', accent:'#E6A742', panel:'#F2DFD8', decor:'#F9E8DC', bg:'#FDFDFD' },
   neutral:   { primary:'#4A4A4A', text:'#1B1717', accent:'#C9A46C', panel:'#F7F5F2', decor:'#F0EDE8', bg:'#FFFFFF' },
   gold:      { primary:'#5A2A27', text:'#1B1717', accent:'#D4A24C', panel:'#F7F1E8', decor:'#F5EDD8', bg:'#FFFFFF' },
@@ -1931,13 +1955,16 @@ async function saveAsPDF() {
 
     // Grab the current stylesheet and swap image URLs for embedded data
     const rawCSS = document.querySelector('style').textContent;
+    // Include dynamic layout-size CSS so inner page dimensions match the selected layout
+    const layoutCSS = document.getElementById('dynamic-layout-size')?.textContent || '';
     // Inject current --pg-* variable values so print window matches chosen theme
     const cs = getComputedStyle(document.documentElement);
     const pgVars = ['--pg-primary','--pg-primary-rgb','--pg-text','--pg-accent','--pg-panel','--pg-decor','--pg-bg']
       .map(v => `${v}: ${cs.getPropertyValue(v).trim()};`).join(' ');
     const css = rawCSS
       .replace(/url\('watercolor-corner-top-left\.png[^']*'\)/g,    `url('${tlData}')`)
-      .replace(/url\('watercolor-corner-bottom-right\.png[^']*'\)/g, `url('${brData}')`);
+      .replace(/url\('watercolor-corner-bottom-right\.png[^']*'\)/g, `url('${brData}')`)
+      + '\n' + layoutCSS;
 
     const pagesHTML = container.innerHTML;
 
@@ -2140,7 +2167,8 @@ async function loadMyJournal() {
     .limit(50);
 
   if (error) {
-    list.innerHTML = '<div class="saved-entries-empty">Could not load entries.</div>';
+    console.error('[loadMyJournal] Supabase error:', error);
+    list.innerHTML = `<div class="saved-entries-empty">Could not load entries: ${error.message || error.code || 'unknown error'}. Check console for details.</div>`;
     return;
   }
   if (!data || data.length === 0) {
@@ -2261,7 +2289,7 @@ async function fetchAsDataURL(src) {
 
 // ── INIT ──────────────────────────────────────────────
 applyPreset('dove');
-updatePrintSize( );
+updateLayoutSize();
 </script>
 </body>
 </html>
