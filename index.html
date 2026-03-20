@@ -565,18 +565,44 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   text-align: center; padding: 2rem 0;
 }
 /* ── PAGE STYLE: LINED ────────────────────────────────── */
-/* Applies to writing-heavy sections only; header/meta stays clean */
-.ps-lined .j-word-area,
-.ps-lined .j-prose,
-.ps-lined .j-scripture {
+/* Per-element line heights for accurate ruled alignment */
+.ps-lined .j-word-area {
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
     transparent calc(1.82em - 1px),
-    rgba(var(--pg-primary-rgb),0.13) calc(1.82em - 1px),
+    rgba(var(--pg-primary-rgb),0.18) calc(1.82em - 1px),
     transparent 1.82em
   );
   background-size: 100% 1.82em;
+  background-attachment: local;
+  background-position: 0 0.04in;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.ps-lined .j-prose {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.86em - 1px),
+    rgba(var(--pg-primary-rgb),0.18) calc(1.86em - 1px),
+    transparent 1.86em
+  );
+  background-size: 100% 1.86em;
+  background-attachment: local;
+  background-position: 0 0.04in;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+.ps-lined .j-scripture {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(1.78em - 1px),
+    rgba(var(--pg-primary-rgb),0.18) calc(1.78em - 1px),
+    transparent 1.78em
+  );
+  background-size: 100% 1.78em;
+  background-attachment: local;
+  background-position: 0 0.04in;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 
@@ -607,6 +633,26 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .btn-save-journal:hover { background: rgba(var(--pg-primary-rgb),0.08); }
 
+/* ── GENERATOR NAV ────────────────────────────────────── */
+.gen-nav {
+  display: flex; justify-content: center; gap: 0;
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+}
+.gen-nav-link {
+  font-family: 'Playfair Display', serif; font-size: 0.66rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-soft); text-decoration: none;
+  padding: 0.65rem 1.4rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.gen-nav-link:hover { color: var(--text); }
+.gen-nav-link.is-active {
+  color: #630000;
+  border-bottom-color: #C5A44D;
+}
 </style>
 </head>
 <body>
@@ -618,6 +664,12 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   <div class="thin-rule"></div>
   <p class="subtitle">Document your prophetic words with beauty and intention.</p>
 </header>
+<!-- GENERATOR NAV -->
+<nav class="gen-nav">
+  <a class="gen-nav-link" href="https://dreamjournaltemplategenerator-fez9.vercel.app/" target="_blank" rel="noopener">Dream Journal</a>
+  <span class="gen-nav-link is-active">Prophetic Word</span>
+  <a class="gen-nav-link" href="https://doveexpressions.org" target="_blank" rel="noopener">← Back to App</a>
+</nav>
 
 <!-- AUTH BAR -->
 <div class="auth-bar" id="authBar">
@@ -732,6 +784,15 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
           <option value="dotted">Dotted</option>
         </select>
       </div>
+      <div class="f-group">
+        <label for="printSize">Print Size</label>
+        <select id="printSize" onchange="updatePrintSize()">
+          <option value="letter">Letter (8.5 × 11 in)</option>
+          <option value="a4">A4 (210 × 297 mm)</option>
+          <option value="a5">A5 (148 × 210 mm)</option>
+          <option value="halfletter">Half Letter (5.5 × 8.5 in)</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -740,7 +801,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <div class="section-eyebrow">Theme Customizer</div>
     <div class="theme-presets">
       <button class="preset-btn active" onclick="applyPreset('dove')" id="preset-dove">Burgundy</button>
-      <button class="preset-btn" onclick="applyPreset('purple')" id="preset-purple">Purple</button>
+      <button class="preset-btn" onclick="applyPreset('walnut')" id="preset-walnut">Walnut</button>
       <button class="preset-btn" onclick="applyPreset('neutral')" id="preset-neutral">Neutral</button>
       <button class="preset-btn" onclick="applyPreset('gold')" id="preset-gold">Gold</button>
       <button class="preset-btn" onclick="applyPreset('pink')" id="preset-pink">Pink</button>
@@ -1784,10 +1845,33 @@ window.addEventListener('afterprint', () => {
   }
 });
 
+// ── PRINT SIZE ───────────────────────────────────────────
+const PRINT_SIZES = {
+  letter:     { page: '8.5in 11in',  w: '8.5in', h: '11in'  },
+  a4:         { page: '210mm 297mm', w: '210mm',  h: '297mm' },
+  a5:         { page: '148mm 210mm', w: '148mm',  h: '210mm' },
+  halfletter: { page: '5.5in 8.5in', w: '5.5in',  h: '8.5in' },
+};
+let _printSizeStyleEl = null;
+function updatePrintSize() {
+  const key = (document.getElementById('printSize')?.value) || 'letter';
+  const s = PRINT_SIZES[key] || PRINT_SIZES.letter;
+  if (!_printSizeStyleEl) {
+    _printSizeStyleEl = document.createElement('style');
+    _printSizeStyleEl.id = 'dynamic-print-size';
+    document.head.appendChild(_printSizeStyleEl);
+  }
+  _printSizeStyleEl.textContent = `
+    @media print { @page { size: ${s.page}; margin: 0; } }
+    .journal-page { width: ${s.w} !important; min-height: ${s.h} !important; }
+    @media print { .journal-page { width: ${s.w} !important; min-height: ${s.h} !important; } }
+  `;
+}
+
 // ── CLEAR ───────────────────────────────────────────────
 // ── THEME PRESETS ─────────────────────────────────────
 const PRESETS = {
-  purple:    { primary:'#7E4C21', text:'#2b2b2b', accent:'#C5A44D', panel:'#F5EDE0', decor:'#F2E4CC', bg:'#ffffff' },
+  walnut:    { primary:'#7E4C21', text:'#2b2b2b', accent:'#C5A44D', panel:'#F5EDE0', decor:'#F2E4CC', bg:'#ffffff' },
   dove:      { primary:'#630000', text:'#1B1717', accent:'#E6A742', panel:'#F2DFD8', decor:'#F9E8DC', bg:'#FDFDFD' },
   neutral:   { primary:'#4A4A4A', text:'#1B1717', accent:'#C9A46C', panel:'#F7F5F2', decor:'#F0EDE8', bg:'#FFFFFF' },
   gold:      { primary:'#5A2A27', text:'#1B1717', accent:'#D4A24C', panel:'#F7F1E8', decor:'#F5EDD8', bg:'#FFFFFF' },
@@ -1815,15 +1899,23 @@ function hexToRgb(hex) {
   return parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16);
 }
 function applyCustomColors() {
-  const r = document.documentElement;
   const primary = document.getElementById('cpPrimary').value;
-  r.style.setProperty('--pg-primary',     primary);
-  r.style.setProperty('--pg-primary-rgb', hexToRgb(primary));
-  r.style.setProperty('--pg-text',    document.getElementById('cpText').value);
-  r.style.setProperty('--pg-accent',  document.getElementById('cpAccent').value);
-  r.style.setProperty('--pg-panel',   document.getElementById('cpPanel').value);
-  r.style.setProperty('--pg-decor',   document.getElementById('cpDecor').value);
-  r.style.setProperty('--pg-bg',      document.getElementById('cpBg').value);
+  const vars = {
+    '--pg-primary':     primary,
+    '--pg-primary-rgb': hexToRgb(primary),
+    '--pg-text':        document.getElementById('cpText').value,
+    '--pg-accent':      document.getElementById('cpAccent').value,
+    '--pg-panel':       document.getElementById('cpPanel').value,
+    '--pg-decor':       document.getElementById('cpDecor').value,
+    '--pg-bg':          document.getElementById('cpBg').value,
+  };
+  // Scope theme vars to pages container only — shell is unaffected
+  const container = document.getElementById('pagesContainer');
+  if (container) {
+    Object.entries(vars).forEach(([k, v]) => container.style.setProperty(k, v));
+  }
+  // Store for saveAsPDF()
+  window._currentThemeVars = vars;
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
 }
 
@@ -1882,9 +1974,8 @@ async function saveAsPDF() {
     // Grab the current stylesheet and swap image URLs for embedded data
     const rawCSS = document.querySelector('style').textContent;
     // Inject current --pg-* variable values so print window matches chosen theme
-    const cs = getComputedStyle(document.documentElement);
-    const pgVars = ['--pg-primary','--pg-primary-rgb','--pg-text','--pg-accent','--pg-panel','--pg-decor','--pg-bg']
-      .map(v => `${v}: ${cs.getPropertyValue(v).trim()};`).join(' ');
+    const themeVars = window._currentThemeVars || {};
+    const pgVars = Object.entries(themeVars).map(([k,v]) => `${k}: ${v};`).join(' ');
     const css = rawCSS
       .replace(/url\('watercolor-corner-top-left\.png[^']*'\)/g,    `url('${tlData}')`)
       .replace(/url\('watercolor-corner-bottom-right\.png[^']*'\)/g, `url('${brData}')`);
@@ -2211,6 +2302,7 @@ async function fetchAsDataURL(src) {
 
 // ── INIT ──────────────────────────────────────────────
 applyPreset('dove');
+updatePrintSize();
 </script>
 </body>
 </html>
