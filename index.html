@@ -725,20 +725,30 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     </div>
   </div>
 
-  <!-- Page Style -->
-  <div class="form-block">
-    <div class="section-eyebrow">Page Style</div>
-    <div class="field-row">
-      <div class="f-group">
-        <label for="pageStyle">Writing Area Style</label>
-        <select id="pageStyle">
-          <option value="clean">Blank</option>
-          <option value="lined">Lined</option>
-          <option value="dotted">Dotted</option>
-        </select>
-      </div>
+<!-- Page Style -->
+<div class="form-block">
+  <div class="section-eyebrow">Page Style</div>
+  <div class="field-row">
+    <div class="f-group">
+      <label for="pageStyle">Writing Area Style</label>
+      <select id="pageStyle">
+        <option value="clean">Blank</option>
+        <option value="lined">Lined</option>
+        <option value="dotted">Dotted</option>
+      </select>
+    </div>
+
+    <div class="f-group">
+      <label for="printSize">Print Size</label>
+      <select id="printSize" onchange="updatePrintSize()">
+        <option value="letter">Letter (8.5 × 11 in)</option>
+        <option value="a4">A4 (210 × 297 mm)</option>
+        <option value="a5">A5 (148 × 210 mm)</option>
+        <option value="halfletter">Half Letter (5.5 × 8.5 in)</option>
+      </select>
     </div>
   </div>
+</div>
 
   <!-- Theme Customizer -->
   <div class="form-block">
@@ -1788,6 +1798,41 @@ window.addEventListener('afterprint', () => {
     if (!currentUser) journalSec.style.display = 'none';
   }
 });
+const PRINT_SIZES = {
+  letter: { page: '8.5in 11in', w: '8.5in', h: '11in' },
+  a4: { page: '210mm 297mm', w: '210mm', h: '297mm' },
+  a5: { page: '148mm 210mm', w: '148mm', h: '210mm' },
+  halfletter: { page: '5.5in 8.5in', w: '5.5in', h: '8.5in' },
+};
+
+let _printSizeStyleEl = null;
+
+function updatePrintSize()
+
+{
+  const key = (document.getElementById('printSize')?.value) || 'letter';
+  const s = PRINT_SIZES[key] || PRINT_SIZES.letter;
+
+  document.body.setAttribute('data-print-size', key);
+  document.documentElement.style.setProperty('--page-width', s.w);
+  document.documentElement.style.setProperty('--page-height', s.h);
+
+  if (!_printSizeStyleEl) {
+    _printSizeStyleEl = document.createElement('style');
+    _printSizeStyleEl.id = 'dynamic-print-size';
+    document.head.appendChild(_printSizeStyleEl);
+  }
+
+  _printSizeStyleEl.textContent = `
+    @media print { @page { size: ${s.page}; margin: 0; } }
+    .journal-page { width: ${s.w} !important; min-height: ${s.h} !important; }
+    .page-inner { min-height: ${s.h} !important; }
+    @media print {
+      .journal-page { width: ${s.w} !important; min-height: ${s.h} !important; }
+      .page-inner { min-height: ${s.h} !important; }
+    }
+  `;
+}
 
 // ── CLEAR ───────────────────────────────────────────────
 // ── THEME PRESETS ─────────────────────────────────────
@@ -2216,6 +2261,7 @@ async function fetchAsDataURL(src) {
 
 // ── INIT ──────────────────────────────────────────────
 applyPreset('dove');
+updatePrintSize( );
 </script>
 </body>
 </html>
