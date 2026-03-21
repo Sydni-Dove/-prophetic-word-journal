@@ -1730,112 +1730,234 @@ function setParaText(el, text) {
   });
 }
 
-// ── CONTENT PAGINATION ─────────────────────────────────
-// Splits text that overflows a page into continuation pages.
-// Returns array of text chunks, each fitting within maxHeightPx.
-function splitTextToFitHeight(text, cssClassName, maxHeightPx, widthPx) {
-  if (!text || !text.trim()) return [text || ''];
-  const paragraphs = text.split(/\n{2,}/).filter(p => p.trim());
-  if (paragraphs.length <= 1) return [text];
+// ── TRUE CONTENT-AWARE PAGINATION ──────────────────────────────────────────
+// Measures content BEFORE placing it on pages. Builds pages section-by-section
+// so content never overflows — sections continue on subsequent pages as needed.
 
+const _SEC_GAP = 12;   // px between sections
+const _MIN_SPLIT = 50; // minimum px worth of content to split for
+
+// Measure available journal-body height and width using a hidden probe page
+function measureJournalBodyAvailable() {
+  const s = document.createElement('div'); s.className = 'journal-sheet';
+  s.style.cssText = 'position:fixed;visibility:hidden;top:-9999px;left:-9999px;pointer-events:none;';
+  const p = document.createElement('div'); p.className = 'journal-page';
+  p.innerHTML = `<div class="page-inner">
+    <div class="page-header"><div class="page-brand">X</div><div class="page-title">X</div><div class="page-title-rule"></div></div>
+    <div class="meta-row"><div class="meta-item"><span class="meta-label">X</span><div class="meta-value">X</div></div></div>
+    <div class="journal-body" id="__pbody__" style="flex:1;min-height:0;overflow:hidden;"></div>
+    <div class="page-footer"><div class="footer-verse">X</div><div class="footer-brand">X</div></div>
+  </div>`;
+  s.appendChild(p); document.body.appendChild(s);
+  const b = p.querySelector('#__pbody__');
+  const result = { h: b.offsetHeight, w: b.offsetWidth };
+  document.body.removeChild(s);
+  return result;
+}
+
+// Measure the total height of a section block (header label + content) at a given width
+function measureSectionBlock(label, cssClass, content, widthPx) {
   const probe = document.createElement('div');
-  probe.className = cssClassName;
   probe.style.cssText = `position:fixed;visibility:hidden;top:-9999px;left:-9999px;width:${widthPx}px;height:auto;`;
+  const head = document.createElement('div'); head.className = 'j-sec-head';
+  head.innerHTML = `<span class="j-sec-label">${label}</span><div class="j-sec-rule"></div>`;
+  probe.appendChild(head);
+  if (content && content.trim()) {
+    const contentEl = document.createElement('div'); contentEl.className = cssClass;
+    setParaText(contentEl, content); probe.appendChild(contentEl);
+  }
   document.body.appendChild(probe);
+  const totalH = probe.offsetHeight; const headH = head.offsetHeight;
+  document.body.removeChild(probe);
+  return { totalH, headH };
+}
 
-  const chunks = [];
-  let batch = [];
+// Split content into chunks that each fit within maxH at a given width.
+// Handles single-paragraph content by splitting on line breaks if needed.
+function splitContentToFit(content, cssClass, maxH, widthPx) {
+  if (!content || !content.trim()) return [''];
+  const probe = document.createElement('div'); probe.className = cssClass;
+  probe.style.cssText = `position:fixed;visibility:hidden;top:-9999px;left:-9999px;width:${widthPx}px;height:auto;overflow:visible;`;
+  document.body.appendChild(probe);
+  setParaText(probe, content);
+  if (probe.offsetHeight <= maxH) { document.body.removeChild(probe); return [content]; }
 
-  for (const para of paragraphs) {
-    batch.push(para);
-    setParaText(probe, batch.join('\n\n'));
-    if (probe.offsetHeight > maxHeightPx && batch.length > 1) {
-      batch.pop();
-      chunks.push(batch.join('\n\n'));
-      batch = [para];
+  const paragraphs = content.split(/\n{2,}/).filter(p => p.trim());
+  if (paragraphs.length <= 1) {
+    // Single paragraph — try splitting on line breaks
+    const lines = content.split('\n');
+    if (lines.length <= 1) { document.body.removeChild(probe); return [content]; }
+    const chunks = []; let batch = [];
+    for (const line of lines) {
+      batch.push(line);
+      setParaText(probe, batch.join('\n'));
+      if (probe.offsetHeight > maxH && batch.length > 1) {
+        batch.pop(); chunks.push(batch.join('\n')); batch = [line];
+      }
     }
+    if (batch.length) chunks.push(batch.join('\n'));
+    document.body.removeChild(probe);
+    return chunks.length > 1 ? chunks : [content];
+  }
+
+  const chunks = []; let batch = [];
+  for (const para of paragraphs) {
+    const test = [...batch, para];
+    setParaText(probe, test.join('\n\n'));
+    if (probe.offsetHeight > maxH && batch.length > 0) {
+      chunks.push(batch.join('\n\n')); batch = [para];
+    } else { batch = test; }
   }
   if (batch.length) chunks.push(batch.join('\n\n'));
   document.body.removeChild(probe);
-  return chunks.length ? chunks : [text];
+  return chunks.length > 1 ? chunks : [content];
 }
 
-// Builds a continuation page for long sections
-function buildContinuationPageProphetic(sectionLabel, content, styleClass) {
-  const sheet = document.createElement('div');
-  sheet.className = 'journal-sheet';
-  const page = document.createElement('div');
-  page.className = 'journal-page';
-  page.innerHTML = `
-    <div class="page-inner">
-      <div class="page-header">
-        <div class="page-brand">Hearing God App</div>
-        <div class="page-title" style="font-size:18px">Prophetic Word</div>
-        <div class="page-title-rule"></div>
-      </div>
-      <div class="journal-body" style="flex:1;min-height:0;overflow:hidden;">
-        <div>
-          <div class="j-sec-head">
-            <span class="j-sec-label">${sectionLabel} <em style="font-style:italic;opacity:0.6;font-size:9px">(continued)</em></span>
-            <div class="j-sec-rule"></div>
-          </div>
-          <div class="j-word-area continuation-content" data-cont></div>
-        </div>
-      </div>
-      <div class="page-footer">
-        <div class="footer-verse">"Draw near to God, and he will draw near to you." — James 4:8</div>
-        <div class="footer-brand">Dove Expressions &nbsp;·&nbsp; doveexpressions.org</div>
-      </div>
-    </div>`;
-  const contentEl = page.querySelector('[data-cont]');
-  contentEl.className = styleClass;
-  setParaText(contentEl, content);
-  sheet.appendChild(page);
+// Build a journal page DOM element from a page descriptor object.
+// desc = { isFirst: bool, sections: [{label, cssClass, content, isCont}] }
+function buildPropheticPageFromDescriptor(desc, data) {
+  const sheet = document.createElement('div'); sheet.className = 'journal-sheet';
+  const page = document.createElement('div'); page.className = 'journal-page';
+  const inner = document.createElement('div'); inner.className = 'page-inner';
+
+  const header = document.createElement('div'); header.className = 'page-header';
+  const brand = document.createElement('div'); brand.className = 'page-brand'; brand.textContent = 'Dove Expressions';
+  const title = document.createElement('div'); title.className = 'page-title'; title.textContent = 'Prophetic Word';
+  if (!desc.isFirst) title.style.fontSize = '18px';
+  const rule = document.createElement('div'); rule.className = 'page-title-rule';
+  header.appendChild(brand); header.appendChild(title); header.appendChild(rule);
+  inner.appendChild(header);
+
+  if (desc.isFirst) {
+    const meta = document.createElement('div'); meta.className = 'meta-row';
+    [['Date', data.date||''], ['By', data.by||''], ['Type', data.type||''], ['Theme', data.theme||'']].forEach(([lbl, val]) => {
+      const item = document.createElement('div'); item.className = 'meta-item';
+      const labelEl = document.createElement('span'); labelEl.className = 'meta-label'; labelEl.textContent = lbl;
+      const valEl = document.createElement('div'); valEl.className = 'meta-value'; valEl.textContent = val;
+      item.appendChild(labelEl); item.appendChild(valEl); meta.appendChild(item);
+    });
+    inner.appendChild(meta);
+  }
+
+  const body = document.createElement('div'); body.className = 'journal-body';
+  body.style.cssText = 'flex:1;min-height:0;overflow:hidden;';
+  desc.sections.forEach(sec => {
+    const wrapper = document.createElement('div');
+    const head = document.createElement('div'); head.className = 'j-sec-head';
+    const labelSpan = document.createElement('span'); labelSpan.className = 'j-sec-label';
+    labelSpan.textContent = sec.label;
+    if (sec.isCont) {
+      const em = document.createElement('em');
+      em.style.cssText = 'font-style:italic;opacity:0.6;font-size:9px;margin-left:4px;';
+      em.textContent = '(continued)';
+      labelSpan.appendChild(em);
+    }
+    const secRule = document.createElement('div'); secRule.className = 'j-sec-rule';
+    head.appendChild(labelSpan); head.appendChild(secRule);
+    const contentEl = document.createElement('div'); contentEl.className = sec.cssClass;
+    setParaText(contentEl, sec.content);
+    wrapper.appendChild(head); wrapper.appendChild(contentEl);
+    body.appendChild(wrapper);
+  });
+  inner.appendChild(body);
+
+  const footer = document.createElement('div'); footer.className = 'page-footer';
+  const verse = document.createElement('div'); verse.className = 'footer-verse';
+  verse.textContent = '"Draw near to God, and he will draw near to you." — James 4:8';
+  const brand2 = document.createElement('div'); brand2.className = 'footer-brand';
+  brand2.innerHTML = 'Dove Expressions &nbsp;·&nbsp; doveexpressions.org';
+  footer.appendChild(verse); footer.appendChild(brand2);
+  inner.appendChild(footer);
+
+  page.appendChild(inner); sheet.appendChild(page);
   return sheet;
 }
 
-// After appending a journal sheet, check if Word section overflows and paginate
-function paginateAndAppendSheet(container, sheetEl, data, pageStyle) {
-  container.appendChild(sheetEl);
-  const page = sheetEl.querySelector('.journal-page');
-  const wordEl = page ? page.querySelector('.j-word-area') : null;
-  if (!wordEl || !data.word) return;
-
-  const bodyEl = page.querySelector('.journal-body');
-  if (!bodyEl) return;
-
-  // KEY FIX: .j-word-area has overflow:visible, so scrollHeight == offsetHeight always.
-  // Instead, check the BODY element (overflow:hidden) — body.scrollHeight > body.offsetHeight
-  // means content is being clipped. This works for all layout sizes.
-  const bodyAvailH = bodyEl.offsetHeight;
-  const bodyContentH = bodyEl.scrollHeight;
-  if (bodyContentH <= bodyAvailH + 5) return; // nothing overflows
-
-  // Word element's full rendered height (since overflow:visible this is the true content height)
-  const wordFullH = wordEl.offsetHeight;
-  const availW = wordEl.offsetWidth || 600;
-
-  // Budget for the word section = body available height minus all other sections' heights
-  const otherContentH = bodyContentH - wordFullH;
-  const wordBudget = Math.max(bodyAvailH - otherContentH - 16, 80);
-
-  const chunks = splitTextToFitHeight(data.word, 'j-word-area', wordBudget, availW);
-
-  if (chunks.length <= 1) return;
-
-  // Set first chunk on existing page
-  setParaText(wordEl, chunks[0]);
-
-  // Add continuation pages for remaining chunks
-  for (let i = 1; i < chunks.length; i++) {
-    const contSheet = buildContinuationPageProphetic('Word', chunks[i], 'j-word-area');
-    if (pageStyle === 'lined') contSheet.querySelector('.journal-page').classList.add('ps-lined');
-    else if (pageStyle === 'dotted') contSheet.querySelector('.journal-page').classList.add('ps-dotted');
-    const spacer = document.createElement('div');
-    spacer.className = 'page-spacer'; spacer.style.height = '2.5rem';
-    container.appendChild(contSheet);
-    container.appendChild(spacer);
+// Main pagination function — builds all pages for one entry using measure-before-render.
+// Replaces the old buildJournalPageElement + paginateAndAppendSheet.
+function buildPropheticPages(container, data, pageStyle) {
+  const { h: bodyH, w: bodyW } = measureJournalBodyAvailable();
+  if (bodyH <= 0 || bodyW <= 0) {
+    // Fallback: render single page with no pagination
+    const sheet = buildJournalPageElement(data);
+    if (pageStyle === 'lined') sheet.querySelector('.journal-page').classList.add('ps-lined');
+    else if (pageStyle === 'dotted') sheet.querySelector('.journal-page').classList.add('ps-dotted');
+    container.appendChild(sheet); return 1;
   }
+
+  const allSections = [
+    { label: 'Word', field: 'word', cssClass: 'j-word-area' },
+    { label: 'What I Believe God Is Saying', field: 'interpretation', cssClass: 'j-prose medium' },
+    { label: 'Scripture Confirmation', field: 'scripture', cssClass: 'j-scripture' },
+    { label: 'How I Will Respond', field: 'response', cssClass: 'j-prose large' },
+    { label: 'Additional Notes', field: 'notes', cssClass: 'j-prose medium' },
+  ].filter(s => data[s.field] && data[s.field].trim());
+
+  const pageDescriptors = [];
+  let curSecs = []; let isFirst = true; let remaining = bodyH;
+
+  function commitPage() {
+    pageDescriptors.push({ isFirst, sections: curSecs });
+    curSecs = []; isFirst = false; remaining = bodyH;
+  }
+
+  for (const sec of allSections) {
+    const content = data[sec.field];
+    const { totalH, headH } = measureSectionBlock(sec.label, sec.cssClass, content, bodyW);
+
+    if (totalH + _SEC_GAP <= remaining) {
+      curSecs.push({ label: sec.label, cssClass: sec.cssClass, content, isCont: false });
+      remaining -= (totalH + _SEC_GAP);
+    } else {
+      const availForContent = remaining - headH - _SEC_GAP * 2;
+      if (availForContent >= _MIN_SPLIT) {
+        const chunks = splitContentToFit(content, sec.cssClass, availForContent, bodyW);
+        if (chunks.length > 1) {
+          curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[0], isCont: false });
+          commitPage();
+          for (let i = 1; i < chunks.length; i++) {
+            const chk = measureSectionBlock(sec.label, sec.cssClass, chunks[i], bodyW);
+            if (chk.totalH + _SEC_GAP > remaining && curSecs.length > 0) commitPage();
+            curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[i], isCont: true });
+            remaining -= (chk.totalH + _SEC_GAP);
+          }
+          continue;
+        }
+      }
+      // Doesn't split usefully — start fresh page
+      if (curSecs.length > 0) commitPage();
+      const freshAvail = remaining - headH - _SEC_GAP * 2;
+      if (totalH + _SEC_GAP <= remaining) {
+        curSecs.push({ label: sec.label, cssClass: sec.cssClass, content, isCont: false });
+        remaining -= (totalH + _SEC_GAP);
+      } else {
+        // Taller than a full page — must split across pages
+        const chunks = splitContentToFit(content, sec.cssClass, Math.max(freshAvail, _MIN_SPLIT), bodyW);
+        curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[0], isCont: false });
+        commitPage();
+        for (let i = 1; i < chunks.length; i++) {
+          const chk = measureSectionBlock(sec.label, sec.cssClass, chunks[i], bodyW);
+          if (chk.totalH + _SEC_GAP > remaining && curSecs.length > 0) commitPage();
+          curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[i], isCont: true });
+          remaining -= (chk.totalH + _SEC_GAP);
+        }
+      }
+    }
+  }
+  if (curSecs.length > 0) commitPage();
+
+  let pageCount = 0;
+  pageDescriptors.forEach((desc, idx) => {
+    if (idx > 0) {
+      const sp = document.createElement('div'); sp.className = 'page-spacer'; sp.style.height = '2.5rem';
+      container.appendChild(sp);
+    }
+    const sheet = buildPropheticPageFromDescriptor(desc, data);
+    if (pageStyle === 'lined') sheet.querySelector('.journal-page').classList.add('ps-lined');
+    else if (pageStyle === 'dotted') sheet.querySelector('.journal-page').classList.add('ps-dotted');
+    container.appendChild(sheet); pageCount++;
+  });
+  return pageCount;
 }
 
 // ──────────────────────────────────────────────────────
@@ -1910,18 +2032,11 @@ function showPages(dataArray) {
   const pageStyleEl    = document.getElementById('pageStyle');
   const pageStyle      = pageStyleEl ? pageStyleEl.value : 'clean'; // 'clean' | 'lined' | 'dotted'
 
-  // Total pages = entries × (1 main + notesPageCount notes)
-  const pagesPerEntry = 1 + (addNotes ? notesPageCount : 0);
-  const totalPages    = dataArray.length * pagesPerEntry;
-
   dataArray.forEach((data, entryIndex) => {
-    // ── Main journal page ──────────────────────────────
-    const pg = buildJournalPageElement(data);
-    if (pageStyle === 'lined') pg.classList.add('ps-lined');
-    else if (pageStyle === 'dotted') pg.classList.add('ps-dotted');
-    paginateAndAppendSheet(container, pg, data, pageStyle);
+    // ── Main journal pages (content-aware pagination) ──
+    buildPropheticPages(container, data, pageStyle);
 
-    // ── Notes pages (one spacer + one page, repeated) ─
+    // ── Notes pages ────────────────────────────────────
     if (addNotes) {
       for (let n = 0; n < notesPageCount; n++) {
         const spacer = document.createElement('div');
@@ -1945,6 +2060,7 @@ function showPages(dataArray) {
   });
 
   // Update print button label
+  const totalPages = container.querySelectorAll('.journal-page').length;
   const printBtn = document.getElementById('printBtn');
   if (printBtn) {
     printBtn.textContent = totalPages > 1
