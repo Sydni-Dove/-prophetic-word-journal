@@ -48,38 +48,70 @@ body {
 /* ── SITE HEADER ──────────────────────────────────────── */
 .site-header {
   text-align: left;
-  padding: 1.4rem 2rem 1.1rem;
-  background: var(--white);
+  padding: 2rem 2rem 1.6rem;
+  background: linear-gradient(135deg, #ffffff 0%, #fdf5f0 55%, #fdf0e4 100%);
   border-bottom: 1px solid var(--pale-pink);
+  position: relative;
+  overflow: hidden;
+}
+.site-header::before {
+  content: '';
+  position: absolute; top: 0; right: 0; width: 220px; height: 100%;
+  background: linear-gradient(to left, rgba(217,121,4,0.08), transparent);
+  pointer-events: none;
 }
 .site-header .brand-tag {
   font-family: 'Lato', sans-serif;
-  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--ui-accent); margin-bottom: 0.3rem; opacity: 0.85;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  background: linear-gradient(to right, var(--ui-accent), var(--coral));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: 0.45rem;
 }
 .site-header h1 {
   font-family: 'Playfair Display', serif;
-  font-weight: 700; font-size: clamp(1.4rem, 2.8vw, 1.9rem);
-  color: var(--ui-accent); line-height: 1.2;
+  font-weight: 700; font-size: clamp(2rem, 4vw, 2.9rem);
+  background: linear-gradient(to right, var(--ui-accent), var(--coral), var(--sunrise));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; line-height: 1.15; margin-bottom: 0.4rem;
 }
 .site-header .subtitle {
-  font-family: 'Lato', sans-serif; font-size: 0.86rem; color: var(--text-soft); margin-top: 0.3rem;
+  font-family: 'Lato', sans-serif; font-size: 0.95rem; color: var(--text-soft); margin-top: 0.1rem;
 }
 .thin-rule { display: none; }
+/* ── HERO BANNER ─────────────────────────────────────── */
+.hero-banner {
+  background: linear-gradient(to right, rgba(99,0,0,0.04), rgba(217,98,72,0.06), rgba(217,121,4,0.04));
+  border-bottom: 1px solid rgba(242,223,216,0.8);
+  padding: 0.85rem 2rem; text-align: center;
+}
+.hero-banner .hero-inner { display: inline-flex; align-items: center; gap: 0.7rem; }
+.hero-banner .hero-icon {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(to right, var(--ui-accent), var(--coral));
+  display: flex; align-items: center; justify-content: center;
+}
+.hero-banner .hero-icon svg { width: 12px; height: 12px; fill: white; }
+.hero-banner .hero-quote {
+  font-family: 'Playfair Display', serif; font-style: italic;
+  font-size: 0.88rem; color: var(--text-mid); line-height: 1.4;
+}
 
 /* ── EDITOR ───────────────────────────────────────────── */
 .editor-section { max-width: 820px; margin: 2.5rem auto; padding: 0 1.5rem; }
 .section-eyebrow {
-  font-family: 'Lato', sans-serif; font-size: 0.7rem;
-  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ui-accent);
-  margin-bottom: 1rem; margin-top: 2rem;
+  font-family: 'Lato', sans-serif; font-size: 0.72rem;
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  background: linear-gradient(to right, var(--ui-accent), var(--coral));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1rem; margin-top: 2.2rem;
   display: flex; align-items: center; gap: 0.8rem;
 }
 .section-eyebrow:first-child { margin-top: 0; }
 .section-eyebrow::after {
   content: ''; flex: 1; height: 1px;
-  background: linear-gradient(to right, var(--gold), transparent);
-  opacity: 0.4;
+  background: linear-gradient(to right, var(--coral), transparent);
+  opacity: 0.35;
 }
 .form-block { margin-bottom: 2.2rem; }
 .upload-zone {
@@ -127,12 +159,13 @@ textarea:focus {
 select:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-row { display: flex; gap: 0.9rem; justify-content: center; margin-top: 2.8rem; flex-wrap: wrap; }
 .btn-generate {
-  font-family: 'Lato', sans-serif; font-size: 0.88rem; font-weight: 700;
-  color: var(--white); background: var(--ui-accent);
+  font-family: 'Lato', sans-serif; font-size: 0.95rem; font-weight: 700;
+  color: var(--white); background: linear-gradient(to right, var(--ui-accent), var(--coral));
+  box-shadow: 0 4px 15px rgba(99,0,0,0.25);
   border: none; border-radius: 100px; padding: 0.7rem 2.4rem;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
-.btn-generate:hover { background: #4a0000; transform: translateY(-1px); }
+.btn-generate:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,0,0,0.3); }
 .btn-ghost {
   font-family: 'Lato', sans-serif; font-size: 0.88rem; font-weight: 500;
   color: var(--text); background: var(--pale-pink);
@@ -437,7 +470,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .gen-nav { display: flex; justify-content: center; gap: 0.5rem; padding: 0.6rem 1.5rem; background: var(--white); border-bottom: 1px solid var(--pale-pink); flex-wrap: wrap; align-items: center; }
 .gen-nav-link { font-family: 'Lato', sans-serif; font-size: 0.84rem; font-weight: 500; color: var(--text); text-decoration: none; padding: 0.42rem 1.1rem; border-radius: 100px; background: var(--pale-pink); border: none; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; gap: 0.3rem; }
 .gen-nav-link:hover { background: rgba(99,0,0,0.12); color: var(--ui-accent); }
-.gen-nav-link.is-active { background: var(--ui-accent); color: var(--white); font-weight: 600; }
+.gen-nav-link.is-active { background: linear-gradient(to right, var(--ui-accent), var(--coral)); color: var(--white); font-weight: 600; }
 
 /* ── RESPONSIVE ───────────────────────────────────────── */
 @media (max-width: 680px) {
@@ -660,9 +693,16 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 <header class="site-header">
   <div class="brand-tag">Hearing God App</div>
   <h1>Prophetic Word Generator</h1>
-  <div class="thin-rule"></div>
+  <div class="subtitle">Document your prophetic words with beauty and intention.</div>
   <p class="subtitle">Document your prophetic words with beauty and intention.</p>
 </header>
+<!-- HERO BANNER -->
+<div class="hero-banner">
+  <div class="hero-inner">
+    <div class="hero-icon"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg></div>
+    <p class="hero-quote">"Write the vision, and make it plain…" — Habakkuk 2:2</p>
+  </div>
+</div>
 <!-- GENERATOR NAV -->
 <nav class="gen-nav">
   <a class="gen-nav-link" href="https://dreamjournaltemplategenerator-fez9.vercel.app/" target="_blank" rel="noopener">Dream Journal</a>
@@ -1020,7 +1060,12 @@ async function handleUpload(e) {
         setMsg(`✓ ${entries.length} entries found — click Generate to create ${entries.length} journal pages.`, 'ok');
       } else {
         populate(combined);
-        setMsg('✓ Fields populated. Review and edit freely.', 'ok');
+        if (!combined.trim()) {
+          setMsg('✗ No readable content found in file.', 'err');
+        } else {
+          setMsg('✓ Content imported — generating journal page…', 'ok');
+          setTimeout(() => generateFromForm(), 300);
+        }
       }
 
     } else {
@@ -1646,7 +1691,7 @@ function buildJournalPageElement(data) {
       </div>
       <div class="page-footer">
         <div class="footer-verse">"Draw near to God, and he will draw near to you." — James 4:8</div>
-        <div class="footer-brand">Powered by Dove Expressions</div>
+        <div class="footer-brand">Dove Expressions &nbsp;·&nbsp; doveexpressions.org</div>
       </div>
     </div>`;
 
@@ -1740,7 +1785,7 @@ function buildContinuationPageProphetic(sectionLabel, content, styleClass) {
       </div>
       <div class="page-footer">
         <div class="footer-verse">"Draw near to God, and he will draw near to you." — James 4:8</div>
-        <div class="footer-brand">Powered by Dove Expressions</div>
+        <div class="footer-brand">Dove Expressions &nbsp;·&nbsp; doveexpressions.org</div>
       </div>
     </div>`;
   const contentEl = page.querySelector('[data-cont]');
@@ -1753,27 +1798,29 @@ function buildContinuationPageProphetic(sectionLabel, content, styleClass) {
 // After appending a journal sheet, check if Word section overflows and paginate
 function paginateAndAppendSheet(container, sheetEl, data, pageStyle) {
   container.appendChild(sheetEl);
-  // After appending, check the j-word-area for overflow
   const page = sheetEl.querySelector('.journal-page');
   const wordEl = page ? page.querySelector('.j-word-area') : null;
   if (!wordEl || !data.word) return;
 
-  // Available height: page height minus header, meta, footer, other sections
-  const pageH = page.offsetHeight;
-  const headerH = (page.querySelector('.page-header') || {offsetHeight: 120}).offsetHeight;
-  const metaH = (page.querySelector('.meta-row') || {offsetHeight: 50}).offsetHeight;
-  const footerH = (page.querySelector('.page-footer') || {offsetHeight: 60}).offsetHeight;
   const bodyEl = page.querySelector('.journal-body');
-  const bodyH = bodyEl ? bodyEl.offsetHeight : (pageH - headerH - metaH - footerH - 80);
+  if (!bodyEl) return;
 
-  // Check if word area overflows the journal-body
-  const wordH = wordEl.scrollHeight;
-  if (wordH <= wordEl.offsetHeight + 5) return; // fits fine
+  // KEY FIX: .j-word-area has overflow:visible, so scrollHeight == offsetHeight always.
+  // Instead, check the BODY element (overflow:hidden) — body.scrollHeight > body.offsetHeight
+  // means content is being clipped. This works for all layout sizes.
+  const bodyAvailH = bodyEl.offsetHeight;
+  const bodyContentH = bodyEl.scrollHeight;
+  if (bodyContentH <= bodyAvailH + 5) return; // nothing overflows
 
-  // Split the word content across pages
+  // Word element's full rendered height (since overflow:visible this is the true content height)
+  const wordFullH = wordEl.offsetHeight;
   const availW = wordEl.offsetWidth || 600;
-  const availH = Math.max(bodyH * 0.85, 400);
-  const chunks = splitTextToFitHeight(data.word, 'j-word-area', availH, availW);
+
+  // Budget for the word section = body available height minus all other sections' heights
+  const otherContentH = bodyContentH - wordFullH;
+  const wordBudget = Math.max(bodyAvailH - otherContentH - 16, 80);
+
+  const chunks = splitTextToFitHeight(data.word, 'j-word-area', wordBudget, availW);
 
   if (chunks.length <= 1) return;
 
@@ -1826,7 +1873,7 @@ function createNotesPage(style) {
       ${notesBodyHTML}
       <div class="page-footer">
         <div class="footer-verse">"Draw near to God, and he will draw near to you." — James 4:8</div>
-        <div class="footer-brand">Powered by Dove Expressions</div>
+        <div class="footer-brand">Dove Expressions &nbsp;·&nbsp; doveexpressions.org</div>
       </div>
     </div>`;
   sheet.appendChild(page);
