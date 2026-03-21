@@ -54,7 +54,7 @@ body {
   background: linear-gradient(135deg, #ffffff 0%, #fdf5f0 55%, #fdf0e4 100%);
   border-bottom: 1px solid var(--pale-pink);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 .site-header::before {
   content: '';
@@ -486,7 +486,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   .output-section { overflow-x: hidden; }
 }
 @media (max-width: 699px) {
-  .output-section { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-left: 0.5rem; padding-right: 0.5rem; }
+  /* CSS zoom shrinks sheets to fit — no horizontal scroll needed. overflow-x: clip prevents
+     the brief pre-zoom flash of full-width sheets from triggering a mobile viewport rescale. */
+  .output-section { overflow-x: clip; padding-left: 0; padding-right: 0; max-width: 100vw; }
 }
 
 /* ── PRINT ────────────────────────────────────────────── */
@@ -2123,6 +2125,7 @@ function showPages(dataArray) {
 
   const sec = document.getElementById('outputSection');
   sec.classList.add('show');
+  scaleJournalToFit();
   requestAnimationFrame(() => requestAnimationFrame(() => {
     scaleJournalToFit();
     sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2138,7 +2141,7 @@ function scaleJournalToFit() {
   // zoom also changes layout dimensions, so no negative marginBottom compensation needed.
   const sheets   = [...document.querySelectorAll('.journal-sheet')];
   const sec      = document.getElementById('outputSection');
-  const available = sec.clientWidth;
+  const available = sec.clientWidth || Math.min(window.innerWidth, 820);
 
   sheets.forEach(sheet => {
     sheet.style.zoom         = '';
