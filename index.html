@@ -1747,6 +1747,28 @@ function setParaText(el, text) {
 const _SEC_GAP = 12;   // px between sections
 const _MIN_SPLIT = 50; // minimum px worth of content to split for
 
+// Measure available journal-body height on a CONTINUATION page (no meta-row, smaller title).
+// Continuation pages have more vertical space than page 1 because they omit the meta-row
+// and use a smaller page-title (18px vs 30px). Using page-1 bodyH for continuation pages
+// causes them to be underfilled. This probe matches the actual continuation page structure.
+let _contJournalBodyH = 0;
+function measureContJournalBodyH() {
+  if (_contJournalBodyH > 0) return _contJournalBodyH;
+  const s = document.createElement('div'); s.className = 'journal-sheet';
+  s.style.cssText = 'position:fixed;visibility:hidden;top:-9999px;left:-9999px;pointer-events:none;';
+  const p = document.createElement('div'); p.className = 'journal-page';
+  p.innerHTML = `<div class="page-inner">
+    <div class="page-header"><div class="page-brand">X</div><div class="page-title" style="font-size:18px">X</div><div class="page-title-rule"></div></div>
+    <div class="journal-body" id="__cbody__" style="flex:1;min-height:0;overflow:hidden;"></div>
+    <div class="page-footer"><div class="footer-verse">X</div><div class="footer-brand">X</div></div>
+  </div>`;
+  s.appendChild(p); document.body.appendChild(s);
+  const b = p.querySelector('#__cbody__');
+  _contJournalBodyH = b ? b.offsetHeight : 0;
+  document.body.removeChild(s);
+  return _contJournalBodyH > 0 ? _contJournalBodyH : 0;
+}
+
 // Measure available journal-body height and width using a hidden probe page
 function measureJournalBodyAvailable() {
   const s = document.createElement('div'); s.className = 'journal-sheet';
@@ -1948,12 +1970,19 @@ function buildPropheticPages(container, data, pageStyle) {
     { label: 'Additional Notes', field: 'notes', cssClass: 'j-prose medium' },
   ].filter(s => data[s.field] && data[s.field].trim());
 
+  // Continuation pages (isFirst=false) have no meta-row and a smaller title,
+  // so their journal-body is taller. Measure it once and use it when resetting
+  // `remaining` for pages after the first.
+  const contBodyH = measureContJournalBodyH() || bodyH;
+
   const pageDescriptors = [];
   let curSecs = []; let isFirst = true; let remaining = bodyH;
 
   function commitPage() {
     pageDescriptors.push({ isFirst, sections: curSecs });
-    curSecs = []; isFirst = false; remaining = bodyH;
+    curSecs = []; isFirst = false;
+    // Use the taller continuation body height so continuation pages fill up properly.
+    remaining = contBodyH;
   }
 
   for (const sec of allSections) {
