@@ -201,7 +201,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 
 /* ── OUTPUT ───────────────────────────────────────────── */
-.output-section { max-width: 820px; margin: 0 auto 4rem; padding: 0; display: none; overflow-x: auto; }
+.output-section { max-width: 820px; margin: 0 auto 4rem; padding: 0 0 2rem; display: none; overflow-x: auto; }
 .output-section.show { display: block; }
 .output-controls {
   display: flex; gap: 0.9rem; justify-content: center;
@@ -245,6 +245,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   background: #ffffff;
   position: relative;
   overflow: hidden;
+  box-sizing: border-box;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -478,16 +479,18 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   .page-inner {
     min-height: unset !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
   }
   /* Allow journal-body to flex-shrink so the footer always stays on the same page */
   .journal-body {
-    flex: 1 !important;
+    flex: 1 1 0 !important;
     min-height: 0 !important;
     overflow: hidden !important;
   }
   /* Remove fixed min-heights in print — only content size matters */
-  .j-word-area, .j-prose.medium, .j-prose.large, .j-scripture {
+  .j-word-area, .j-prose, .j-prose.medium, .j-prose.large, .j-scripture {
     min-height: 0 !important;
+    overflow: hidden !important;
   }
 }
 
@@ -1880,7 +1883,7 @@ function updatePrintSize() { updateLayoutSize(); }
 // ── CLEAR ───────────────────────────────────────────────
 // ── THEME PRESETS ─────────────────────────────────────
 const PRESETS = {
-  purple:    { primary:'#7D3F7C', text:'#2b2b2b', accent:'#C5A44D', panel:'#F5EDE0', decor:'#F2E4CC', bg:'#ffffff' },
+  purple:    { primary:'#6F5B7E', text:'#2b2b2b', accent:'#9B7BB0', panel:'#EDE5F5', decor:'#E4D9F0', bg:'#fafafa' },
   dove:      { primary:'#630000', text:'#1B1717', accent:'#E6A742', panel:'#F2DFD8', decor:'#F9E8DC', bg:'#FDFDFD' },
   neutral:   { primary:'#4A4A4A', text:'#1B1717', accent:'#C9A46C', panel:'#F7F5F2', decor:'#F0EDE8', bg:'#FFFFFF' },
   gold:      { primary:'#5A2A27', text:'#1B1717', accent:'#D4A24C', panel:'#F7F1E8', decor:'#F5EDD8', bg:'#FFFFFF' },
