@@ -333,13 +333,14 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── META ROW ─────────────────────────────────────────── */
 .meta-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   border-top: 1px solid var(--pg-accent);
   border-bottom: 1px solid var(--pg-accent);
   margin-bottom: 0.2in; padding: 0.09in 0;
   flex-shrink: 0; opacity: 0.9;
 }
-.meta-item { flex: 1; min-width: 0; padding: 0 0.12in; border-right: 1px solid var(--pg-primary); opacity: 1; }
+.meta-item { min-width: 0; padding: 0 0.12in; border-right: 1px solid var(--pg-primary); opacity: 1; overflow: hidden; }
 .meta-item:first-child { padding-left: 0; }
 .meta-item:last-child  { border-right: none; padding-right: 0; }
 .meta-label {
