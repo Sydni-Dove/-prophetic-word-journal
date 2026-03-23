@@ -238,6 +238,8 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 /* ── OUTPUT ───────────────────────────────────────────── */
 .output-section { max-width: 820px; margin: 0 auto 4rem; padding: 0 0 2rem; display: none; overflow-x: auto; }
 .output-section.show { display: block; }
+/* #previewWrap is the preview-scaling layer. CSS zoom is applied here only. */
+#previewWrap { display: block; transform-origin: top center; }
 .output-controls {
   display: flex; gap: 0.9rem; justify-content: center;
   margin-bottom: 1.5rem; flex-wrap: wrap; padding: 0 1.5rem;
@@ -486,9 +488,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   .output-section { overflow-x: hidden; }
 }
 @media (max-width: 699px) {
-  /* CSS zoom shrinks sheets to fit — no horizontal scroll needed. overflow-x: clip prevents
-     the brief pre-zoom flash of full-width sheets from triggering a mobile viewport rescale. */
+  /* CSS zoom on #previewWrap shrinks all sheets to fit the screen width. */
   .output-section { overflow-x: clip; padding-left: 0; padding-right: 0; max-width: 100vw; }
+  #previewWrap { overflow-x: clip; }
 }
 
 /* ── PRINT ────────────────────────────────────────────── */
@@ -498,9 +500,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   body { background: white !important; }
   /* Hide all UI chrome — editor, header, auth bar, journal panel, controls */
   .site-header, .editor-section, .output-controls,
-  .auth-bar, .my-journal-section, .app-footer { display: none !important; }
+  .auth-bar, .tab-nav, .my-journal-section, .app-footer { display: none !important; }
   .page-spacer { display: none !important; }
   .output-section { display: block !important; max-width: none; margin: 0; padding: 0; overflow: visible; }
+  /* Reset any screen-preview zoom/transform on the preview wrapper at print time */
+  #previewWrap { zoom: 1 !important; transform: none !important; }
   .journal-sheet {
     width: 8.5in !important; height: 11in !important;
     display: flex !important; align-items: center !important; justify-content: center !important;
@@ -509,7 +513,6 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     page-break-after: always; break-after: page;
     page-break-inside: avoid; break-inside: avoid;
     -webkit-print-color-adjust: exact; print-color-adjust: exact;
-    zoom: 1 !important; transform: none !important;
   }
   .journal-sheet:last-child { page-break-after: avoid; break-after: avoid; }
   .journal-page {
@@ -637,6 +640,14 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   font-style: italic; color: var(--text-light);
   text-align: center; padding: 2rem 0;
 }
+/* ── TAB NAVIGATION ───────────────────────────────────── */
+.tab-nav { background: var(--white); border-bottom: 1px solid var(--line); display: none; }
+.tab-nav.show { display: block; }
+.tab-nav-inner { max-width: 820px; margin: 0 auto; display: flex; padding: 0 1rem; }
+.tab-btn { font-family: 'Playfair Display', serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.78rem 1.2rem; cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-soft); margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }
+.tab-btn:hover { color: var(--primary); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
 /* ── PAGE STYLE: LINED ────────────────────────────────── */
 /* Applies to writing-heavy sections only; header/meta stays clean */
 .ps-lined .j-word-area,
@@ -724,6 +735,14 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <!-- rendered by renderAuthBar() -->
   </div>
 </div>
+
+<!-- TAB NAV (visible when signed in) -->
+<nav class="tab-nav" id="tabNav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" id="tabBtnGenerator" onclick="switchTab('generator')">Generator</button>
+    <button class="tab-btn" id="tabBtnSaved" onclick="switchTab('saved')">My Saved Entries</button>
+  </div>
+</nav>
 
 <!-- MY JOURNAL SECTION -->
 <div class="my-journal-section" id="myJournalSection" style="display:none">
@@ -965,8 +984,12 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <button class="btn-ghost" onclick="window.open('https://dreamjournaltemplategenerator-fez9.vercel.app/','_blank','noopener,noreferrer')" title="Open Dream Journal Generator">✦ Dream Journal Generator</button>
     <button class="btn-ghost" onclick="scrollToForm()">← Back to Editor</button>
   </div>
-  <!-- Journal pages are dynamically inserted here -->
-  <div id="pagesContainer"></div>
+  <!-- #previewWrap is the ONLY element that receives CSS zoom for screen preview.
+       .journal-sheet elements inside it are always at native print dimensions —
+       never scaled — so all offsetHeight/offsetWidth measurements are always correct. -->
+  <div id="previewWrap">
+    <div id="pagesContainer"></div>
+  </div>
 </div>
 
 <script>
@@ -994,12 +1017,15 @@ let authMode     = 'signin'; // 'signin' | 'signup'
 sb.auth.onAuthStateChange((event, session) => {
   currentUser = session?.user ?? null;
   renderAuthBar();
-  const sec = document.getElementById('myJournalSection');
+  const tabNav = document.getElementById('tabNav');
   if (currentUser) {
-    loadMyJournal();
-    if (sec) sec.style.display = 'block';
+    if (tabNav) tabNav.classList.add('show');
+    let lastTab = 'generator';
+    try { lastTab = sessionStorage.getItem('pwTab') || 'generator'; } catch {}
+    switchTab(lastTab);
   } else {
-    if (sec) sec.style.display = 'none';
+    if (tabNav) tabNav.classList.remove('show');
+    switchTab('generator');
   }
 });
 
@@ -1008,10 +1034,12 @@ sb.auth.onAuthStateChange((event, session) => {
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session?.user ?? null;
   renderAuthBar();
-  const sec = document.getElementById('myJournalSection');
+  const tabNav = document.getElementById('tabNav');
   if (currentUser) {
-    loadMyJournal();
-    if (sec) sec.style.display = 'block';
+    if (tabNav) tabNav.classList.add('show');
+    let lastTab = 'generator';
+    try { lastTab = sessionStorage.getItem('pwTab') || 'generator'; } catch {}
+    switchTab(lastTab);
   }
 })();
 
@@ -2106,8 +2134,22 @@ function parsePropheticDate(str) {
 }
 
 function showPages(dataArray) {
-  lastGeneratedData = dataArray; // store for Supabase saving
+  // Store synchronously so the save-to-journal button works while fonts load.
+  lastGeneratedData = dataArray;
+  // Defer ALL layout measurement until web fonts (Lora, Playfair Display) are
+  // fully loaded. If fonts aren't ready, offsetHeight returns fallback-font
+  // dimensions — causing splitContentToFit() to mis-size chunks, clipping words
+  // at page boundaries and underfilling continuation pages.
+  // document.fonts.ready resolves instantly when fonts are already cached.
+  document.fonts.ready.then(() => _showPagesCore(dataArray));
+}
+
+function _showPagesCore(dataArray) {
   const container = document.getElementById('pagesContainer');
+  // ── CRITICAL: reset preview zoom before building so all DOM measurements
+  // are taken at native print dimensions (never at a scaled size).
+  const previewWrap = document.getElementById('previewWrap');
+  if (previewWrap) previewWrap.style.zoom = '';
   container.innerHTML = '';
 
   const notesStyle     = document.getElementById('notesStyle').value;
@@ -2165,22 +2207,24 @@ function showPages(dataArray) {
 // Scales each .journal-page down on narrow viewports (681–816px)
 // so nothing gets cut off. No scaling needed on larger screens.
 function scaleJournalToFit() {
-  // Use CSS zoom (not transform: scale) for all viewports.
-  // zoom renders at full native resolution — no GPU compositing layer, no blurry output.
-  // zoom also changes layout dimensions, so no negative marginBottom compensation needed.
-  const sheets   = [...document.querySelectorAll('.journal-sheet')];
-  const sec      = document.getElementById('outputSection');
+  // Zoom is applied to #previewWrap ONLY — never to individual .journal-sheet elements.
+  // .journal-sheet content is always at native print dimensions for reliable measurement.
+  const previewWrap = document.getElementById('previewWrap');
+  if (!previewWrap) return;
+
+  // Reset first so we read the native (unscaled) sheet width.
+  previewWrap.style.zoom = '';
+
+  const firstSheet = previewWrap.querySelector('.journal-sheet');
+  if (!firstSheet) return;
+
+  const sec       = document.getElementById('outputSection');
   const available = sec.clientWidth || Math.min(window.innerWidth, 820);
 
-  sheets.forEach(sheet => {
-    sheet.style.zoom         = '';
-    sheet.style.transform    = '';
-    sheet.style.marginBottom = '';
-    if (available > 0 && available < sheet.offsetWidth) {
-      const scale = available / sheet.offsetWidth;
-      sheet.style.zoom = String(scale);
-    }
-  });
+  if (available > 0 && available < firstSheet.offsetWidth) {
+    previewWrap.style.zoom = String(available / firstSheet.offsetWidth);
+  }
+  // Spacers inside #previewWrap inherit the wrapper zoom automatically — no manual scaling needed.
 }
 window.addEventListener('resize', () => {
   if (document.getElementById('outputSection').classList.contains('show')) scaleJournalToFit();
@@ -2191,19 +2235,25 @@ window.addEventListener('resize', () => {
 // beforeprint/afterprint guarantee auth chrome is hidden at the DOM level.
 window.addEventListener('beforeprint', () => {
   const authBar    = document.getElementById('authBar');
+  const tabNav     = document.getElementById('tabNav');
   const journalSec = document.getElementById('myJournalSection');
   if (authBar)    authBar.style.setProperty('display', 'none', 'important');
+  if (tabNav)     tabNav.style.setProperty('display', 'none', 'important');
   if (journalSec) journalSec.style.setProperty('display', 'none', 'important');
 });
 window.addEventListener('afterprint', () => {
-  const authBar    = document.getElementById('authBar');
-  const journalSec = document.getElementById('myJournalSection');
-  if (authBar)    authBar.style.removeProperty('display');
-  if (journalSec) {
-    // Restore based on auth state
-    journalSec.style.removeProperty('display');
-    if (!currentUser) journalSec.style.display = 'none';
-  }
+  const authBar = document.getElementById('authBar');
+  const tabNav  = document.getElementById('tabNav');
+  if (authBar) authBar.style.removeProperty('display');
+  if (tabNav)  tabNav.style.removeProperty('display');
+  // Restore correct tab state after print
+  const myJSec = document.getElementById('myJournalSection');
+  if (!currentUser && myJSec) { myJSec.style.display = 'none'; }
+  // Re-show generator tab content
+  const gen = document.getElementById('editorSection');
+  const out = document.getElementById('outputSection');
+  if (gen) gen.style.removeProperty('display');
+  if (out) out.style.removeProperty('display');
 });
 // Inner page layout sizes — @page always stays US Letter (8.5×11).
 const LAYOUT_SIZES = {
@@ -2214,6 +2264,7 @@ const LAYOUT_SIZES = {
 };
 let _layoutStyleEl = null;
 function updateLayoutSize() {
+  _contJournalBodyH = 0; // page dimensions changed — invalidate continuation-height cache
   const key = (document.getElementById('printSize')?.value) || 'letter';
   const s = LAYOUT_SIZES[key] || LAYOUT_SIZES.letter;
   if (!_layoutStyleEl) {
@@ -2300,6 +2351,7 @@ function clearAll() {
   document.getElementById('fileInput').value = '';
   document.getElementById('outputSection').classList.remove('show');
   document.getElementById('pagesContainer').innerHTML = '';
+  const pw = document.getElementById('previewWrap'); if (pw) pw.style.zoom = '';
 }
 
 function scrollToForm() {
@@ -2402,7 +2454,7 @@ function renderAuthBar() {
       <span class="auth-sep">·</span>
       <button class="auth-btn ghost" id="signOutBtn">Sign Out</button>
     `;
-    document.getElementById('myJournalBtn')?.addEventListener('click', toggleMyJournal);
+    document.getElementById('myJournalBtn')?.addEventListener('click', () => switchTab('saved'));
     document.getElementById('signOutBtn')?.addEventListener('click', signOut);
   } else {
     inner.innerHTML = `
@@ -2424,12 +2476,28 @@ function toggleAuthMode() {
   renderAuthBar();
 }
 
-function toggleMyJournal() {
-  const sec = document.getElementById('myJournalSection');
-  if (!sec) return;
-  const isHidden = sec.style.display === 'none';
-  sec.style.display = isHidden ? 'block' : 'none';
-  if (isHidden) sec.scrollIntoView({ behavior: 'smooth' });
+function switchTab(tab) {
+  const gen   = document.getElementById('editorSection');
+  const out   = document.getElementById('outputSection');
+  const saved = document.getElementById('myJournalSection');
+  const btnG  = document.getElementById('tabBtnGenerator');
+  const btnS  = document.getElementById('tabBtnSaved');
+  if (tab === 'saved') {
+    if (gen)   gen.style.display = 'none';
+    if (out)   out.style.display = 'none';
+    if (saved) saved.style.display = 'block';
+    if (btnG)  btnG.classList.remove('active');
+    if (btnS)  btnS.classList.add('active');
+    try { sessionStorage.setItem('pwTab', 'saved'); } catch {}
+    loadMyJournal();
+  } else {
+    if (gen)   gen.style.display = '';
+    if (out)   out.style.display = '';
+    if (saved) saved.style.display = 'none';
+    if (btnG)  btnG.classList.add('active');
+    if (btnS)  btnS.classList.remove('active');
+    try { sessionStorage.setItem('pwTab', 'generator'); } catch {}
+  }
 }
 
 async function handleLogin() {
@@ -2525,10 +2593,8 @@ async function saveToJournal() {
     setTimeout(() => {
       if (btn) { btn.textContent = '💜 Save to Journal'; btn.disabled = false; }
     }, 2500);
-    // Show and refresh My Journal
-    const sec = document.getElementById('myJournalSection');
-    if (sec) { sec.style.display = 'block'; }
-    loadMyJournal();
+    // Switch to My Saved Entries tab and refresh
+    switchTab('saved');
   } catch (err) {
     alert('Could not save: ' + (err.message || 'Unknown error'));
     if (btn) { btn.textContent = '💜 Save to Journal'; btn.disabled = false; }
