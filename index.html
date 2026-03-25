@@ -1576,6 +1576,228 @@ function extractData(raw) {
   return result;
 }
 
+// ── MEASUREMENT HELPER ─────────────────────────────
+function createContentMeasurer(layout) {
+  const probe = document.createElement('div');
+  // Match content container context: width, typography, and rendering environment
+  probe.style.cssText = `
+    position: fixed;
+    visibility: hidden;
+    top: -9999px;
+    left: -9999px;
+    width: ${layout.bodyW}px;
+    height: auto;
+    overflow: visible;
+    min-height: 0;
+    font-family: 'Lora', serif; /* Match .j-word-area and .j-prose typography */
+    font-size: 12pt; /* Approximate print font size */
+    line-height: 1.4;
+    padding: 0;
+    margin: 0;
+  `;
+  document.body.appendChild(probe);
+  
+  return function measure(content, cssClass, maxH) {
+    if (!content || !content.trim()) return { height: 0, fits: true };
+    probe.className = cssClass; // Apply section-specific styles
+    setParaText(probe, content);
+    const h = probe.offsetHeight;
+    return { height: h, fits: h <= maxH };
+  };
+}
+
+// ── PAGE PLANNING ─────────────────────────────
+function planPages(data, layout, measure) {
+  const pages = [];
+  let pageNum = 1;
+  let currentSections = [];
+  let isContinuationPage = false;
+  
+  // Helper to add a page
+  const commitPage = () => {
+    if (currentSections.length > 0) {
+      pages.push({
+        pageNumber: pageNum++,
+        isContinuationPage,
+        sections: [...currentSections]
+      });
+      currentSections = [];
+      isContinuationPage = true;
+    }
+  };
+  
+  // Plan Word
+  const wordContent = data.word || '';
+  if (wordContent.trim()) {
+    const availForWord = Math.max(layout.bodyAvailH - layout.metaH - layout.narrHeadH - 24, 60);
+    const wordChunks = [];
+    let remainingWord = wordContent;
+    
+    while (remainingWord.trim()) {
+      const meas = measure(remainingWord, 'j-word-area', availForWord);
+      if (meas.fits) {
+        wordChunks.push(remainingWord);
+        break;
+      } else {
+        // Split: find largest prefix that fits
+        const words = remainingWord.trim().split(/\s+/);
+        let low = 0, high = words.length;
+        let bestSplit = '';
+        while (low <= high) {
+          const mid = Math.floor((low + high) / 2);
+          const testContent = words.slice(0, mid).join(' ');
+          const testMeas = measure(testContent, 'j-word-area', availForWord);
+          if (testMeas.fits) {
+            bestSplit = testContent;
+            low = mid + 1;
+          } else {
+            high = mid - 1;
+          }
+        }
+        if (bestSplit) {
+          wordChunks.push(bestSplit);
+          remainingWord = words.slice(bestSplit.split(/\s+/).length).join(' ');
+        } else {
+          // Fallback: take first word
+          wordChunks.push(words[0]);
+          remainingWord = words.slice(1).join(' ');
+        }
+      }
+    }
+    
+    // Add word sections to pages
+    wordChunks.forEach((chunk, i) => {
+      currentSections.push({
+        type: 'word',
+        label: 'Word',
+        content: chunk,
+        isContinuation: i > 0
+      });
+      if (i < wordChunks.length - 1) commitPage(); // New page for continuation
+    });
+  }
+  
+  // Plan Interpretation
+  const interpretationContent = data.interpretation || '';
+  if (interpretationContent.trim()) {
+    const availForInterpretation = Math.max(layout.bodyAvailH - layout.metaH - layout.narrHeadH - layout.brainstormHeadH - 24, 60);
+    const interpretationMeas = measure(interpretationContent, 'j-prose medium', availForInterpretation);
+    if (interpretationMeas.fits) {
+      currentSections.push({
+        type: 'interpretation',
+        label: 'What I Believe God Is Saying',
+        content: interpretationContent,
+        isContinuation: false
+      });
+    } else {
+      // Split interpretation if needed
+      const words = interpretationContent.trim().split(/\s+/);
+      const mid = Math.floor(words.length / 2);
+      const firstHalf = words.slice(0, mid).join(' ');
+      const secondHalf = words.slice(mid).join(' ');
+      currentSections.push({
+        type: 'interpretation',
+        label: 'What I Believe God Is Saying',
+        content: firstHalf,
+        isContinuation: false
+      });
+      commitPage();
+      currentSections.push({
+        type: 'interpretation',
+        label: 'What I Believe God Is Saying',
+        content: secondHalf,
+        isContinuation: true
+      });
+    }
+  }
+  
+  // Plan Scripture (assume fits, no split for simplicity)
+  const scriptureContent = data.scripture || '';
+  if (scriptureContent.trim()) {
+    currentSections.push({
+      type: 'scripture',
+      label: 'Scripture Confirmation',
+      content: scriptureContent,
+      isContinuation: false
+    });
+  }
+  
+  // Plan Response
+  const responseContent = data.response || '';
+  if (responseContent.trim()) {
+    const availForResponse = Math.max(layout.bodyAvailH - layout.metaH - layout.narrHeadH - layout.brainstormHeadH - 24, 60);
+    const responseMeas = measure(responseContent, 'j-prose large', availForResponse);
+    if (responseMeas.fits) {
+      currentSections.push({
+        type: 'response',
+        label: 'How I Will Respond',
+        content: responseContent,
+        isContinuation: false
+      });
+    } else {
+      // Split response if needed
+      const words = responseContent.trim().split(/\s+/);
+      const mid = Math.floor(words.length / 2);
+      const firstHalf = words.slice(0, mid).join(' ');
+      const secondHalf = words.slice(mid).join(' ');
+      currentSections.push({
+        type: 'response',
+        label: 'How I Will Respond',
+        content: firstHalf,
+        isContinuation: false
+      });
+      commitPage();
+      currentSections.push({
+        type: 'response',
+        label: 'How I Will Respond',
+        content: secondHalf,
+        isContinuation: true
+      });
+    }
+  }
+  
+  // Plan Notes
+  const notesContent = data.notes || '';
+  if (notesContent.trim()) {
+    const availForNotes = Math.max(layout.bodyAvailH - layout.metaH - layout.narrHeadH - layout.brainstormHeadH - 24, 60);
+    const notesMeas = measure(notesContent, 'j-prose medium', availForNotes);
+    if (notesMeas.fits) {
+      currentSections.push({
+        type: 'notes',
+        label: 'Additional Notes',
+        content: notesContent,
+        isContinuation: false
+      });
+    } else {
+      // Split notes if needed
+      const words = notesContent.trim().split(/\s+/);
+      const mid = Math.floor(words.length / 2);
+      const firstHalf = words.slice(0, mid).join(' ');
+      const secondHalf = words.slice(mid).join(' ');
+      currentSections.push({
+        type: 'notes',
+        label: 'Additional Notes',
+        content: firstHalf,
+        isContinuation: false
+      });
+      commitPage();
+      currentSections.push({
+        type: 'notes',
+        label: 'Additional Notes',
+        content: secondHalf,
+        isContinuation: true
+      });
+    }
+  }
+  
+  // Commit final page
+  commitPage();
+  
+  return pages;
+}
+
+// ── CONTENT-AWARE PAGINATION ─────────────────────────────
+
 function populate(raw) {
   const data = extractData(raw);
   Object.entries(data).forEach(([key, val]) => { if (val && key !== '_label') set(key, val); });
