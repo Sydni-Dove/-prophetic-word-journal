@@ -1268,312 +1268,706 @@ function parseEntries(rawText) {
 }
 
 // ── EXTRACTION ENGINE ───────────────────────────────────
-// Pure function: takes raw entry text, returns a data object.
-// All existing extraction logic is preserved exactly.
-function extractData(raw) {
-  const result = {};
-  const text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-  const nonEmptyLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  const isShortNote = nonEmptyLines.length < 8;
-  const wordCount = text.split(/\s+/).length;
-  const looksLikeTranscript = !isShortNote && (wordCount > 80
-    || /\b(um|uh|gonna|i'm hearing|i was hearing)\b/i.test(text));
-  const sentences = looksLikeTranscript
-    ? text.replace(/([.!?])\s+/g, '$1\n').split('\n').map(s => s.trim()).filter(s => s.length > 4)
-    : text
-        .replace(/([.!?])\s+/g, '$1\n')
-        .replace(/,\s+((?:trust|faith|hope|go|be still|write|tell|use|choose|ride|cling|prophesy|sing|praise|arise|behold|fear not|do not|receive|prepare|follow|abide|count|give|work|let|make|show|believe|rest|wait|watch|spring|draw|walk|run|stand|seek|ask|knock|cry|speak|declare|proclaim|glorify|worship|honor|love|serve|give|lift|rise|sing|shout|come|stay|build|plant|harvest|shine|bloom|soar|anchor|abide)\b)/gi, '\n$1')
-        .split('\n').map(s => s.trim()).filter(s => s.length > 8);
+function createEmptyPropheticFields() {
+  return {
+    date: '',
+    source: '',
+    type: '',
+    theme: '',
+    word: '',
+    meaning: '',
+    scriptureConfirmation: '',
+    response: '',
+    additionalNotes: ''
+  };
+}
 
-  // DATE — supports long form, short form, numeric, and ISO
-  // Use the first line (the date heading) for reliable extraction
-  const firstLine = nonEmptyLines[0] || '';
-  const dateMatch =
-    firstLine.match(/(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+\d{4}/i) ||
-    firstLine.match(/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+\d{1,2},?\s+\d{4}/i) ||
-    firstLine.match(/\d{4}-\d{2}-\d{2}/) ||
-    firstLine.match(/\d{1,2}\.\.\d{1,2}\.\d{2,4}/) ||
-    firstLine.match(/\d{1,2}\.\d{1,2}\.\d{2,4}/) ||
-    firstLine.match(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/);
-  if (dateMatch) result.date = dateMatch[0].trim();
+function normalizePropheticText(input) {
+  return String(input || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+}
 
-  // THEME — two sources:
-  // 1. Trailing label on the date heading line:
-  //    "2.24.26 theme: God leads and empowers me" → "God leads and empowers me"
-  //    "March 14, 2026 — Identity in Christ"       → "Identity in Christ"
-  if (isDateHeading(firstLine)) {
-    const trailMatch =
-      firstLine.match(/^\d{1,2}\.\.\d{1,2}\.\d{2,4}\s+(.+)$/) ||
-      firstLine.match(/^\d{1,2}\.\d{1,2}\.\d{2,4}\s+(.+)$/) ||
-      firstLine.match(/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\s+(.+)$/) ||
-      firstLine.match(/^(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{1,2},?\s+\d{4}\s*[-–—:,]+\s*(.+)$/i);
-    if (trailMatch) {
-      result.theme = trailMatch[1].replace(/^theme[:\s]*/i, '').trim();
+function normalizePropheticHeading(line) {
+  const t = String(line || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s:;,.!?-–—]+$/g, '')
+    .replace(/\s+/g, ' ');
+  if (!t) return null;
+  if (/^(date|given|received|date received)$/.test(t)) return 'date';
+  if (/^(by|source|from|given by|speaker|prophet|person|minister|by\s*\/\s*source)$/.test(t)) return 'source';
+  if (/^(type|word type|category)$/.test(t)) return 'type';
+  if (/^(theme|subject|topic)$/.test(t)) return 'theme';
+  if (/^(word|prophetic word|the word|what i heard|what was said|exact word)$/.test(t)) return 'word';
+  if (/^(meaning|discernment|interpretation|understanding|what i believe god is saying|what i sense god is saying|what god is highlighting)$/.test(t)) return 'meaning';
+  if (/^(scripture|scriptures|scripture confirmation|biblical confirmation|word confirmation)$/.test(t)) return 'scriptureConfirmation';
+  if (/^(response|application|action|my response|how i will respond|what i will do)$/.test(t)) return 'response';
+  if (/^(notes|additional notes|context|background|circumstances|confirmation notes)$/.test(t)) return 'additionalNotes';
+  return null;
+}
+
+function extractInlinePropheticHeading(line) {
+  const trimmed = String(line || '').trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/^(.+?)\s*[-–—:]+\s*(.+)$/);
+  if (!match) return null;
+  const field = normalizePropheticHeading(match[1]);
+  if (!field) return null;
+  return { field, content: match[2].trim() };
+}
+
+function joinPropheticChunks(chunks) {
+  return (chunks || [])
+    .map(chunk => normalizePropheticText(chunk).trim())
+    .filter(Boolean)
+    .join('\n\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function appendPropheticChunk(target, field, chunk) {
+  const text = normalizePropheticText(chunk).trim();
+  if (!field || !text) return;
+  target[field].push(text);
+}
+
+function extractPropheticDateValue(text) {
+  const source = String(text || '');
+  const match =
+    source.match(/(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+\d{4}/i) ||
+    source.match(/(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+\d{1,2},?\s+\d{4}/i) ||
+    source.match(/\d{4}-\d{2}-\d{2}/) ||
+    source.match(/\d{1,2}\.\.\d{1,2}\.\d{2,4}/) ||
+    source.match(/\d{1,2}\.\d{1,2}\.\d{2,4}/) ||
+    source.match(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/);
+  return match ? match[0].trim() : '';
+}
+
+function containsBibleReference(text) {
+  return /\b(?:[1-3]\s*)?(?:genesis|exodus|leviticus|numbers|deuteronomy|joshua|judges|ruth|samuel|kings|chronicles|ezra|nehemiah|esther|job|psalms?|proverbs|ecclesiastes|song|isaiah|jeremiah|lamentations|ezekiel|daniel|hosea|joel|amos|obadiah|jonah|micah|nahum|habakkuk|zephaniah|haggai|zechariah|malachi|matthew|mark|luke|john|acts|romans|corinthians|galatians|ephesians|philippians|colossians|thessalonians|timothy|titus|philemon|hebrews|james|peter|jude|revelation)\s+\d+[:.]\d+/i.test(String(text || ''));
+}
+
+function looksLikeSourceValue(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  const compact = t.replace(/[.!?]+$/g, '').trim();
+  if (!compact) return false;
+  if (containsBibleReference(compact)) return false;
+  if (/\b(?:you are|you will|i have given|i believe in you|my daughter|my son|god is saying|the lord said)\b/i.test(compact)) return false;
+  if (/\b(?:i believe god is showing|this seems to mean|i feel this is about|what god is highlighting)\b/i.test(compact)) return false;
+  if (/\b(?:mustard seed|evidence of your glory|season of|call to)\b/i.test(compact)) return false;
+  if (/[,:;]/.test(compact)) return false;
+  if (compact.split(/\s+/).length > 5) return false;
+
+  if (/^(?:personal prayer|prayer|dream|vision|sermon|church service|worship|during worship|during prayer|bible study|small group|conference|journal|devotional|phone call|conversation|podcast)$/i.test(compact)) return true;
+  if (/^(?:prophet|pastor|minister|speaker|apostle|evangelist)\s+[A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){0,2}$/i.test(compact)) return true;
+  if (/^(?:mom|dad|mother|father|grandma|grandmother|grandpa|grandfather|sister|brother|friend|mentor)$/i.test(compact)) return true;
+  if (/^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}$/.test(compact)) return true;
+  return false;
+}
+
+function looksLikeThemeLine(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  const compact = t.replace(/[.!?]+$/g, '').trim();
+  if (!compact) return false;
+  if (containsBibleReference(compact)) return false;
+  if (looksLikeSourceValue(compact)) return false;
+  if (/[,:;]/.test(compact)) return false;
+  if (/(?:^|\b)(?:i|we|you|he|she|they)\b/i.test(compact)) return false;
+  if (/(?:^|\b)(?:then|because|when|while|after|before)\b/i.test(compact)) return false;
+  const words = compact.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 8) return false;
+  if (/[.!?].+[.!?]/.test(t)) return false;
+  return /^[A-Za-z0-9'".-]+(?:\s+[A-Za-z0-9'".-]+){1,7}$/.test(compact);
+}
+
+function directPropheticWordScore(text) {
+  const t = String(text || '').trim();
+  if (!t) return 0;
+  let score = 0;
+  if (/\b(?:the lord said|god is saying|i heard the lord|the word of the lord|thus says the lord)\b/i.test(t)) score += 4;
+  if (/\b(?:my daughter|my son|i have given you|i believe in you|you are\b|you will\b)\b/i.test(t)) score += 3;
+  if (/^(?:you are|you will|i have|i am|do not fear|fear not|get ready|return|build|my daughter|my son|arise|listen|remember|write)\b/i.test(t)) score += 3;
+  if (/\b(?:return|build|arise|prepare|write|go forth|do not fear|fear not)\b/i.test(t)) score += 1;
+  if (/\b(?:i believe god is showing|this seems to mean|what god is highlighting|i sense\b|i feel\b)\b/i.test(t)) score -= 2;
+  return score;
+}
+
+function meaningBlockScore(text) {
+  const t = String(text || '').trim();
+  if (!t) return 0;
+  let score = 0;
+  if (/\b(?:i believe god is saying|i believe god is showing|i sense god is saying|this means|this seems to be about|i believe this word is about|god may be highlighting|what i believe god is saying|what i sense god is saying|what god is highlighting)\b/i.test(t)) score += 4;
+  if (/\b(?:i believe\b|i sense\b|i feel\b|this may mean|this could mean|this is about|discernment|understanding|interpretation)\b/i.test(t)) score += 2;
+  if (/\b(?:you are|you will|i have given you|i believe in you|my daughter|my son)\b/i.test(t)) score -= 2;
+  return score;
+}
+
+function looksLikeDirectPropheticWord(text) {
+  return directPropheticWordScore(text) >= Math.max(2, meaningBlockScore(text));
+}
+
+function looksLikeMeaningBlock(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  return /\b(?:i believe god is saying|i believe god is showing|i sense god is saying|this means|this seems to be about|i believe this word is about|god may be highlighting|what i believe god is saying|what i sense god is saying|what god is highlighting)\b/i.test(t);
+}
+
+function looksLikeResponseLanguage(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  return /^(?:my prayer\b|in the name of jesus\b|thank you lord\b|hallelujah\b|i thank you\b|i pray\b|god i\b|lord i\b|my response is\b|how i will respond\b|what i will do\b|i will obey\b|i need to pray\b|i will pray\b|i will begin\b|i should\b|i will fast\b|i will seek\b|i will write\b|i will journal\b|i will submit\b|i will repent\b|i will spend time\b)/i.test(t);
+}
+
+function looksLikeNoteLine(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (/^\(.*\)$/.test(t)) return true;
+  if (/\b(?:lyrics?|song|ringtone|usher|usher's songs?)\b/i.test(t)) return true;
+  if (/\b(?:i thought you said|i was thinking|i don't remember|i dont remember|not sure|maybe|possibly|context|background|circumstance|confirmation)\b/i.test(t)) return true;
+  return false;
+}
+
+function isPropheticPrayerHeading(text) {
+  return /^my prayer\s*:?\s*$/i.test(String(text || '').trim());
+}
+
+function splitPropheticMixedLine(text) {
+  const source = String(text || '').trim();
+  if (!source) return [];
+
+  const segments = [];
+  const splitEmbeddedCommentary = (chunk) => {
+    const value = String(chunk || '').trim();
+    if (!value) return [];
+    const commentaryMatch = value.match(/^(i don't remember specifically what else he said(?:\s+but he was saying)?|i dont remember specifically what else he said(?:\s+but he was saying)?|something like this)\b[\s,:-]*(.*)$/i);
+    if (commentaryMatch) {
+      const commentary = commentaryMatch[1].trim();
+      const remainder = String(commentaryMatch[2] || '').trim();
+      return [commentary].concat(remainder ? [remainder] : []);
+    }
+    const trailingCommentaryMatch = value.match(/^(.*?)(\([^)]*$)/);
+    if (trailingCommentaryMatch && trailingCommentaryMatch[2]) {
+      const leading = trailingCommentaryMatch[1].trim();
+      const trailing = trailingCommentaryMatch[2].trim();
+      return [leading, trailing].filter(Boolean);
+    }
+    return [value];
+  };
+  let remaining = source;
+
+  remaining = remaining.replace(/\(([^)]+)\)/g, (match) => {
+    segments.push(match.trim());
+    return ' ';
+  }).trim();
+
+  if (remaining) {
+    remaining
+      .split(/(?<=[.!?])\s+(?=(?:['"(A-Z]|I\b|He\b|She\b|They\b|We\b|My\b|In\b|Thank\b|Hallelujah\b|God\b|Lord\b))/)
+      .map(part => part.trim())
+      .filter(Boolean)
+      .forEach(part => splitEmbeddedCommentary(part).forEach(piece => segments.push(piece)));
+  }
+
+  return segments.length ? segments : [source];
+}
+
+function looksLikeShortPropheticLine(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (containsBibleReference(t)) return false;
+  if (looksLikeSourceValue(t)) return false;
+  if (looksLikeThemeLine(t)) return false;
+  if (looksLikeResponseLanguage(t)) return false;
+
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 16) return false;
+
+  if (/^(?:i am|i have|i am giving|i will|i love you|i understand you|i've got you|you are|you will|do not|don't|fear not|get ready|return|build|my daughter|my son|write this down)\b/i.test(t)) return true;
+  if (/\b(?:i give you|i've given you|i have given you|i am giving you|my daughter|my son|i believe in you|this is your|i love you|i understand you|i've got you|i got you|he watches over you)\b/i.test(t)) return true;
+  return false;
+}
+
+function looksLikeImperativePropheticWord(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  if (containsBibleReference(t)) return false;
+  if (looksLikeResponseLanguage(t)) return false;
+  if (/^(?:i|we)\b/i.test(t)) return false;
+
+  const words = t.split(/\s+/).filter(Boolean);
+  if (words.length < 2 || words.length > 14) return false;
+
+  return /^(?:trust|rest|hope|speak|walk|commit|believe|focus|obey|remember|stand|wait|endure|preach|promote|cast|calibrate|rehearse|imitate|teach|give thanks|get ready|go and speak|have faith|hope on|hope for|rest in|cast vision|speak life)\b/i.test(t);
+}
+
+function shouldKeepThemeLikeLineWithWord(line, nextLine = '') {
+  const current = String(line || '').trim();
+  const next = String(nextLine || '').trim();
+  if (!current || !looksLikeThemeLine(current) || !next) return false;
+  return (
+    looksLikeDirectPropheticWord(next) ||
+    looksLikeImperativePropheticWord(next) ||
+    looksLikeShortPropheticLine(next) ||
+    /^(?:i love you|i understand you|i've got you|i got you|you are|you will|my daughter|my son|do not fear|get ready|return|build|promote|preach)\b/i.test(next)
+  );
+}
+
+function classifyPropheticParagraph(paragraph) {
+  const p = String(paragraph || '').trim();
+  if (!p) return 'additionalNotes';
+  const prayerLikeRe = /^(in the name of jesus|thank you lord|hallelujah|i thank you|i pray|god i|lord i)/i;
+  const directSpeechStartRe = /^(you are|you will|i have|my daughter|my son|i am)/i;
+
+  const lines = p.split('\n').map(line => line.trim()).filter(Boolean);
+  if (!lines.length) return 'additionalNotes';
+
+  if (lines.length === 1) {
+    const single = lines[0];
+    if (isPropheticPrayerHeading(single)) return 'response';
+    if (containsBibleReference(single)) return 'scriptureConfirmation';
+    if (prayerLikeRe.test(single)) return 'response';
+    if (looksLikeImperativePropheticWord(single)) return 'word';
+    if (looksLikeResponseLanguage(single)) return 'response';
+    if (looksLikeMeaningBlock(single)) return 'meaning';
+    if (looksLikeDirectPropheticWord(single) || looksLikeShortPropheticLine(single)) return 'word';
+    if (looksLikeNoteLine(single)) return 'additionalNotes';
+  }
+
+  let wordLike = 0;
+  let meaningLike = 0;
+  let responseLike = 0;
+  let noteLike = 0;
+  let scriptureLike = 0;
+
+  lines.forEach(line => {
+    if (isPropheticPrayerHeading(line)) responseLike += 4;
+    if (containsBibleReference(line)) scriptureLike += 2;
+    if (prayerLikeRe.test(line)) responseLike += 3;
+    if (looksLikeImperativePropheticWord(line)) wordLike += 3;
+    if (looksLikeResponseLanguage(line)) responseLike += 2;
+    if (looksLikeMeaningBlock(line)) meaningLike += 2;
+    if (looksLikeDirectPropheticWord(line) || looksLikeShortPropheticLine(line)) wordLike += 2;
+    if (looksLikeNoteLine(line)) noteLike += 1;
+  });
+
+  if (scriptureLike > Math.max(wordLike, meaningLike, responseLike, noteLike)) return 'scriptureConfirmation';
+  if (responseLike > Math.max(wordLike, meaningLike, noteLike)) return 'response';
+  if (noteLike > 0 && (wordLike > 0 || meaningLike > 0 || responseLike > 0 || scriptureLike > 0)) return 'additionalNotes';
+  if (meaningLike > Math.max(wordLike, responseLike, noteLike)) return 'meaning';
+  if (wordLike >= Math.max(meaningLike, responseLike, noteLike, 1)) return 'word';
+  if (noteLike > 0) return 'additionalNotes';
+
+  return 'word';
+}
+
+function pushChunkToPropheticBucket(buckets, field, text) {
+  const cleaned = normalizePropheticText(text).trim();
+  if (!cleaned) return;
+  if (field === 'word') buckets.wordChunks.push(cleaned);
+  else if (field === 'meaning') buckets.meaningChunks.push(cleaned);
+  else if (field === 'scriptureConfirmation') buckets.scriptureChunks.push(cleaned);
+  else if (field === 'response') buckets.responseChunks.push(cleaned);
+  else buckets.noteChunks.push(cleaned);
+}
+
+function distributeMixedPropheticParagraph(paragraph, buckets, result) {
+  const rawLines = normalizePropheticText(paragraph).split('\n');
+  let currentField = null;
+  let currentLines = [];
+
+  const flush = () => {
+    if (!currentLines.length) return;
+    const chunk = currentLines.join('\n').trim();
+    if (chunk) pushChunkToPropheticBucket(buckets, currentField || 'additionalNotes', chunk);
+    currentLines = [];
+  };
+
+  rawLines.forEach((rawLine, index) => {
+    const line = String(rawLine || '').trim();
+    if (!line) {
+      if (currentLines.length) currentLines.push('');
+      return;
+    }
+    const nextLine = rawLines
+      .slice(index + 1)
+      .map(item => String(item || '').trim())
+      .find(Boolean) || '';
+
+    if (!result.source && looksLikeSourceValue(line)) {
+      flush();
+      result.source = line.replace(/[.!?]+$/g, '').trim();
+      currentField = null;
+      return;
+    }
+
+    if (isPropheticPrayerHeading(line)) {
+      flush();
+      currentField = 'response';
+      return;
+    }
+
+    if (!result.theme && looksLikeThemeLine(line) && !shouldKeepThemeLikeLineWithWord(line, nextLine)) {
+      flush();
+      result.theme = line.replace(/[.!?]+$/g, '').trim();
+      currentField = null;
+      return;
+    }
+
+    const lineSegments = splitPropheticMixedLine(line);
+    lineSegments.forEach(segment => {
+      const cleanedSegment = String(segment || '').trim();
+      if (!cleanedSegment) return;
+      let field = classifyPropheticParagraph(cleanedSegment);
+      if (field === 'additionalNotes' && looksLikeShortPropheticLine(cleanedSegment)) field = 'word';
+
+      if (field !== currentField && currentLines.length) flush();
+      currentField = field;
+      currentLines.push(cleanedSegment);
+    });
+  });
+
+  flush();
+}
+
+function countNormalizedPropheticHeadings(text) {
+  return normalizePropheticText(text)
+    .split('\n')
+    .map(line => String(line || '').trim())
+    .filter(Boolean)
+    .reduce((count, line) => {
+      if (normalizePropheticHeading(line)) return count + 1;
+      if (extractInlinePropheticHeading(line)) return count + 1;
+      return count;
+    }, 0);
+}
+
+function detectPropheticDocumentMode(text) {
+  const normalizedHeadingCount = countNormalizedPropheticHeadings(text);
+  return normalizedHeadingCount >= 2 ? 'labeled_sections' : 'content_fallback';
+}
+
+function parsePropheticLabeledBlocks(text) {
+  const buckets = {
+    date: [],
+    source: [],
+    type: [],
+    theme: [],
+    word: [],
+    meaning: [],
+    scriptureConfirmation: [],
+    response: [],
+    additionalNotes: []
+  };
+  const lines = normalizePropheticText(text).split('\n');
+  let currentField = null;
+  let currentLines = [];
+  let sawHeading = false;
+  const prefaceLines = [];
+
+  const flushCurrent = () => {
+    if (!currentField) {
+      currentLines = [];
+      return;
+    }
+    appendPropheticChunk(buckets, currentField, currentLines.join('\n'));
+    currentLines = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = String(rawLine || '').trim();
+    if (!line) {
+      if (currentField && currentLines.length && currentLines[currentLines.length - 1] !== '') currentLines.push('');
+      continue;
+    }
+
+    if (isDateHeading(line) && !buckets.date.length) {
+      const dateValue = extractPropheticDateValue(line) || line;
+      appendPropheticChunk(buckets, 'date', dateValue);
+      const trailing = line.replace(dateValue, '').replace(/^[-–—:,.\s]+/, '').trim();
+      if (trailing) prefaceLines.push(trailing);
+      continue;
+    }
+
+    const inline = extractInlinePropheticHeading(line);
+    if (inline) {
+      flushCurrent();
+      sawHeading = true;
+      currentField = inline.field;
+      appendPropheticChunk(buckets, inline.field, inline.content);
+      continue;
+    }
+
+    const heading = normalizePropheticHeading(line);
+    if (heading) {
+      flushCurrent();
+      sawHeading = true;
+      currentField = heading;
+      continue;
+    }
+
+    if (!sawHeading) {
+      prefaceLines.push(rawLine);
+    } else {
+      currentLines.push(rawLine);
     }
   }
-  // 2. Explicit "Theme: …" label anywhere in the document (common in uploaded files)
-  //    "Theme: God leads and empowers me"
-  //    "Theme — The Gospel"
-  if (!result.theme) {
-    for (const line of nonEmptyLines) {
-      const m = line.match(/^theme\s*[-–—:]+\s*(.+)$/i);
-      if (m && m[1].trim().length > 1) { result.theme = m[1].trim(); break; }
+  flushCurrent();
+
+  const preface = joinPropheticChunks([prefaceLines.join('\n')]);
+  if (preface) {
+    if (!joinPropheticChunks(buckets.theme) && looksLikeThemeLine(preface)) appendPropheticChunk(buckets, 'theme', preface);
+    else if (!joinPropheticChunks(buckets.source) && looksLikeSourceValue(preface)) appendPropheticChunk(buckets, 'source', preface);
+    else appendPropheticChunk(buckets, 'additionalNotes', preface);
+  }
+
+  return {
+    date: joinPropheticChunks(buckets.date),
+    source: joinPropheticChunks(buckets.source),
+    type: joinPropheticChunks(buckets.type),
+    theme: joinPropheticChunks(buckets.theme),
+    word: joinPropheticChunks(buckets.word),
+    meaning: joinPropheticChunks(buckets.meaning),
+    scriptureConfirmation: joinPropheticChunks(buckets.scriptureConfirmation),
+    response: joinPropheticChunks(buckets.response),
+    additionalNotes: joinPropheticChunks(buckets.additionalNotes)
+  };
+}
+
+function parsePropheticFallback(text) {
+  const result = createEmptyPropheticFields();
+  const lines = normalizePropheticText(text).split('\n');
+  const headerLines = [];
+  const contentLines = [];
+
+  for (const rawLine of lines) {
+    const line = String(rawLine || '').trim();
+    if (!line) {
+      contentLines.push('');
+      continue;
     }
-  }
-
-  // LABELED FIELD EXTRACTION — catch "By:", "Source:", "Type:" lines in uploaded docs
-  for (const line of nonEmptyLines) {
-    // By / Source
-    if (!result.by) {
-      const byM = line.match(/^(?:by|source)\s*[-–—:]+\s*(.+)$/i);
-      if (byM && byM[1].trim().length > 1) result.by = byM[1].trim();
+    if (!result.date && isDateHeading(line)) {
+      result.date = extractPropheticDateValue(line) || line;
+      const trailing = line.replace(result.date, '').replace(/^[-–—:,.\s]+/, '').trim();
+      if (trailing) headerLines.push(trailing);
+      continue;
     }
-    // Type — only accept known values
-    if (!result.type || result.type === 'Prophetic Word') {
-      const typeM = line.match(/^type\s*[-–—:]+\s*(.+)$/i);
-      if (typeM) {
-        const tv = typeM[1].trim();
-        const known = ['Dream','Vision','Prayer','Encouragement','Instruction','Promise','Warning','Correction','Preparation','Identity','Prophetic Word'];
-        const match = known.find(k => k.toLowerCase() === tv.toLowerCase());
-        if (match) result.type = match;
-      }
+    const inline = extractInlinePropheticHeading(line);
+    if (inline && ['date', 'source', 'type', 'theme'].includes(inline.field) && !result[inline.field]) {
+      result[inline.field] = inline.content;
+      continue;
     }
+    headerLines.push(rawLine);
+    contentLines.push(rawLine);
   }
 
-  // SOURCE
-  const lower = text.toLowerCase();
-  if (/during prayer|while praying|in prayer|time of prayer/.test(lower))         result.by = 'During Prayer';
-  else if (/during worship|while worshipping|in worship/.test(lower))             result.by = 'During Worship';
-  else if (/in a dream|during a dream/.test(lower))                               result.by = 'Dream';
-  else if (/in a vision|during a vision/.test(lower))                             result.by = 'Vision';
-  else if (/(?:pastor|prophet|teacher|speaker|minister)\s+([a-z][a-z\s]{1,25})/i.test(text)) {
-    const m = text.match(/(?:pastor|prophet|teacher|speaker|minister)\s+([a-z][a-z\s]{1,25})/i);
-    if (m) result.by = cap(m[0].trim());
-  }
+  const paragraphs = normalizePropheticText(contentLines.join('\n'))
+    .split(/\n{2,}/)
+    .map(chunk => chunk.trim())
+    .filter(Boolean);
 
-  // SCRIPTURE
-  const bibleBooks = ['genesis','exodus','leviticus','numbers','deuteronomy','joshua','judges','ruth','samuel','kings','chronicles','ezra','nehemiah','esther','job','psalm','psalms','proverbs','ecclesiastes','song','isaiah','jeremiah','lamentations','ezekiel','daniel','hosea','joel','amos','obadiah','jonah','micah','nahum','habakkuk','zephaniah','haggai','zechariah','malachi','matthew','mark','luke','john','acts','romans','corinthians','galatians','ephesians','philippians','colossians','thessalonians','timothy','titus','philemon','hebrews','james','peter','jude','revelation'];
-  const bibleRe = new RegExp(`(?:${bibleBooks.join('|')})[\\s]+\\d+[:\\s]\\d+`, 'gi');
-  const scriptureHits = [...new Set((text.match(bibleRe) || []).map(s => s.trim()))].slice(0, 3);
-  if (scriptureHits.length) result.scripture = scriptureHits.join('\n');
+  const wordChunks = [];
+  const meaningChunks = [];
+  const scriptureChunks = [];
+  const responseChunks = [];
+  const noteChunks = [];
+  const bucketRefs = { wordChunks, meaningChunks, scriptureChunks, responseChunks, noteChunks };
+  const consumedParagraphIndexes = new Set();
+  let prayerSectionStarted = false;
 
-  // PROPHETIC WORD
-  const prophetic = [];
-  const seen = new Set();
-  const fixTranscript = s => s
-    .replace(/\bblame\b/gi, 'plain').replace(/\bbumpets\b/gi, 'trumpets')
-    .replace(/\bhedgestone\b/gi, 'headstone').replace(/\bfake movement\b/gi, 'faith movement')
-    .replace(/\bmaid in his image\b/gi, 'made in His image').trim();
-  const quoteRe = /[\u201c"]([^"\u201c\u201d\n]{6,160})[\u201d"]/g;
-  let qm;
-  while ((qm = quoteRe.exec(text)) !== null) {
-    const line = fixTranscript(qm[1].trim());
-    const k = line.toLowerCase().replace(/\s+/g,' ');
-    if (line.length >= 6 && !seen.has(k)) { seen.add(k); prophetic.push(line); }
-  }
-  const imperativeRe = /^(trust\b|faith\b|hope\b|be still|be at peace|be fruitful|write the vision|tell your story|tell it|ride in|use your|use and choose|choose life|choose your|cling to|prophesy|let freedom|let there be|spring forth|draw near|work while|don't rush|have faith|fear no evil|i shall fear|he leads|he heals|he loves|he covers|he favors|he's got|god's got|god is|if god|he will|he shall|you are|you're safe|you can|you shall|i shall|mercy|trust him|trust and|hope again|cry out|rise|arise|be peaceful|watch and wait|be advantageous|advocate|open|do it according|spring forth|they shall live|out of the ashes|sink your face|be still and know|draw near)/i;
-
-  // Noise filter shared across non-transcript paths
-  const isMetaNoise = s => {
-    if (s.length < 4) return true;
-    if (/^(date[:\s]|scripture[:\s]|theme[:\s]|type[:\s]|source[:\s]|by[:\s]|notes[:\s]|interpretation[:\s]|response[:\s]|word[:\s])/i.test(s)) return true;
-    if (/^(um+|uh+|okay|yeah|yes|right|alright|amen|thank you|thanks)\.?\s*$/i.test(s)) return true;
-    if (/^(side note|maybe i|how can i|i was asking|wow |after i )/i.test(s)) return true;
+  const assignTopMeta = (candidate, nextCandidate = '') => {
+    const trimmed = String(candidate || '').trim();
+    if (!trimmed) return false;
+    if (!result.source && looksLikeSourceValue(trimmed)) {
+      result.source = trimmed.replace(/[.!?]+$/g, '').trim();
+      return true;
+    }
+    if (!result.theme && looksLikeThemeLine(trimmed) && !shouldKeepThemeLikeLineWithWord(trimmed, nextCandidate)) {
+      result.theme = trimmed.replace(/[.!?]+$/g, '').trim();
+      return true;
+    }
     return false;
   };
 
-  // Helper: split raw text into paragraph groups, filter noise, rejoin with \n\n
-  // so setParaText() renders each group as a spaced <p> block
-  function buildParaWord(rawText) {
-    const groups = rawText.split(/\n{2,}/);
-    const resultParas = [];
-    groups.forEach(group => {
-      const lines = group.split('\n')
-        .map(l => l.trim())
-        .filter(l => l.length > 0)
-        .filter(l => !isDateHeading(l))
-        .filter(l => !isMetaNoise(fixTranscript(l)));
-      const unique = [];
-      lines.forEach(l => {
-        const clean = fixTranscript(l);
-        const k = clean.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
-        if (k && !seen.has(k)) { seen.add(k); unique.push(clean); }
-      });
-      if (unique.length) resultParas.push(unique.join('\n'));
-    });
-    return resultParas.join('\n\n');
-  }
+  const headerCandidates = headerLines
+    .map(line => String(line || '').trim())
+    .filter(Boolean)
+    .slice(0, 4);
+  headerCandidates.some((line, index) => assignTopMeta(line, headerCandidates[index + 1] || ''));
 
-  if (isShortNote) {
-    const w = buildParaWord(text);
-    if (w) result.word = w;
-  } else if (looksLikeTranscript) {
-    const isNoise = s => {
-      if (s.length < 5) return true;
-      if (/^(um+|uh+|okay|yeah|yes|right|alright|amen|thank you|thank you lord|thanks|open)\.?\s*$/i.test(s)) return true;
-      if (/^(side note[,.:—]|maybe i (should|can) look up|i was asking him.*was it okay|how can i regulate)/i.test(s)) return true;
-      return false;
-    };
-    sentences.forEach(s => {
-      const clean = fixTranscript(s);
-      if (isNoise(clean)) return;
-      const k = clean.toLowerCase().replace(/\s+/g,' ').trim();
-      if (seen.has(k) || clean.length < 5) return;
-      seen.add(k); prophetic.push(clean);
-    });
-    if (prophetic.length) result.word = prophetic.join('\n');
-  } else {
-    const addLine = line => {
-      const k = line.toLowerCase().replace(/\s+/g,' ').trim();
-      if (seen.has(k) || line.length < 6) return;
-      if (/^(so |um |uh |okay |and i |i was |i'm |and he |earlier|side note|maybe i|how can|amen|thank you|open\b)/i.test(line)) return;
-      seen.add(k); prophetic.push(line);
-    };
-    sentences.forEach(s => {
-      const clean = fixTranscript(s);
-      if (clean.length < 8 || clean.length > 200) return;
-      if (imperativeRe.test(clean)) addLine(clean);
-    });
-    sentences.forEach(s => {
-      const clean = fixTranscript(s);
-      if (clean.length < 8 || clean.length > 200) return;
-      if (prophetic.find(x => x.toLowerCase() === clean.toLowerCase())) return;
-      if (/^(so |um |uh |okay |and i |i was |i'm |and he |earlier|side note|maybe i|how can|amen\b|thank you|open\b|i said|i was asking|i told|wow |after i )/i.test(clean)) return;
-      if (/\b(god|lord|faith|trust|hope|mercy|spirit|holy|glory|kingdom|victory|healing|heals|favors|covers|loves|leads|anointed|anointing|declare|decree|prophesy|vision|promise|covenant|righteousness|inheritance|recompense)\b/i.test(clean)) addLine(clean);
-    });
-    // If sentence-keyword extraction produced nothing, fall back to paragraph-preserving
-    if (prophetic.length) {
-      result.word = prophetic.slice(0, 20).join('\n');
-    } else {
-      const w = buildParaWord(text);
-      if (w) result.word = w;
-    }
-  }
-
-  // TYPE — auto-detect from content; do not overwrite if already set by labeled extraction
-  let t = 'Prophetic Word';
-  if (/\b(in a dream|had a dream|i dreamed|i dreamt|while i slept|i saw in a dream)\b/.test(lower)) t = 'Dream';
-  else if (/\b(in a vision|had a vision|saw a vision|open vision|i had a vision)\b/.test(lower))     t = 'Vision';
-  else if (/\b(during prayer|while praying|in prayer|time of prayer)\b/.test(lower))                t = 'Prayer';
-  else if (/prepare|consecrat|sanctif|ready|equip|write the vision/.test(lower))                    t = 'Instruction';
-  else if (/you are|identity|who you are|you're safe|made in his image/.test(lower))                t = 'Identity';
-  else if (/gospel|preach|proclaim|go forth|commission|tell your story/.test(lower))                t = 'Instruction';
-  else if (/fear no evil|he loves|he heals|he favors|he's got you|trust him|peace|hope again/.test(lower)) t = 'Encouragement';
-  else if (/i will restore|victory|recover|recompense|be fruitful|multiply/.test(lower))            t = 'Promise';
-  else if (/faith|trust|hope/.test(lower))                                                          t = 'Encouragement';
-  // Only apply if type wasn't already determined by explicit label (By:, Type:, Dream:, etc.)
-  if (!result.type || result.type === 'Prophetic Word') result.type = t;
-
-  // THEME
-  const stop = new Set(['the','and','that','this','with','have','from','they','will','what','your','you','for','are','not','but','was','has','his','her','him','its','all','been','when','who','can','more','also','into','then','than','now','said','just','like','some','even','most','other','over','such','after','before','their','there','these','those','about','would','could','should','shall','does','did','had','see','may','our','my','me','he','she','it','we','is','in','of','to','on','at','a','an','be','do','by','or','as','if','up','got','get','say','know','gonna','cause','right','yeah','okay','amen','let','way','work','works','got','says','going']);
-  const freq = {};
-  text.toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).forEach(w => {
-    if (w.length > 3 && !stop.has(w)) freq[w] = (freq[w] || 0) + 1;
+  paragraphs.slice(0, 3).forEach((paragraph, index, arr) => {
+    if (consumedParagraphIndexes.has(index)) return;
+    if (assignTopMeta(paragraph, arr[index + 1] || '')) consumedParagraphIndexes.add(index);
   });
-  const topWords = Object.entries(freq).filter(([,v]) => v >= 2).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([w])=>cap(w));
-  // Only use word-frequency theme if no theme was found by explicit extraction
-  if (topWords.length && !result.theme) result.theme = topWords.join(', ');
 
-  // INTERPRETATION
-  const reflective = sentences.filter(s =>
-    s.length > 40 && s.length < 300
-    && /^(i believe|i think (he|god|this)|i was hearing|i feel (like|that)|i sense |he (said|told|showed|revealed)\b|he's (saying|showing|telling)|the lord (said|told|spoke)|god (said|told|showed|is saying|is showing)\b|this (word|feels|seems|is about)|earlier,? (god|he|i heard))/i.test(s)
-    && !/^(i shall|i am (safe|made|the |a )|i will (trust|hope|rise|follow|fear|choose|ride|declare|confess)|i choose|i can do|we shall|we will|i declare|i confess|i say to)/i.test(s)
-  );
-  if (reflective.length) result.interpretation = reflective.slice(0, 3).join(' ').slice(0, 600);
+  paragraphs.forEach((paragraph, index) => {
+    if (consumedParagraphIndexes.has(index)) return;
+    if (prayerSectionStarted) {
+      responseChunks.push(paragraph);
+      return;
+    }
 
-  // RESPONSE
-  const propheticDeclarationRe = /^(i shall|i am (safe|made|the lord|a child)|i will (trust|hope|rise|follow|fear not|choose|ride|declare|confess|live|not|overcome)|i choose (life|your|to follow)|i can do|we shall|we will (live|rise|overcome|not)|i declare|i confess|i say (to |unto))/i;
-  const actionStepRe = /^(i (need to|should|must|plan to|will spend|will write|will steward|will pray|will fast|will seek|will obey|will prepare|will study|will record|will commit|am going to (pray|fast|seek|write|prepare|obey))|i will (make time|set aside|start|stop|begin|continue|practice))/i;
-  const actionSentences = sentences.filter(s => actionStepRe.test(s) && !propheticDeclarationRe.test(s));
-  if (actionSentences.length) result.response = actionSentences.slice(0, 2).join('\n');
+    const prayerStartMatch = paragraph.match(/^my prayer\s*:?\s*([\s\S]*)$/i);
+    if (prayerStartMatch) {
+      prayerSectionStarted = true;
+      const initialPrayer = String(prayerStartMatch[1] || '').trim();
+      if (initialPrayer) responseChunks.push(initialPrayer);
+      return;
+    }
 
-  // ── SECTION-LABEL FIELD MAPPING ────────────────────────────────────────────
-  // Final pass: collect multi-line content under labeled section headers.
-  // Supports common prophetic journal document formats:
-  //   "Word from the Lord: ..."  → word field
-  //   "Dream: ..."               → word field + type=Dream, by=Dream
-  //   "Vision: ..."              → word field + type=Vision, by=Vision
-  //   "Prayer: ..."              → word field + by=Prayer
-  //   "Interpretation: ..."      → interpretation field
-  //   "Scripture: ..."           → scripture field
-  //   "Response: ..."            → response field
-  //   "Notes: ..."               → notes field
-  // Only fills fields not already populated by earlier extraction passes.
-  (function() {
-    const LABEL_MAP = {
-      'word from the lord': 'word',
-      'prophetic word':     'word',
-      'the word':           'word',
-      'word':               'word',
-      'dream':              '_dream',
-      'vision':             '_vision',
-      'prayer':             '_prayer',
-      'interpretation':                    'interpretation',
-      'what i believe god is saying':      'interpretation',
-      'what i believe':                    'interpretation',
-      'scripture':              'scripture',
-      'verse':                  'scripture',
-      'scripture confirmation': 'scripture',
-      'response':               'response',
-      'how i will respond':     'response',
-      'my response':            'response',
-      'notes':                  'notes',
-      'additional notes':       'notes',
-    };
-    // Build regex that matches any label key (longest first to avoid partial matches)
-    const escapedKeys = Object.keys(LABEL_MAP)
-      .sort((a, b) => b.length - a.length)
-      .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-      .join('|');
-    const labelRe = new RegExp('^(' + escapedKeys + ')\\s*[-–—:]+\\s*(.*)', 'i');
-
-    let curField = null;
-    const buf = {};
-
-    for (const line of nonEmptyLines) {
-      if (isDateHeading(line)) { curField = null; continue; }
-      const m = line.match(labelRe);
-      if (m) {
-        const mapped = LABEL_MAP[m[1].trim().toLowerCase()];
-        if (mapped) {
-          curField = mapped;
-          if (m[2].trim()) buf[curField] = (buf[curField] ? buf[curField] + '\n' : '') + m[2].trim();
-        } else {
-          curField = null;
-        }
-      } else if (curField) {
-        buf[curField] = (buf[curField] ? buf[curField] + '\n' : '') + line;
+    const inline = extractInlinePropheticHeading(paragraph);
+    if (inline) {
+      if (inline.field === 'date' && !result.date) result.date = inline.content;
+      else if (inline.field === 'source' && !result.source && looksLikeSourceValue(inline.content)) result.source = inline.content.replace(/[.!?]+$/g, '').trim();
+      else if (inline.field === 'type' && !result.type) result.type = inline.content;
+      else if (inline.field === 'theme' && !result.theme) result.theme = inline.content.replace(/[.!?]+$/g, '').trim();
+      else if (inline.field === 'word') wordChunks.push(inline.content);
+      else if (inline.field === 'meaning') meaningChunks.push(inline.content);
+      else if (inline.field === 'scriptureConfirmation') scriptureChunks.push(inline.content);
+      else if (inline.field === 'response') responseChunks.push(inline.content);
+      else if (inline.field === 'additionalNotes') noteChunks.push(inline.content);
+      else if (!result.theme && looksLikeThemeLine(inline.content)) result.theme = inline.content.replace(/[.!?]+$/g, '').trim();
+      else {
+        const inlineClass = classifyPropheticParagraph(inline.content);
+        if (inlineClass === 'word') wordChunks.push(inline.content);
+        else if (inlineClass === 'meaning') meaningChunks.push(inline.content);
+        else if (inlineClass === 'scriptureConfirmation') scriptureChunks.push(inline.content);
+        else if (inlineClass === 'response') responseChunks.push(inline.content);
+        else noteChunks.push(inline.content);
       }
+      return;
     }
 
-    // Apply buffered content — only fill fields not already populated
-    const fill = (field, src) => { if (src && src.trim() && !result[field]) result[field] = src.trim(); };
-    fill('word',           buf['word']);
-    fill('interpretation', buf['interpretation']);
-    fill('scripture',      buf['scripture']);
-    fill('response',       buf['response']);
-    fill('notes',          buf['notes']);
+    if (!result.source && looksLikeSourceValue(paragraph)) {
+      result.source = paragraph.replace(/[.!?]+$/g, '').trim();
+      return;
+    }
 
-    // Dream / Vision / Prayer — set word + type + by
-    if (buf['_dream'] && !result.word) {
-      result.word = buf['_dream'].trim();
-      if (!result.by)   result.by   = 'Dream';
-      if (!result.type || result.type === 'Prophetic Word') result.type = 'Dream';
+    if (!result.theme && looksLikeThemeLine(paragraph)) {
+      result.theme = paragraph.replace(/[.!?]+$/g, '').trim();
+      return;
     }
-    if (buf['_vision'] && !result.word) {
-      result.word = buf['_vision'].trim();
-      if (!result.by)   result.by   = 'Vision';
-      if (!result.type || result.type === 'Prophetic Word') result.type = 'Vision';
+
+    const classification = classifyPropheticParagraph(paragraph);
+    if (classification === 'additionalNotes') {
+      distributeMixedPropheticParagraph(paragraph, bucketRefs, result);
+    } else if (classification === 'word') {
+      wordChunks.push(paragraph);
+    } else if (classification === 'meaning') {
+      meaningChunks.push(paragraph);
+    } else if (classification === 'scriptureConfirmation') {
+      scriptureChunks.push(paragraph);
+    } else if (classification === 'response') {
+      responseChunks.push(paragraph);
+    } else {
+      noteChunks.push(paragraph);
     }
-    if (buf['_prayer']) {
-      if (!result.word) result.word = buf['_prayer'].trim();
-      if (!result.by)   result.by   = 'Prayer';
-      if (!result.type || result.type === 'Prophetic Word') result.type = 'Prayer';
+  });
+
+  const headerChunk = joinPropheticChunks(headerLines);
+  if (headerChunk) {
+    const headerLinesClean = headerChunk.split('\n').map(line => line.trim()).filter(Boolean);
+    const topHeaderLine = headerLinesClean[0] || '';
+
+    if (!result.theme && topHeaderLine && looksLikeThemeLine(topHeaderLine)) {
+      result.theme = topHeaderLine.replace(/[.!?]+$/g, '').trim();
     }
-  })();
+
+    if (!result.source) {
+      const sourceCandidate = headerLinesClean.find(line => looksLikeSourceValue(line));
+      if (sourceCandidate) result.source = sourceCandidate.replace(/[.!?]+$/g, '').trim();
+    }
+  }
+  if (!result.type) {
+    const combined = normalizePropheticText(text).toLowerCase();
+    if (/\bvision\b/.test(combined)) result.type = 'Vision';
+    else if (/\bdream\b/.test(combined)) result.type = 'Dream';
+    else if (/\bprayer\b/.test(combined)) result.type = 'Prayer';
+    else result.type = 'Prophetic Word';
+  }
+
+  if (noteChunks.length) {
+    const reclassifiedNotes = [];
+    noteChunks.forEach(chunk => {
+      const cls = classifyPropheticParagraph(chunk);
+      if (cls === 'additionalNotes') {
+        const beforeCounts = {
+          word: wordChunks.length,
+          meaning: meaningChunks.length,
+          scripture: scriptureChunks.length,
+          response: responseChunks.length,
+          notes: noteChunks.length
+        };
+        distributeMixedPropheticParagraph(chunk, bucketRefs, result);
+        const movedSomewhere = wordChunks.length !== beforeCounts.word || meaningChunks.length !== beforeCounts.meaning || scriptureChunks.length !== beforeCounts.scripture || responseChunks.length !== beforeCounts.response;
+        if (!movedSomewhere) reclassifiedNotes.push(chunk);
+      } else if (cls === 'word') {
+        wordChunks.push(chunk);
+      } else if (cls === 'meaning') {
+        meaningChunks.push(chunk);
+      } else if (cls === 'scriptureConfirmation') {
+        scriptureChunks.push(chunk);
+      } else if (cls === 'response') {
+        responseChunks.push(chunk);
+      } else {
+        reclassifiedNotes.push(chunk);
+      }
+    });
+    noteChunks.length = 0;
+    reclassifiedNotes.forEach(chunk => noteChunks.push(chunk));
+  }
+
+  result.word = joinPropheticChunks(wordChunks);
+  result.meaning = joinPropheticChunks(meaningChunks);
+  result.scriptureConfirmation = joinPropheticChunks(scriptureChunks);
+  result.response = joinPropheticChunks(responseChunks);
+  result.additionalNotes = joinPropheticChunks(noteChunks);
 
   return result;
+}
+
+function adaptPropheticData(prophetic) {
+  const normalized = {
+    ...createEmptyPropheticFields(),
+    ...prophetic
+  };
+  return {
+    ...normalized,
+    by: normalized.source || '',
+    interpretation: normalized.meaning || '',
+    scripture: normalized.scriptureConfirmation || '',
+    notes: normalized.additionalNotes || ''
+  };
+}
+
+function extractPropheticData(raw) {
+  const text = normalizePropheticText(raw);
+  const mode = detectPropheticDocumentMode(text);
+  let parsed;
+
+  switch (mode) {
+    case 'labeled_sections':
+      parsed = parsePropheticLabeledBlocks(text);
+      break;
+    case 'content_fallback':
+    default:
+      parsed = parsePropheticFallback(text);
+      break;
+  }
+
+  if (!parsed.date) {
+    const firstNonEmpty = text.split('\n').map(line => line.trim()).find(Boolean) || '';
+    parsed.date = extractPropheticDateValue(firstNonEmpty) || extractPropheticDateValue(text) || '';
+  }
+
+  return {
+    ...adaptPropheticData(parsed),
+    _docMode: mode
+  };
+}
+
+function extractData(raw) {
+  return extractPropheticData(raw);
 }
 
 // ── MEASUREMENT HELPER ─────────────────────────────
@@ -1809,6 +2203,13 @@ function set(id, val) {
   if (el.tagName === 'SELECT') {
     const opt = [...el.options].find(o => o.value.toLowerCase() === val.toLowerCase());
     if (opt) el.value = opt.value;
+    else {
+      const injected = document.createElement('option');
+      injected.value = String(val).trim();
+      injected.textContent = String(val).trim();
+      el.appendChild(injected);
+      el.value = injected.value;
+    }
   } else { el.value = String(val).trim(); }
 }
 
@@ -2200,97 +2601,342 @@ function buildPropheticPageFromDescriptor(desc, data) {
   return sheet;
 }
 
-// Main pagination function — builds all pages for one entry using measure-before-render.
-// Replaces the old buildJournalPageElement + paginateAndAppendSheet.
-function buildPropheticPages(container, data, pageStyle) {
-  const { h: bodyH, w: bodyW } = measureJournalBodyAvailable();
-  if (bodyH <= 0 || bodyW <= 0) {
-    // Fallback: render single page with no pagination
-    const sheet = buildJournalPageElement(data);
-    if (pageStyle === 'lined') sheet.querySelector('.journal-page').classList.add('ps-lined');
-    else if (pageStyle === 'dotted') sheet.querySelector('.journal-page').classList.add('ps-dotted');
-    container.appendChild(sheet); return 1;
+function buildPropheticSectionPage(sectionLabel, cssClass, content, data, options = {}) {
+  const {
+    pageTitle = sectionLabel,
+    includeMeta = false,
+    isContinuation = false
+  } = options;
+
+  const sheet = document.createElement('div');
+  sheet.className = 'journal-sheet';
+  const page = document.createElement('div');
+  page.className = 'journal-page';
+  const inner = document.createElement('div');
+  inner.className = 'page-inner';
+
+  const header = document.createElement('div');
+  header.className = 'page-header';
+  const brand = document.createElement('div');
+  brand.className = 'page-brand';
+  brand.textContent = 'Dove Expressions';
+  const title = document.createElement('div');
+  title.className = 'page-title';
+  title.textContent = pageTitle;
+  if (!includeMeta) title.style.fontSize = '18px';
+  const rule = document.createElement('div');
+  rule.className = 'page-title-rule';
+  header.appendChild(brand);
+  header.appendChild(title);
+  header.appendChild(rule);
+  inner.appendChild(header);
+
+  if (includeMeta) {
+    const meta = document.createElement('div');
+    meta.className = 'meta-row';
+    [['Date', data.date || ''], ['By / Source', data.by || ''], ['Type', data.type || ''], ['Theme', data.theme || '']].forEach(([lbl, val]) => {
+      const item = document.createElement('div');
+      item.className = 'meta-item';
+      const labelEl = document.createElement('span');
+      labelEl.className = 'meta-label';
+      labelEl.textContent = lbl;
+      const valEl = document.createElement('div');
+      valEl.className = 'meta-value';
+      valEl.textContent = val;
+      item.appendChild(labelEl);
+      item.appendChild(valEl);
+      meta.appendChild(item);
+    });
+    inner.appendChild(meta);
   }
 
-  const allSections = [
-    { label: 'Word', field: 'word', cssClass: 'j-word-area' },
-    { label: 'What I Believe God Is Saying', field: 'interpretation', cssClass: 'j-prose medium' },
-    { label: 'Scripture Confirmation', field: 'scripture', cssClass: 'j-scripture' },
-    { label: 'How I Will Respond', field: 'response', cssClass: 'j-prose large' },
-    { label: 'Additional Notes', field: 'notes', cssClass: 'j-prose medium' },
-  ].filter(s => data[s.field] && data[s.field].trim());
+  const body = document.createElement('div');
+  body.className = 'journal-body';
+  body.style.cssText = 'flex:1;min-height:0;overflow:hidden;';
 
-  // Continuation pages (isFirst=false) have no meta-row and a smaller title,
-  // so their journal-body is taller. Measure it once and use it when resetting
-  // `remaining` for pages after the first.
-  const contBodyH = measureContJournalBodyH() || bodyH;
-
-  const pageDescriptors = [];
-  let curSecs = []; let isFirst = true; let remaining = bodyH;
-
-  function commitPage() {
-    pageDescriptors.push({ isFirst, sections: curSecs });
-    curSecs = []; isFirst = false;
-    // Use the taller continuation body height so continuation pages fill up properly.
-    remaining = contBodyH;
+  const wrapper = document.createElement('div');
+  const head = document.createElement('div');
+  head.className = 'j-sec-head';
+  const labelSpan = document.createElement('span');
+  labelSpan.className = 'j-sec-label';
+  labelSpan.textContent = sectionLabel;
+  if (isContinuation) {
+    const em = document.createElement('em');
+    em.style.cssText = 'font-style:italic;opacity:0.6;font-size:9px;margin-left:4px;';
+    em.textContent = '(continued)';
+    labelSpan.appendChild(em);
   }
+  const secRule = document.createElement('div');
+  secRule.className = 'j-sec-rule';
+  head.appendChild(labelSpan);
+  head.appendChild(secRule);
 
-  for (const sec of allSections) {
-    const content = data[sec.field];
-    const { totalH, headH } = measureSectionBlock(sec.label, sec.cssClass, content, bodyW);
+  const contentEl = document.createElement('div');
+  contentEl.className = cssClass;
+  setParaText(contentEl, content);
 
-    if (totalH + _SEC_GAP <= remaining) {
-      curSecs.push({ label: sec.label, cssClass: sec.cssClass, content, isCont: false });
-      remaining -= (totalH + _SEC_GAP);
-    } else {
-      const availForContent = remaining - headH - _SEC_GAP * 2;
-      if (availForContent >= _MIN_SPLIT) {
-        const chunks = splitContentToFit(content, sec.cssClass, availForContent, bodyW);
-        if (chunks.length > 1) {
-          curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[0], isCont: false });
-          commitPage();
-          for (let i = 1; i < chunks.length; i++) {
-            const chk = measureSectionBlock(sec.label, sec.cssClass, chunks[i], bodyW);
-            if (chk.totalH + _SEC_GAP > remaining && curSecs.length > 0) commitPage();
-            curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[i], isCont: true });
-            remaining -= (chk.totalH + _SEC_GAP);
-          }
-          continue;
-        }
+  wrapper.appendChild(head);
+  wrapper.appendChild(contentEl);
+  body.appendChild(wrapper);
+  inner.appendChild(body);
+
+  const footer = document.createElement('div');
+  footer.className = 'page-footer';
+  const verse = document.createElement('div');
+  verse.className = 'footer-verse';
+  verse.textContent = '"Draw near to God, and he will draw near to you." — James 4:8';
+  const brand2 = document.createElement('div');
+  brand2.className = 'footer-brand';
+  brand2.innerHTML = 'Dove Expressions &nbsp;·&nbsp; doveexpressions.org';
+  footer.appendChild(verse);
+  footer.appendChild(brand2);
+  inner.appendChild(footer);
+
+  page.appendChild(inner);
+  sheet.appendChild(page);
+  return sheet;
+}
+
+function buildWordPage(data, content, includeMeta = true) {
+  return buildPropheticSectionPage('Word', 'j-word-area', content, data, {
+    pageTitle: 'Word',
+    includeMeta,
+    isContinuation: false
+  });
+}
+
+function buildWordContinuationPage(data, content) {
+  return buildPropheticSectionPage('Word', 'j-word-area', content, data, {
+    pageTitle: 'Word (continued)',
+    includeMeta: false,
+    isContinuation: true
+  });
+}
+
+function buildSectionContinuationPage(sectionLabel, cssClass, content, data, isFirstPageForEntry = false) {
+  return buildPropheticSectionPage(sectionLabel, cssClass, content, data, {
+    pageTitle: isFirstPageForEntry ? sectionLabel : `${sectionLabel} (continued)`,
+    includeMeta: isFirstPageForEntry,
+    isContinuation: !isFirstPageForEntry
+  });
+}
+
+function createPropheticSectionMeasurement(sectionLabel, cssClass, data, options = {}) {
+  const {
+    pageTitle = sectionLabel,
+    includeMeta = false,
+    isContinuation = false,
+    pageStyle = 'clean'
+  } = options;
+  const sheet = buildPropheticSectionPage(sectionLabel, cssClass, '', data, {
+    pageTitle,
+    includeMeta,
+    isContinuation
+  });
+  sheet.style.cssText = 'position:fixed;visibility:hidden;top:-9999px;left:-9999px;pointer-events:none;';
+  const page = sheet.querySelector('.journal-page');
+  if (pageStyle === 'lined') page.classList.add('ps-lined');
+  else if (pageStyle === 'dotted') page.classList.add('ps-dotted');
+  document.body.appendChild(sheet);
+
+  const body = sheet.querySelector('.journal-body');
+  const contentEl = body.querySelector('.' + cssClass.split(' ')[0]);
+  const bodyRect = body.getBoundingClientRect();
+  const contentRect = contentEl.getBoundingClientRect();
+  const availableHeight = Math.max(Math.floor(bodyRect.bottom - contentRect.top), 1);
+  const width = Math.max(contentEl.clientWidth || body.clientWidth || 280, 120);
+
+  return {
+    availableHeight,
+    width,
+    cleanup() {
+      if (sheet.parentNode) sheet.parentNode.removeChild(sheet);
+    }
+  };
+}
+
+function consumePropheticSectionContent(fullText, fittedText) {
+  const full = String(fullText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  const fitted = String(fittedText || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  if (!full || !fitted) return full;
+  if (full === fitted) return '';
+  if (full.startsWith(fitted)) return full.slice(fitted.length).replace(/^\s+/, '').trim();
+
+  const fullWords = full.split(/\s+/).filter(Boolean);
+  const fittedWords = fitted.split(/\s+/).filter(Boolean);
+  if (fittedWords.length >= fullWords.length) return '';
+  return fullWords.slice(fittedWords.length).join(' ').trim();
+}
+
+function findLargestFittingPropheticChunk(content, cssClass, maxHeight, widthPx) {
+  const full = String(content || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  if (!full) return { text: '', height: 0 };
+
+  const probe = document.createElement('div');
+  probe.className = cssClass;
+  probe.style.cssText = `position:fixed;visibility:hidden;top:-9999px;left:-9999px;width:${widthPx}px;height:auto;overflow:visible;min-height:0;`;
+  document.body.appendChild(probe);
+
+  const measureText = (text) => {
+    setParaText(probe, text);
+    return probe.offsetHeight;
+  };
+
+  try {
+    const fullHeight = measureText(full);
+    if (fullHeight <= maxHeight) return { text: full, height: fullHeight };
+
+    const wordEndPositions = [];
+    const wordRe = /\S+/g;
+    let match;
+    while ((match = wordRe.exec(full))) {
+      wordEndPositions.push(match.index + match[0].length);
+    }
+
+    let low = 0;
+    let high = wordEndPositions.length - 1;
+    let bestText = '';
+    let bestHeight = 0;
+
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      const candidate = full.slice(0, wordEndPositions[mid]).trim();
+      if (!candidate) {
+        low = mid + 1;
+        continue;
       }
-      // Doesn't split usefully — start fresh page
-      if (curSecs.length > 0) commitPage();
-      const freshAvail = remaining - headH - _SEC_GAP * 2;
-      if (totalH + _SEC_GAP <= remaining) {
-        curSecs.push({ label: sec.label, cssClass: sec.cssClass, content, isCont: false });
-        remaining -= (totalH + _SEC_GAP);
+      const candidateHeight = measureText(candidate);
+      if (candidateHeight <= maxHeight) {
+        bestText = candidate;
+        bestHeight = candidateHeight;
+        low = mid + 1;
       } else {
-        // Taller than a full page — must split across pages
-        const chunks = splitContentToFit(content, sec.cssClass, Math.max(freshAvail, _MIN_SPLIT), bodyW);
-        curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[0], isCont: false });
-        commitPage();
-        for (let i = 1; i < chunks.length; i++) {
-          const chk = measureSectionBlock(sec.label, sec.cssClass, chunks[i], bodyW);
-          if (chk.totalH + _SEC_GAP > remaining && curSecs.length > 0) commitPage();
-          curSecs.push({ label: sec.label, cssClass: sec.cssClass, content: chunks[i], isCont: true });
-          remaining -= (chk.totalH + _SEC_GAP);
-        }
+        high = mid - 1;
       }
     }
+
+    if (!bestText && wordEndPositions.length) {
+      bestText = full.slice(0, wordEndPositions[0]).trim();
+      bestHeight = measureText(bestText);
+    }
+
+    return { text: bestText, height: bestHeight };
+  } finally {
+    if (probe.parentNode) probe.parentNode.removeChild(probe);
   }
-  if (curSecs.length > 0) commitPage();
+}
+
+function paginatePropheticSectionContent(content, cssClass, firstMaxHeight, continuationMaxHeight, widthPx, sectionLabel = '') {
+  const chunks = [];
+  let remaining = String(content || '').trim();
+  let isFirstChunk = true;
+  let safety = 0;
+
+  while (remaining && safety < 100) {
+    safety += 1;
+    const maxHeight = isFirstChunk ? firstMaxHeight : continuationMaxHeight;
+    const fitResult = findLargestFittingPropheticChunk(remaining, cssClass, maxHeight, widthPx);
+    const fitted = String(fitResult.text || '').trim();
+    if (!fitted) break;
+    chunks.push(fitted);
+    const nextRemaining = consumePropheticSectionContent(remaining, fitted);
+    console.log('[PROPHECY PAGINATION]', {
+      section: sectionLabel,
+      pageType: isFirstChunk ? 'first' : 'continuation',
+      availableHeight: maxHeight,
+      fittedHeight: fitResult.height || 0,
+      fittedPreview: fitted.slice(0, 120),
+      remainingLength: nextRemaining.length
+    });
+    if (!nextRemaining) break;
+    if (!nextRemaining || nextRemaining === remaining) break;
+    remaining = nextRemaining;
+    isFirstChunk = false;
+  }
+
+  return chunks.length ? chunks : (content && String(content).trim() ? [String(content).trim()] : []);
+}
+
+// Main pagination function — builds pages section by section.
+function buildPropheticPages(container, data, pageStyle) {
+  const sectionOrder = [
+    { key: 'word', label: 'Word', cssClass: 'j-word-area' },
+    { key: 'interpretation', label: 'What I Believe God Is Saying', cssClass: 'j-prose medium' },
+    { key: 'scripture', label: 'Scripture Confirmation', cssClass: 'j-scripture' },
+    { key: 'response', label: 'How I Will Respond', cssClass: 'j-prose large' },
+    { key: 'notes', label: 'Additional Notes', cssClass: 'j-prose medium' }
+  ];
 
   let pageCount = 0;
-  pageDescriptors.forEach((desc, idx) => {
-    if (idx > 0) {
-      const sp = document.createElement('div'); sp.className = 'page-spacer'; sp.style.height = '2.5rem';
-      container.appendChild(sp);
+  let firstPageForEntry = true;
+
+  for (const section of sectionOrder) {
+    const content = String(data[section.key] || '').trim();
+    if (!content) continue;
+
+    const firstMeasure = createPropheticSectionMeasurement(section.label, section.cssClass, data, {
+      pageTitle: section.key === 'word' ? 'Word' : section.label,
+      includeMeta: firstPageForEntry,
+      isContinuation: false,
+      pageStyle
+    });
+    const continuationMeasure = createPropheticSectionMeasurement(section.label, section.cssClass, data, {
+      pageTitle: section.key === 'word' ? 'Word (continued)' : `${section.label} (continued)`,
+      includeMeta: false,
+      isContinuation: true,
+      pageStyle
+    });
+
+    let chunks = [];
+    try {
+      chunks = paginatePropheticSectionContent(
+        content,
+        section.cssClass,
+        firstMeasure.availableHeight,
+        continuationMeasure.availableHeight,
+        firstMeasure.width,
+        section.label
+      );
+    } finally {
+      firstMeasure.cleanup();
+      continuationMeasure.cleanup();
     }
-    const sheet = buildPropheticPageFromDescriptor(desc, data);
-    if (pageStyle === 'lined') sheet.querySelector('.journal-page').classList.add('ps-lined');
-    else if (pageStyle === 'dotted') sheet.querySelector('.journal-page').classList.add('ps-dotted');
-    container.appendChild(sheet); pageCount++;
-  });
+
+    chunks.forEach((chunk, index) => {
+      if (pageCount > 0) {
+        const spacer = document.createElement('div');
+        spacer.className = 'page-spacer';
+        spacer.style.height = '2.5rem';
+        container.appendChild(spacer);
+      }
+
+      let sheet;
+      if (section.key === 'word') {
+        sheet = index === 0
+          ? buildWordPage(data, chunk, firstPageForEntry)
+          : buildWordContinuationPage(data, chunk);
+      } else {
+        sheet = buildSectionContinuationPage(section.label, section.cssClass, chunk, data, firstPageForEntry && index === 0);
+      }
+
+      const page = sheet.querySelector('.journal-page');
+      if (pageStyle === 'lined') page.classList.add('ps-lined');
+      else if (pageStyle === 'dotted') page.classList.add('ps-dotted');
+      container.appendChild(sheet);
+      pageCount += 1;
+      if (firstPageForEntry && index === 0) firstPageForEntry = false;
+    });
+  }
+
+  if (pageCount === 0) {
+    const sheet = buildJournalPageElement(data);
+    const page = sheet.querySelector('.journal-page');
+    if (pageStyle === 'lined') page.classList.add('ps-lined');
+    else if (pageStyle === 'dotted') page.classList.add('ps-dotted');
+    container.appendChild(sheet);
+    return 1;
+  }
+
   return pageCount;
 }
 
