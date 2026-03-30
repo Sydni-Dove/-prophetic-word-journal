@@ -3,6 +3,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 function ok(body: unknown) {
@@ -14,18 +16,28 @@ function ok(body: unknown) {
 
 // Try models in order — newest first, fallback to older stable versions
 const MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-pro-latest',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-pro',
 ];
 
 const PROMPT =
-  'Extract all the text from this handwritten image exactly as written. ' +
-  'Preserve every paragraph break, line break, date, and punctuation mark. ' +
-  'Return only the raw extracted text — no commentary, no formatting changes, no markdown.';
+  'Read this handwritten journal page carefully and extract the text as accurately as possible. ' +
+  'Preserve paragraph breaks, line breaks, dates, labels, and punctuation whenever they are readable. ' +
+  'If the page contains headings or labels such as Word, Prophetic Word, Meaning, Interpretation, Scripture, Response, Prayer, Notes, Theme, By, Source, or Date, keep those labels exactly as written instead of rewriting them. ' +
+  'Do not summarize, explain, clean up, or paraphrase. Do not add commentary. Do not invent missing words. ' +
+  'If a word is unclear, keep your best close reading rather than rewriting the sentence. ' +
+  'Return only the extracted text.';
+
+const FUNCTION_VERSION = 'ocr-image-2026-03-27-v2';
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: cors,
+    });
+  }
 
   try {
     const { image, mimeType } = await req.json();
@@ -67,14 +79,23 @@ Deno.serve(async (req: Request) => {
       }
 
       const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-      return ok({ text, model });
+      return ok({
+        text,
+        model,
+        version: FUNCTION_VERSION,
+        attemptedModels: MODELS
+      });
     }
 
     // All models failed
-    return ok({ error: `OCR failed — ${lastError}` });
+    return ok({
+      error: `OCR failed — ${lastError}`,
+      version: FUNCTION_VERSION,
+      models: MODELS
+    });
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    return ok({ error: msg });
+    return ok({ error: msg, version: FUNCTION_VERSION });
   }
 });
