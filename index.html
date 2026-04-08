@@ -14,20 +14,22 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
+  --primary:       #630000;
+  --primary-light: #8a1a1a;
   /* UI shell — fixed, never changed by presets */
   --ui-accent:     #630000;
   --ui-accent-rgb: 99, 0, 0;
   --coral:         #D96248;
   --sunrise:       #D97904;
-  --gold:          #C5A44D;
+  --gold:          #E6A742;
   --pale-pink:     #F2DFD8;
   --soft-bg:       #FDFDFD;
   --line:          #F2DFD8;
   --white:         #ffffff;
   --text:          #1B1717;
-  --text-mid:      #444444;
-  --text-soft:     #666666;
-  --text-light:    #999999;
+  --text-mid:      #3a2f2f;
+  --text-soft:     #6b5050;
+  --text-light:    #9e8080;
 
   /* Page template — updated by applyPreset / applyCustomColors */
   --pg-primary:    #630000;
@@ -97,23 +99,99 @@ body {
   font-family: 'Playfair Display', serif; font-style: italic;
   font-size: 0.88rem; color: var(--text-mid); line-height: 1.4;
 }
+.m-tab-nav {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--white);
+  border-bottom: 1px solid var(--pale-pink);
+  box-shadow: 0 2px 8px rgba(27,23,23,0.06);
+}
+@media (max-width: 767px) {
+  .m-tab-nav {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    border-bottom: none;
+    border-top: 1px solid var(--pale-pink);
+    box-shadow: 0 -2px 8px rgba(27,23,23,0.06);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+.m-tab-btn {
+  flex: 1;
+  font-family: 'Lato', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.72rem 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+  margin-bottom: -1px;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+.m-tab-btn .m-tab-icon { font-size: 1rem; line-height: 1; }
+.m-tab-btn:hover { color: var(--primary); }
+.m-tab-btn.is-active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 700;
+}
+@media (min-width: 640px) {
+  .m-tab-nav { justify-content: center; gap: 0; }
+  .m-tab-btn {
+    flex: 0 0 auto;
+    padding: 0.72rem 1.6rem 0.6rem;
+    flex-direction: row;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+  }
+  .m-tab-btn .m-tab-icon { font-size: 0.88rem; }
+}
 
 /* ── EDITOR ───────────────────────────────────────────── */
 .editor-section { max-width: 820px; margin: 2.5rem auto; padding: 0 1.5rem; }
+#editorSection {
+  margin-top: 0;
+  position: relative;
+}
+#editorSection::before {
+  display: none;
+}
 .section-eyebrow {
-  font-family: 'Lato', sans-serif; font-size: 0.72rem;
-  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  background: linear-gradient(to right, var(--ui-accent), var(--coral));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 1rem; margin-top: 2.2rem;
+  font-family: 'Playfair Display', serif; font-size: 0.62rem;
+  letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 1.2rem; margin-top: 2.2rem;
   display: flex; align-items: center; gap: 0.8rem;
 }
 .section-eyebrow:first-child { margin-top: 0; }
 .section-eyebrow::after {
   content: ''; flex: 1; height: 1px;
-  background: linear-gradient(to right, var(--coral), transparent);
-  opacity: 0.35;
+  background: linear-gradient(to right, var(--gold), transparent);
+  opacity: 0.4;
+}
+.section-support {
+  font-family: 'Lora', serif;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+  line-height: 1.55;
+  margin: -0.25rem 0 0.95rem;
+  max-width: 40rem;
 }
 .form-block { margin-bottom: 2.2rem; }
 .upload-zone {
@@ -159,7 +237,11 @@ textarea:focus {
   box-shadow: 0 0 0 2px rgba(99,0,0,0.1);
 }
 select:disabled { opacity: 0.35; cursor: not-allowed; }
-.btn-row { display: flex; gap: 0.9rem; justify-content: center; margin-top: 2.8rem; flex-wrap: wrap; }
+.form-action-row { display: flex; gap: 0.9rem; justify-content: center; margin-top: 2.8rem; flex-wrap: wrap; }
+.form-action-row {
+  border-top: 1px solid rgba(242,223,216,0.92);
+  padding-top: 1rem;
+}
 .btn-generate {
   font-family: 'Lato', sans-serif; font-size: 0.95rem; font-weight: 700;
   color: var(--white); background: linear-gradient(to right, var(--ui-accent), var(--coral));
@@ -182,14 +264,15 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   border-radius: 100px; padding: 0.7rem 2rem; cursor: pointer; transition: background 0.2s, color 0.2s;
 }
 .btn-save:hover { background: var(--ui-accent); color: var(--white); }
+.mobile-form-bar { display: none; }
 
 /* ── HOW IT WORKS ─────────────────────────────────────── */
 .how-it-works {
-  background: var(--pale-pink);
-  border: none;
+  background: rgba(255,255,255,0.86);
+  border: 1px solid rgba(242,223,216,0.88);
   border-radius: 0.75rem;
-  padding: 1.6rem 2rem;
-  margin-top: 2.8rem;
+  padding: 1.4rem 1.7rem;
+  margin-top: 2.1rem;
 }
 .how-it-works .hiw-title {
   font-family: 'Playfair Display', serif;
@@ -236,32 +319,312 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 
 /* ── OUTPUT ───────────────────────────────────────────── */
-.output-section { max-width: 820px; width: 100%; margin: 0 auto 4rem; padding: 0 0 2rem; display: none; overflow: hidden; }
+.output-section {
+  max-width: none;
+  width: 100%;
+  margin: 0 0 4rem;
+  padding: 0 0 2rem;
+  display: none;
+  overflow-x: hidden;
+  background: #f5f0ec;
+}
 .output-section.show { display: block; }
+.stage-panel {
+  width: min(100%, 960px);
+  margin: 0 auto 0.7rem;
+  padding: 1rem 1rem 0.8rem;
+  background: rgba(255,255,255,0.92);
+  border: none;
+  border-bottom: 1px solid rgba(242,223,216,0.74);
+}
+.stage-eyebrow {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ui-accent);
+  margin-bottom: 0.22rem;
+  opacity: 0.82;
+}
+.stage-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.08rem;
+  font-weight: 400;
+  color: var(--text);
+  font-style: italic;
+  line-height: 1.15;
+}
+.stage-subtitle {
+  font-family: 'Lora', serif;
+  font-size: 0.76rem;
+  color: var(--text-soft);
+  line-height: 1.45;
+  margin-top: 0.22rem;
+  max-width: 36rem;
+}
+.stage-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.45rem;
+  padding: 0.1rem 0.62rem;
+  border-radius: 999px;
+  background: var(--ui-accent);
+  color: var(--white);
+  font-family: 'Lato', sans-serif;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ── REVIEW FILTERS ───────────────────────────────────── */
+.review-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+.filter-chip {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--white);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-chip.active {
+  background: var(--ui-accent);
+  color: var(--white);
+  border-color: var(--ui-accent);
+}
+.filter-chip:hover {
+  border-color: var(--ui-accent);
+}
+.review-stage-header {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 1.2rem 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border-bottom: 1px solid rgba(242,223,216,0.7);
+  background: rgba(255,255,255,0.92);
+}
+.review-stage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.review-stage-eyebrow,
+.print-stage-eyebrow {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 0.3rem;
+}
+.review-stage-title,
+.print-stage-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.1;
+}
+.review-stage-header .stage-subtitle,
+.print-stage-header .stage-subtitle {
+  font-size: 0.92rem;
+  margin-top: 0.28rem;
+  max-width: 42rem;
+}
+.review-stage-header .review-filters {
+  margin-top: 0;
+}
+.print-stage-header {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 1.2rem 1.5rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(242,223,216,0.7);
+  background: rgba(255,255,255,0.92);
+}
+.print-stage-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+.print-page-count {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--white);
+  background: var(--primary);
+  border-radius: 100px;
+  padding: 0.18rem 0.65rem;
+  display: inline-block;
+  margin-top: 0.4rem;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.print-page-count.visible { opacity: 1; }
+/* ── hidden-attribute guard: CSS display rules above outrank the UA
+   [hidden]{display:none} — these !important overrides restore correct
+   visibility gating that switchStage() sets via el.hidden = true/false */
+.stage-action-bar[hidden],
+.review-stage-header[hidden],
+.print-stage-header[hidden],
+.print-settings-panel[hidden],
+.review-cards-container[hidden] {
+  display: none !important;
+}
+.review-entry-nav {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  width: min(100%, 960px);
+  margin: 0 auto 0.8rem;
+  padding: 0 1rem;
+}
+.review-entry-nav[hidden] { display: none !important; }
+.preview-viewport[hidden]  { display: none !important; }
+
+/* ── REVIEW CARDS ─────────────────────────────────────── */
+.review-cards-container {
+  width: min(100%, 720px);
+  margin: 0 auto;
+  padding: 0.5rem 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+.review-card {
+  background: #ffffff;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(99,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(27,23,23,0.06), 0 6px 24px rgba(27,23,23,0.04);
+  padding: 1.65rem 1.9rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+.rv-entry-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ui-accent);
+  opacity: 0.6;
+}
+.rv-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid rgba(99,0,0,0.1);
+}
+.rv-meta-item {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.76rem;
+  color: var(--text-soft);
+}
+.rv-meta-type, .rv-meta-theme { font-weight: 600; color: var(--text-mid); }
+/* Each field — label + body pair */
+.rv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+/* Inter-field divider: sits between consecutive fields only */
+.rv-field + .rv-field {
+  border-top: 1px solid rgba(99,0,0,0.08);
+  padding-top: 1.1rem;
+  margin-top: -0.05rem;
+}
+.rv-field-label {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(99,0,0,0.58);
+}
+.rv-field-body {
+  font-family: 'Lora', serif;
+  font-size: 0.93rem;
+  color: var(--text);
+  line-height: 1.72;
+  word-break: break-word;
+}
+.review-entry-btn {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.42rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(99,0,0,0.22);
+  background: transparent;
+  color: var(--ui-accent);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.review-entry-btn.is-active,
+.review-entry-btn:hover {
+  background: var(--ui-accent);
+  color: var(--white);
+  border-color: var(--ui-accent);
+}
 /* Screen preview viewport contains visual scaling only; print dimensions stay native inside .journal-sheet. */
 .preview-viewport {
   width: 100%;
-  max-width: 100vw;
+  max-width: 1120px;
   overflow: hidden;
-  padding: 0 0 0.75rem;
+  padding: 0.2rem 1rem 0.85rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 18rem;
+  margin: 0 auto;
 }
 #pagesContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform-origin: top left;
+  transform-origin: top center;
 }
 #pagesContainer .journal-sheet {
   margin-left: auto;
   margin-right: auto;
 }
 #previewWrap {
-  overflow: hidden;
+  overflow: visible;
   margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
-.output-controls {
-  display: flex; gap: 0.9rem; justify-content: center;
-  margin-bottom: 1.5rem; flex-wrap: wrap; padding: 0 1.5rem;
+.stage-action-bar {
+  width: min(100%, 960px);
+  margin: 0.9rem auto 0;
+  display: flex;
+  gap: 0.65rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: center;
 }
 .btn-print {
   font-family: 'Lato', sans-serif; font-size: 0.88rem; font-weight: 700;
@@ -336,21 +699,21 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 
 /* ── PAGE HEADER ──────────────────────────────────────── */
-.page-header { text-align: center; margin-bottom: 0.24in; }
+.page-header { text-align: center; margin-bottom: 0.22in; }
 .page-brand {
   font-family: 'Playfair Display', serif; font-size: 0.52rem;
   letter-spacing: 0.48em; text-transform: uppercase;
   color: var(--pg-primary); margin-bottom: 0.1in;
 }
 .page-title {
-  font-family: 'Playfair Display', serif; font-weight: 400; font-size: 28px;
+  font-family: 'Playfair Display', serif; font-weight: 400; font-size: 30px;
   letter-spacing: 4px; text-transform: uppercase;
   color: var(--pg-primary); line-height: 1;
 }
 .page-title-rule {
   width: 2in; height: 1px;
   background: linear-gradient(to right, transparent, var(--pg-accent), transparent);
-  margin: 0.12in auto 0; opacity: 0.65;
+  margin: 0.1in auto 0; opacity: 0.65;
 }
 
 /* ── META ROW ─────────────────────────────────────────── */
@@ -371,13 +734,13 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   color: var(--pg-primary); display: block; margin-bottom: 0.025in;
 }
 .meta-value {
-  font-family: 'Lora', serif; font-size: 0.74rem; color: var(--text);
+  font-family: 'Lora', serif; font-size: 0.86rem; color: var(--pg-text);
   min-height: 1em; line-height: 1.35;
   word-wrap: break-word; overflow-wrap: break-word;
 }
 
 /* ── JOURNAL BODY ─────────────────────────────────────── */
-.journal-body { display: flex; flex-direction: column; gap: 0.15in; flex: 1; min-height: 0; overflow: hidden; }
+.journal-body { display: flex; flex-direction: column; gap: 0.15in; flex: 1; min-height: 0; overflow: visible; }
 
 .j-sec-head { display: flex; align-items: center; gap: 0.1in; margin-bottom: 0.08in; min-width: 0; }
 .j-sec-label {
@@ -399,7 +762,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   padding: 0.04in 0 0.04in 14px;
   min-height: 2in; height: auto;
   border-left: 3px solid var(--pg-primary);
-  word-wrap: break-word; overflow-wrap: break-word;
+  word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word;
   overflow: visible; display: block;
 }
 /* Paragraph spacing inside word, prose, and scripture areas */
@@ -412,27 +775,26 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .j-prose {
   font-family: 'Lora', serif; font-size: 0.88rem;
   color: var(--pg-text); line-height: 1.86;
-  padding: 0.04in 0.04in 0.06in 14px;
+  padding: 0.04in 0.04in 0.04in 12px;
   height: auto;
   background: transparent; border: none;
-  border-left: 1.5px solid var(--pg-primary);
-  opacity: 0.95;
-  word-wrap: break-word; overflow-wrap: break-word;
+  border-left: 1.5px solid rgba(var(--pg-primary-rgb), 0.22);
+  word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word;
   overflow: visible; display: block;
 }
 /* Section-specific min-heights for print writing space */
 .j-prose.medium { min-height: 0.9in; }   /* What I Believe, Additional Notes */
 .j-prose.large  { min-height: 2.1in; }   /* How I Will Respond — largest section */
 
-/* Scripture — panel tint, accent left bar */
+/* Scripture — accent left bar, no panel tint */
 .j-scripture {
   font-family: 'Lora', serif; font-size: 0.88rem; font-style: italic;
   color: var(--pg-text); line-height: 1.78;
-  padding: 0.04in 0.1in 0.04in 14px;
+  padding: 0.04in 0.1in 0.04in 12px;
   min-height: 0.35in; height: auto;
-  background: var(--pg-panel);
+  background: transparent;
   border: none; border-left: 1.5px solid var(--pg-accent);
-  word-wrap: break-word; overflow-wrap: break-word;
+  word-wrap: break-word; overflow-wrap: anywhere; word-break: break-word;
   overflow: visible; display: block;
 }
 
@@ -444,8 +806,8 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   flex-shrink: 0;
 }
 .footer-verse {
-  font-family: 'Lora', serif; font-size: 0.58rem; font-style: italic;
-  color: var(--text-light); max-width: 3.2in; line-height: 1.4;
+  font-family: 'Lora', serif; font-size: 0.56rem; font-style: italic;
+  color: var(--pg-text); opacity: 0.5; max-width: 3.2in; line-height: 1.4;
   word-wrap: break-word; overflow-wrap: break-word;
 }
 .footer-brand {
@@ -473,8 +835,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 /* College rule: 9/32 inch (0.28125in) per line — fixed height, no flex stretch */
 .notes-body.lined .notes-line {
   height: 0.28125in;
-  border-bottom: 1px solid var(--pg-primary);
-  opacity: 0.22;
+  border-bottom: 1px solid rgba(var(--pg-primary-rgb), 0.24);
   box-sizing: border-box;
 }
 /* Blank: just open space */
@@ -483,16 +844,177 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 .notes-body.dotted { background-image: radial-gradient(circle, var(--pg-accent) 1.2px, transparent 1.2px); background-size: 0.25in 0.25in; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
 /* ── THEME CUSTOMIZER ─────────────────────────────────── */
-.theme-presets { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
-.preset-btn { font-family: 'Lato', sans-serif; font-size: 0.8rem; font-weight: 500; border: 1px solid rgba(99,0,0,0.2); border-radius: 100px; padding: 0.35rem 0.9rem; cursor: pointer; background: var(--pale-pink); color: var(--text); transition: all 0.2s; }
-.preset-btn:hover, .preset-btn.active { border-color: var(--ui-accent); color: var(--white); background: var(--ui-accent); }
-.color-pickers-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
-@media (max-width: 620px) { .color-pickers-grid { grid-template-columns: 1fr 1fr; } }
-.color-picker-group { display: flex; flex-direction: column; gap: 0.4rem; }
-.color-picker-group label { font-size: 0.58rem; }
+.print-settings-panel {
+  width: min(100%, 1120px);
+  margin: 0 auto 0.8rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid rgba(242,223,216,0.7);
+  background: rgba(255,255,255,0.92);
+  box-shadow: none;
+}
+.print-settings-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  border-top: 1px solid rgba(242,223,216,0.8);
+  border-bottom: 1px solid rgba(242,223,216,0.8);
+  padding: 0.82rem 0;
+  cursor: pointer;
+  gap: 0.5rem;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+.print-settings-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.acc-caret {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  transition: transform 0.22s ease;
+  flex-shrink: 0;
+}
+.print-settings-body {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.28s ease, opacity 0.22s ease;
+}
+.print-settings-panel.is-open .print-settings-body {
+  max-height: 2000px;
+  opacity: 1;
+}
+.print-settings-panel.is-open .acc-caret {
+  transform: rotate(180deg);
+}
+.print-settings-inner {
+  padding: 0.9rem 0 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+.print-settings-panel .form-block {
+  margin-bottom: 0;
+}
+.print-settings-panel .section-eyebrow {
+  font-size: 0.58rem;
+  margin-top: 0;
+  margin-bottom: 0.55rem;
+}
+.print-settings-panel .section-eyebrow::after {
+  opacity: 0.18;
+}
+.print-settings-panel label {
+  font-size: 0.62rem;
+  color: var(--text-soft);
+}
+.print-settings-panel select {
+  background: rgba(255,255,255,0.94);
+}
+.theme-presets {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+.preset-btn {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid rgba(99,0,0,0.2);
+  border-radius: 100px;
+  padding: 0.35rem 0.9rem;
+  cursor: pointer;
+  background: var(--pale-pink);
+  color: var(--text);
+  transition: all 0.2s;
+}
+.preset-btn:hover,
+.preset-btn.active {
+  border-color: var(--primary);
+  color: var(--white);
+  background: var(--primary);
+}
+.preset-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99,0,0,0.1);
+}
+.color-pickers-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
+@media (max-width: 620px) { .color-pickers-grid { grid-template-columns: 1fr 1fr; gap: 0.75rem; } }
+.color-picker-group { display: flex; flex-direction: column; gap: 0.45rem; }
+.color-picker-group label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+.color-swatch-wrap {
+  position: relative;
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.color-swatch-wrap input[type="color"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.color-swatch-display {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06);
+  transition: box-shadow 0.15s;
+  pointer-events: none;
+}
+.color-swatch-wrap:hover .color-swatch-display {
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#reviewActionBar .btn-ghost,
+#printActionBar .btn-ghost {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  background: transparent;
+  border: 1px solid rgba(99,0,0,0.2);
+  min-height: 44px;
+}
+#reviewActionBar .btn-generate,
+#printActionBar .btn-print {
+  min-height: 44px;
+  box-shadow: 0 3px 12px rgba(99,0,0,0.22);
+}
+#printActionBar .btn-save,
+#printActionBar .btn-save-journal {
+  min-height: 44px;
+  padding-left: 1.2rem;
+  padding-right: 1.2rem;
+}
 
 /* ── GENERATOR NAV ────────────────────────────────────── */
-.gen-nav { display: flex; justify-content: center; gap: 0.5rem; padding: 0.6rem 1.5rem; background: var(--white); border-bottom: 1px solid var(--pale-pink); flex-wrap: wrap; align-items: center; }
+.gen-nav {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  background: var(--white);
+  border-bottom: 1px solid var(--pale-pink);
+  flex-wrap: wrap;
+  align-items: center;
+}
 .gen-nav-link { font-family: 'Lato', sans-serif; font-size: 0.84rem; font-weight: 500; color: var(--text); text-decoration: none; padding: 0.42rem 1.1rem; border-radius: 100px; background: var(--pale-pink); border: none; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; gap: 0.3rem; }
 .gen-nav-link:hover { background: rgba(99,0,0,0.12); color: var(--ui-accent); }
 .gen-nav-link.is-active { background: linear-gradient(to right, var(--ui-accent), var(--coral)); color: var(--white); font-weight: 600; }
@@ -513,21 +1035,67 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 @media (max-width: 699px) {
   html, body { overflow-x: hidden; }
 
+  /* ── Review cards: clear mobile bottom nav ── */
+  .review-cards-container {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
   /* ── Header / hero: compress vertical space ── */
   .site-header {
-    padding: 0.5rem 1rem 0.4rem;
+    padding: 0.72rem 0.95rem 0.52rem;
   }
-  .site-header h1 { font-size: clamp(1.5rem, 6vw, 2rem); margin-bottom: 0.2rem; }
-  .site-header .subtitle { font-size: 0.85rem; }
-  .site-header .brand-tag { margin-bottom: 0.25rem; }
-  .hero-banner { padding: 0.45rem 1rem; }
-  .hero-banner .hero-inner { align-items: flex-start; }
-  .hero-banner .hero-quote { font-size: 0.8rem; }
+  .site-header::before { width: 92px; }
+  .site-header h1 {
+    font-size: clamp(1.4rem, 6vw, 1.9rem);
+    margin-bottom: 0.14rem;
+    line-height: 1.08;
+  }
+  .site-header .subtitle {
+    font-size: 0.8rem;
+    line-height: 1.42;
+    max-width: 18rem;
+  }
+  .site-header .brand-tag {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.18rem;
+  }
+  .hero-banner {
+    display: none;
+  }
+  .hero-banner .hero-inner {
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .hero-banner .hero-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .hero-banner .hero-quote {
+    font-size: 0.75rem;
+    line-height: 1.42;
+  }
 
   /* ── Nav ── */
   .gen-nav, .tab-nav-inner {
-    padding-left: 0.85rem;
-    padding-right: 0.85rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+  .gen-nav {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-top: 0.46rem;
+    padding-bottom: 0.12rem;
+    scrollbar-width: none;
+  }
+  .gen-nav::-webkit-scrollbar { display: none; }
+  .gen-nav-link {
+    flex: 0 0 auto;
+    min-height: 40px;
+    font-size: 0.76rem;
+    padding: 0.38rem 0.88rem;
   }
   .gen-nav-link, .tab-btn {
     min-height: 44px;
@@ -539,18 +1107,63 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
   /* ── Editor ── */
   .editor-section {
-    margin: 0.35rem auto;
-    padding: 0 0.85rem;
-    /* leave room for sticky action bar */
-    padding-bottom: 5rem;
+    margin: 1.5rem auto;
+    padding: 0 0.9rem;
+    padding-bottom: calc(84px + 50px + env(safe-area-inset-bottom, 0px));
   }
-  .form-block { margin-bottom: 0.65rem; }
-  .section-eyebrow { margin-top: 0.6rem; margin-bottom: 0.35rem; }
+  #editorSection::before {
+    display: none;
+  }
+  .form-block {
+    margin-bottom: 0.8rem;
+    padding: 0.95rem 0.9rem;
+    border-radius: 1rem;
+    background: rgba(255,255,255,0.94);
+    border: 1px solid rgba(242,223,216,0.92);
+    box-shadow: 0 10px 28px rgba(27,23,23,0.04);
+  }
+  .form-block.form-block-entry {
+    margin-top: 0.75rem;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,247,240,0.98));
+    border-color: rgba(217,121,4,0.24);
+    box-shadow: 0 16px 34px rgba(27,23,23,0.08);
+  }
+  .form-block.form-block-entry:first-of-type .section-eyebrow::before {
+    content: 'Start here';
+    display: block;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ui-accent);
+    margin-bottom: 0.35rem;
+  }
+  .form-block.form-block-entry:nth-of-type(2) {
+    background: rgba(255,255,255,0.88);
+    border-color: rgba(242,223,216,0.72);
+    box-shadow: 0 8px 20px rgba(27,23,23,0.04);
+  }
+  .section-eyebrow {
+    margin-top: 0;
+    margin-bottom: 0.38rem;
+    font-size: 0.56rem;
+    letter-spacing: 0.24em;
+    gap: 0.6rem;
+  }
+  .section-eyebrow::after { opacity: 0.22; }
+  .section-support {
+    font-size: 0.76rem;
+    line-height: 1.48;
+    margin: 0 0 0.78rem;
+    max-width: none;
+  }
 
   /* ── Upload zone: leaner ── */
   .upload-zone {
-    padding: 0.55rem 0.75rem;
+    padding: 0.95rem 0.8rem;
     border-radius: 0.75rem;
+    background: linear-gradient(180deg, rgba(242,223,216,0.62), rgba(255,255,255,0.92));
   }
   .upload-zone .upload-glyph { font-size: 1.3rem; margin-bottom: 0.25rem; }
   .upload-zone p {
@@ -582,35 +1195,94 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     padding: 0.75rem 0.9rem;
     line-height: 1.5;
   }
+  .form-block.form-block-content .f-group + .f-group {
+    padding-top: 0.15rem;
+  }
 
   /* ── How it works: condensed ── */
   .how-it-works {
-    padding: 0.5rem 0.75rem;
-    margin-top: 0.5rem;
+    padding: 0.8rem 0.85rem;
+    margin-top: 0.4rem;
+    background: rgba(255,255,255,0.74);
   }
   .how-it-works ol {
     grid-template-columns: 1.45rem 1fr;
     gap: 0.6rem 0.65rem;
   }
+  .how-it-works .hiw-title {
+    margin-bottom: 0.85rem;
+    font-size: 0.56rem;
+    letter-spacing: 0.24em;
+  }
+  .hiw-label { font-size: 0.74rem; }
   .hiw-desc { font-size: 0.78rem; }
 
-  /* Fallback: keep buttons visible on mobile */
-  .btn-row {
-    display: flex;
-    gap: 0.9rem;
-    justify-content: center;
-    flex-wrap: wrap;
+  .form-action-row {
+    display: none;
   }
-  .btn-row > * {
-    flex: 1 1 100%;
+  .mobile-form-bar {
+    display: none;
+    position: fixed;
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: rgba(255,255,255,0.98);
+    border-top: 1px solid rgba(242,223,216,0.92);
+    box-shadow: 0 -4px 16px rgba(27,23,23,0.08);
+    padding: 0.75rem 0.85rem;
+  }
+  .mobile-form-bar.is-visible {
+    display: block;
+  }
+  body[data-generator-stage="review"] .mobile-form-bar,
+  body[data-generator-stage="print"] .mobile-form-bar,
+  body[data-active-tab="saved"] .mobile-form-bar {
+    display: none;
+  }
+  .mobile-form-bar-copy {
+    display: none;
+  }
+  .mobile-form-step {
+    display: none;
+  }
+  .mobile-form-note {
+    display: none;
+  }
+  .mobile-form-bar-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+    gap: 0.62rem;
+  }
+  .mobile-form-bar .btn-ghost,
+  .mobile-form-bar .btn-generate {
+    width: 100%;
+    min-height: 42px;
+    padding-left: 0.95rem;
+    padding-right: 0.95rem;
   }
 
-  /* ── Output controls ── */
-  .theme-presets,
-  .output-controls {
-    gap: 1rem;
+  .m-tab-btn {
+    min-width: 0;
+    overflow: hidden;
   }
-  .preset-btn,
+  .m-tab-btn > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .theme-presets {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .preset-btn {
+    min-height: auto;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.8rem;
+  }
   .btn-save,
   .btn-save-journal,
   .btn-print,
@@ -625,20 +1297,20 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   .btn-ghost {
     font-size: 0.95rem;
   }
-  .output-controls { align-items: stretch; }
-  .output-controls {
-    padding-left: 0.35rem;
-    padding-right: 0.35rem;
-    margin-bottom: 0.8rem;
+  .stage-action-bar {
+    align-items: stretch;
+    margin-left: 0.35rem;
+    margin-right: 0.35rem;
   }
-  .output-controls > * {
+  .stage-action-bar > * {
     flex: 1 1 100%;
     width: 100%;
   }
-  .output-controls .btn-print,
-  .output-controls .btn-save,
-  .output-controls .btn-save-journal,
-  .output-controls .btn-ghost {
+  .stage-action-bar .btn-print,
+  .stage-action-bar .btn-save,
+  .stage-action-bar .btn-save-journal,
+  .stage-action-bar .btn-generate,
+  .stage-action-bar .btn-ghost {
     min-height: 44px;
     padding-top: 0.68rem;
     padding-bottom: 0.68rem;
@@ -649,136 +1321,140 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     overflow: hidden;
     padding-left: 0;
     padding-right: 0;
-    /* extra bottom clearance so sticky bar never covers preview content */
-    padding-bottom: 5.5rem;
+    padding-bottom: calc(12.5rem + env(safe-area-inset-bottom, 0px));
     max-width: 100vw;
   }
-  /* Fallback: show output controls on mobile */
-  .output-controls {
-    display: flex;
-    gap: 0.9rem;
-    justify-content: center;
-    flex-wrap: wrap;
+  .stage-panel {
+    width: auto;
+    margin-left: 0.9rem;
+    margin-right: 0.9rem;
+    padding: 0.85rem 0.85rem 0.7rem;
+    margin-bottom: 0.55rem;
+  }
+  .print-stage-header {
+    align-items: flex-start;
+  }
+  .review-stage-title,
+  .print-stage-title {
+    font-size: 1rem;
+  }
+  .review-stage-header .stage-subtitle,
+  .print-stage-header .stage-subtitle {
+    font-size: 0.78rem;
+    line-height: 1.5;
+    margin-top: 0.28rem;
+  }
+  .review-entry-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-bottom: 0.55rem;
+    padding: 0 0.9rem 0.1rem;
+    scrollbar-width: none;
+  }
+  .review-entry-nav::-webkit-scrollbar { display: none; }
+  .review-entry-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    min-height: 40px;
+    padding: 0.38rem 0.82rem;
+  }
+  .print-settings-panel {
+    padding: 0 1rem;
+  }
+  .print-settings-trigger {
+    padding: 0.82rem 0;
   }
   .preview-viewport {
-    padding: 0 0 0.5rem;
+    padding: 0.05rem 0 0.35rem;
   }
-}
-
-/* ── Sticky mobile action bar ── */
-#mobileActionBar {
-  display: none;
-}
-@media (max-width: 699px) {
-  #mobileActionBar {
-    display: flex !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 99999 !important;
+  .auth-bar {
+    padding: 0.28rem 0.9rem 0.32rem;
+    border-bottom: none;
+  }
+  .auth-inner { gap: 0.5rem 0.6rem; row-gap: 0.38rem; }
+  .auth-input { width: 100%; max-width: 200px; }
+  .auth-email-label { font-size: 0.74rem; }
+  .auth-btn { font-size: 0.76rem; padding: 0.4rem 0.85rem; min-height: 36px; }
+  .stage-action-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
     width: 100%;
-    visibility: visible !important;
-    opacity: 1 !important;
-    transform: none !important;
-    overflow: visible !important;
-    pointer-events: auto;
-    background: var(--white, #fff);
-    border-top: 1px solid rgba(99,0,0,0.12);
-    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    margin: 0;
+    padding: 0.75rem 0.9rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+    background: rgba(255,255,255,0.97);
+    border-top: 1px solid var(--pale-pink);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: grid;
     gap: 0.65rem;
-    align-items: stretch;
-    box-shadow: 0 -2px 12px rgba(27,23,23,0.1);
   }
-
-  #mobileActionBar .mob-state-editor,
-  #mobileActionBar .mob-state-preview {
+  #reviewActionBar .btn-ghost,
+  #printActionBar .btn-ghost,
+  #reviewActionBar .btn-generate,
+  #printActionBar .btn-print,
+  #printActionBar .btn-save,
+  #printActionBar .btn-save-journal {
+    min-height: 46px;
     width: 100%;
-    gap: 0.65rem;
-    align-items: stretch;
   }
-
-  /* Pre-generation state buttons */
-  #mobileActionBar .mob-btn-ghost {
-    flex: 0 0 auto;
-    font-family: 'Lato', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--ui-accent, #630000);
-    background: none;
-    border: 1.5px solid rgba(99,0,0,0.25);
-    border-radius: 100px;
-    padding: 0 1.1rem;
+  #reviewActionBar {
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+  }
+  #reviewActionBar .btn-ghost {
+    grid-column: 1;
+  }
+  #reviewActionBar .btn-generate {
+    grid-column: 2;
     min-height: 48px;
-    cursor: pointer;
-    white-space: nowrap;
   }
-  #mobileActionBar .mob-btn-generate {
-    flex: 1 1 auto;
-    font-family: 'Lato', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(to right, var(--ui-accent, #630000), var(--coral, #D96248));
-    border: none;
-    border-radius: 100px;
+  #printActionBar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #printActionBar .btn-print {
+    grid-column: 1 / -1;
     min-height: 48px;
-    cursor: pointer;
-    -webkit-font-smoothing: antialiased;
   }
-
-  /* Post-generation state buttons */
-  #mobileActionBar .mob-btn-back {
-    flex: 0 0 auto;
-    font-family: 'Lato', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--ui-accent, #630000);
-    background: none;
-    border: 1.5px solid rgba(99,0,0,0.25);
-    border-radius: 100px;
-    padding: 0 1.1rem;
-    min-height: 48px;
-    cursor: pointer;
-    white-space: nowrap;
+  #printActionBar .btn-ghost {
+    grid-column: 1;
   }
-  #mobileActionBar .mob-btn-print {
-    flex: 1 1 auto;
-    font-family: 'Lato', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #fff;
-    background: var(--ui-accent, #630000);
-    border: none;
-    border-radius: 100px;
-    min-height: 48px;
-    cursor: pointer;
-    -webkit-font-smoothing: antialiased;
+  #printActionBar .btn-save {
+    grid-column: 2;
   }
-
-  /* State visibility — default: editor state */
-  #mobileActionBar .mob-state-editor  { display: flex; }
-  #mobileActionBar .mob-state-preview { display: none; }
-
-  /* When bar has data-state="preview" */
-  #mobileActionBar[data-state="preview"] .mob-state-editor  { display: none; }
-  #mobileActionBar[data-state="preview"] .mob-state-preview { display: flex; }
+  #printActionBar .btn-save-journal {
+    grid-column: 1 / -1;
+  }
+  /* Hide redundant navigation buttons on mobile */
+  #printActionBar .btn-ghost,
+  #printActionBar .btn-save-journal {
+    display: none;
+  }
 }
 @media (max-width: 520px) {
-  .btn-row,
-  .output-controls {
+  .stage-action-bar {
     gap: 1.05rem;
   }
-  .output-controls {
-    padding-left: 0.7rem;
-    padding-right: 0.7rem;
-    margin-bottom: 1.2rem;
+  .mobile-form-bar-actions {
+    grid-template-columns: 1fr;
+  }
+  #reviewActionBar {
+    grid-template-columns: 1fr;
+  }
+  #reviewActionBar .btn-ghost,
+  #reviewActionBar .btn-generate,
+  #printActionBar .btn-ghost,
+  #printActionBar .btn-save {
+    grid-column: 1 / -1;
+  }
+  .preset-btn {
+    min-height: auto;
+    font-size: 0.8rem;
   }
 }
 @media (min-width: 700px) and (max-width: 920px) {
   .editor-section {
-    padding-left: 1.25rem;
-    padding-right: 1.25rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
   .field-row.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .output-section { overflow-x: hidden; }
@@ -814,10 +1490,17 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   @page { size: 8.5in 11in; margin: 0; }
   body { background: white !important; }
   /* Hide all UI chrome — editor, header, auth bar, journal panel, controls */
-  .site-header, .editor-section, .output-controls,
-  .auth-bar, .tab-nav, .my-journal-section, .app-footer { display: none !important; }
+  .site-header, .hero-banner, .gen-nav, .editor-section,
+  .auth-bar, .tab-nav, .m-tab-nav, .my-journal-section, .app-footer, .mobile-form-bar { display: none !important; }
   .page-spacer { display: none !important; }
   .output-section { display: block !important; max-width: none; margin: 0; padding: 0; overflow: visible; }
+  .review-stage-header,
+  .review-entry-nav,
+  .print-stage-header,
+  .print-settings-panel,
+  .stage-action-bar {
+    display: none !important;
+  }
   /* Reset any screen-preview scaling on the preview wrapper and inner container at print time */
   #previewWrap { zoom: 1 !important; transform: none !important; width: auto !important; height: auto !important; overflow: visible !important; }
   #pagesContainer { transform: none !important; width: auto !important; }
@@ -847,24 +1530,24 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   .journal-body {
     flex: 1 1 0 !important;
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
   /* Remove fixed min-heights in print — only content size matters */
   .j-word-area, .j-prose, .j-prose.medium, .j-prose.large, .j-scripture {
     min-height: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 }
 
 /* ── AUTH BAR ─────────────────────────────────────────── */
 .auth-bar {
   background: var(--white);
-  border-bottom: 1px solid var(--line);
-  padding: 0.5rem 1.5rem;
+  border-bottom: none;
+  padding: 0.38rem 1.5rem 0.48rem;
 }
 .auth-inner {
   max-width: 820px; margin: 0 auto;
-  display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap;
+  display: flex; align-items: center; justify-content: center; gap: 0.7rem 1rem; flex-wrap: wrap;
 }
 .auth-label {
   font-family: 'Lora', serif; font-size: 0.78rem;
@@ -979,6 +1662,22 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   background-size: 100% 1.82em;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
+.ps-lined .journal-body > div {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.ps-lined .journal-body > div:first-child,
+.ps-lined .journal-body > div:only-child {
+  flex: 1 1 auto;
+}
+.ps-lined .journal-body > div:first-child .j-word-area,
+.ps-lined .journal-body > div:only-child .j-word-area,
+.ps-lined .journal-body > div:only-child .j-prose,
+.ps-lined .journal-body > div:only-child .j-scripture {
+  flex: 1 1 auto;
+  min-height: 2.9in;
+}
 
 /* ── PAGE STYLE: DOTTED ───────────────────────────────── */
 /* Dots applied per writing section — header, metadata, and titles stay clean */
@@ -1052,6 +1751,46 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   </div>
 </div>
 
+<!-- STAGE NAV -->
+<nav class="m-tab-nav" id="mobileTabNav" role="tablist" aria-label="Generator sections">
+  <button class="m-tab-btn is-active" id="mTabForm" role="tab" aria-selected="true" onclick="switchMobileTab('form')">
+    <span class="m-tab-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+    </span>
+    <span>Form</span>
+  </button>
+  <button class="m-tab-btn" id="mTabReview" role="tab" aria-selected="false" onclick="switchMobileTab('review')">
+    <span class="m-tab-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </span>
+    <span>Review</span>
+  </button>
+  <button class="m-tab-btn" id="mTabPrint" role="tab" aria-selected="false" onclick="switchMobileTab('print')">
+    <span class="m-tab-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect x="6" y="14" width="12" height="8"/>
+      </svg>
+    </span>
+    <span>Print</span>
+  </button>
+  <button class="m-tab-btn" id="mTabSaved" role="tab" aria-selected="false" onclick="switchMobileTab('saved')">
+    <span class="m-tab-icon" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      </svg>
+    </span>
+    <span>Saved</span>
+  </button>
+</nav>
+
 <!-- TAB NAV (visible when signed in) -->
 <nav class="tab-nav" id="tabNav">
   <div class="tab-nav-inner">
@@ -1059,6 +1798,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <button class="tab-btn" id="tabBtnSaved" onclick="switchTab('saved')">My Saved Entries</button>
   </div>
 </nav>
+
 
 <!-- MY JOURNAL SECTION -->
 <div class="my-journal-section" id="myJournalSection" style="display:none">
@@ -1074,8 +1814,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 <div class="editor-section" id="editorSection">
 
   <!-- Upload -->
-  <div class="form-block">
+  <div class="form-block form-block-entry">
     <div class="section-eyebrow">Document Upload</div>
+    <p class="section-support">Start here with a document, typed note, or handwritten-page photo. If the upload fills the fields well, you can move straight to Review.</p>
     <div class="upload-zone">
       <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" multiple>
       <div class="upload-glyph">📄</div>
@@ -1086,14 +1827,16 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   </div>
 
   <!-- Paste -->
-  <div class="form-block">
+  <div class="form-block form-block-entry">
     <div class="section-eyebrow">Paste Prophetic Notes</div>
+    <p class="section-support">Use this when your notes are already copied. Multiple dated entries still split into separate pages automatically.</p>
     <textarea id="pasteNotes" rows="5" placeholder="Paste journal entries here. Multiple dated entries (e.g. March 14, 2026 / March 15, 2026) will automatically generate separate pages. You can also separate entries with --- on its own line."></textarea>
   </div>
 
   <!-- Header Info -->
-  <div class="form-block">
+  <div class="form-block form-block-meta">
     <div class="section-eyebrow">Header Information</div>
+    <p class="section-support">These fields are optional if your upload already filled them. Update only what you want to refine before Review.</p>
     <div class="field-row cols-4">
       <div class="f-group">
         <label for="date">Date</label>
@@ -1128,8 +1871,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   </div>
 
   <!-- Journal Content -->
-  <div class="form-block">
+  <div class="form-block form-block-content">
     <div class="section-eyebrow">Journal Content</div>
+    <p class="section-support">Refine the word, meaning, response, and notes here. Leave untouched fields exactly as they were imported.</p>
     <div style="display:flex; flex-direction:column; gap:1.1rem;">
       <div class="f-group">
         <label for="word">Word</label>
@@ -1154,87 +1898,6 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     </div>
   </div>
 
-<!-- Page Style -->
-<div class="form-block">
-  <div class="section-eyebrow">Page Style</div>
-  <div class="field-row">
-    <div class="f-group">
-      <label for="pageStyle">Writing Area Style</label>
-      <select id="pageStyle">
-        <option value="clean">Blank</option>
-        <option value="lined">Lined</option>
-        <option value="dotted">Dotted</option>
-      </select>
-    </div>
-
-    <div class="f-group">
-      <label for="printSize">Inner Page Layout</label>
-      <select id="printSize" onchange="updateLayoutSize()">
-        <option value="letter">Letter (8.5 × 11 in)</option>
-        <option value="a4">A4 (210 × 297 mm)</option>
-        <option value="halfletter">Half Letter (5.5 × 8.5 in)</option>
-        <option value="a5">A5 (148 × 210 mm)</option>
-      </select>
-    </div>
-  </div>
-</div>
-
-  <!-- Theme Customizer -->
-  <div class="form-block">
-    <div class="section-eyebrow">Theme Customizer</div>
-    <div class="theme-presets">
-      <button class="preset-btn active" onclick="applyPreset('dove')" id="preset-dove">Burgundy</button>
-      <button class="preset-btn" onclick="applyPreset('purple')" id="preset-purple">Purple</button>
-      <button class="preset-btn" onclick="applyPreset('neutral')" id="preset-neutral">Neutral</button>
-      <button class="preset-btn" onclick="applyPreset('gold')" id="preset-gold">Gold</button>
-      <button class="preset-btn" onclick="applyPreset('pink')" id="preset-pink">Pink</button>
-      <button class="preset-btn" onclick="applyPreset('orange')" id="preset-orange">Orange</button>
-      <button class="preset-btn" onclick="applyPreset('blue')" id="preset-blue">Blue</button>
-      <button class="preset-btn" onclick="applyPreset('green')" id="preset-green">Green</button>
-      <button class="preset-btn" onclick="applyPreset('brown')" id="preset-brown">Brown</button>
-      <button class="preset-btn" onclick="applyPreset('black')" id="preset-black">Black</button>
-    </div>
-    <div class="color-pickers-grid">
-      <div class="color-picker-group"><label for="cpPrimary">Primary Heading</label><input type="color" id="cpPrimary" value="#630000" oninput="applyCustomColors()"></div>
-      <div class="color-picker-group"><label for="cpText">Body Text</label><input type="color" id="cpText" value="#2b2b2b" oninput="applyCustomColors()"></div>
-      <div class="color-picker-group"><label for="cpAccent">Divider / Accent</label><input type="color" id="cpAccent" value="#C5A44D" oninput="applyCustomColors()"></div>
-      <div class="color-picker-group"><label for="cpPanel">Panel Background</label><input type="color" id="cpPanel" value="#F0EBF8" oninput="applyCustomColors()"></div>
-      <div class="color-picker-group"><label for="cpDecor">Corner Tint</label><input type="color" id="cpDecor" value="#EDE5F5" oninput="applyCustomColors()"></div>
-      <div class="color-picker-group"><label for="cpBg">Page Background</label><input type="color" id="cpBg" value="#ffffff" oninput="applyCustomColors()"></div>
-    </div>
-  </div>
-
-  <!-- Notes Pages -->
-  <div class="form-block">
-    <div class="section-eyebrow">Notes Pages</div>
-    <div class="field-row">
-      <div class="f-group">
-        <label for="notesStyle">Notes Page Style</label>
-        <select id="notesStyle" onchange="onNotesStyleChange()">
-          <option value="none">None</option>
-          <option value="lined">Lined</option>
-          <option value="dotted">Dotted</option>
-          <option value="blank">Blank</option>
-        </select>
-      </div>
-      <div class="f-group">
-        <label for="notesPageCount">Number of Notes Pages</label>
-        <select id="notesPageCount" disabled>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
-          <option value="9">9</option>
-          <option value="10">10</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
   <!-- How It Works -->
   <div class="how-it-works">
     <div class="hiw-title">How to Use This Generator</div>
@@ -1249,29 +1912,29 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
       <li>
         <span class="hiw-num">2</span>
         <div class="hiw-body">
-          <span class="hiw-label">Click Generate</span>
-          <span class="hiw-desc">The generator reads your notes and automatically fills in the date, word, scripture, source, and other fields. Your journal preview will appear below the form.</span>
+          <span class="hiw-label">Generate and review</span>
+          <span class="hiw-desc">The generator reads your notes, fills in the journal fields, and opens a card-based review so you can confirm the content before continuing to print.</span>
         </div>
       </li>
       <li>
         <span class="hiw-num">3</span>
         <div class="hiw-body">
-          <span class="hiw-label">Review and edit freely</span>
-          <span class="hiw-desc">Use the "← Back to Editor" button to adjust or add to any field, then click Generate again to refresh your preview.</span>
+          <span class="hiw-label">Review before printing</span>
+          <span class="hiw-desc">Use "Back to Form" to adjust any field and generate again to refresh the review cards. In Print view, use the page nav to jump between entries.</span>
         </div>
       </li>
       <li>
         <span class="hiw-num">4</span>
         <div class="hiw-body">
-          <span class="hiw-label">Choose your Notes Pages</span>
-          <span class="hiw-desc">Select Lined or Blank from the Notes Page Style dropdown, then choose how many pages to add after each entry (1–10). Set to None if you don't need extra writing space.</span>
+          <span class="hiw-label">Adjust output settings in Print</span>
+          <span class="hiw-desc">Use the Print stage to choose page layout, theme colors, and notes-page options without crowding the initial content form.</span>
         </div>
       </li>
       <li>
         <span class="hiw-num">5</span>
         <div class="hiw-body">
-          <span class="hiw-label">Print or Save as PDF</span>
-          <span class="hiw-desc">Click Print to send to your printer. To save as a PDF, choose "Save as PDF" as the destination in your print dialog.</span>
+          <span class="hiw-label">Continue to print</span>
+          <span class="hiw-desc">Move from Review to Print when the generated pages look right. The print stage keeps the same page structure used in Review.</span>
         </div>
       </li>
       <li>
@@ -1285,20 +1948,177 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <div class="hiw-note">Tip: If you paste multiple dated entries (e.g. 2.23.26 … 2.24.26 …), the generator automatically creates a separate journal page for each date.</div>
   </div>
 
-  <div class="btn-row">
+  <div class="form-action-row">
     <button class="btn-ghost" onclick="clearAll()">Clear Fields</button>
-    <button class="btn-generate" onclick="handleGenerate()">Generate Journal Page</button>
+    <button class="btn-generate" onclick="handleGenerate()">Generate &amp; Review</button>
+  </div>
+
+  <div class="mobile-form-bar" aria-label="Form actions">
+    <div class="mobile-form-bar-copy">
+      <span class="mobile-form-step">Step 1 of 3</span>
+      <span class="mobile-form-note">Upload, paste, or adjust the entry here, then continue to Review when it feels ready.</span>
+    </div>
+    <div class="mobile-form-bar-actions">
+      <button class="btn-ghost" type="button" onclick="clearAll()">Clear</button>
+      <button class="btn-generate" type="button" onclick="handleGenerate()">Continue to Review</button>
+    </div>
   </div>
 </div>
 
 <!-- OUTPUT -->
 <div class="output-section" id="outputSection">
-  <div class="output-controls">
-    <button class="btn-print" id="printBtn" onclick="handlePrint()">🖨️ Print / Save as PDF</button>
-    <button class="btn-save" onclick="saveAsPDF()">💾 Save as PDF</button>
-    <button class="btn-save-journal" id="saveJournalBtn" onclick="saveToJournal()">💜 Save to Journal</button>
-    <button class="btn-ghost" onclick="window.open('https://dreamjournaltemplategenerator-fez9.vercel.app/','_blank','noopener,noreferrer')" title="Open Dream Journal Generator">✦ Dream Journal Generator</button>
-    <button class="btn-ghost" onclick="scrollToForm()">← Back to Editor</button>
+  <div class="stage-panel review-stage-header" id="reviewStageHeader" hidden>
+    <div class="review-stage-head">
+      <div>
+        <div class="review-stage-eyebrow">Review</div>
+        <div class="review-stage-title">Review Your Entry</div>
+        <div class="stage-subtitle" id="reviewStageMeta">Confirm the content looks right before continuing to print.</div>
+      </div>
+    </div>
+    <div class="review-filters">
+      <button class="filter-chip active" data-filter="all">All</button>
+      <button class="filter-chip" data-filter="word">Word</button>
+      <button class="filter-chip" data-filter="interpretation">Meaning</button>
+      <button class="filter-chip" data-filter="scripture">Scripture</button>
+      <button class="filter-chip" data-filter="response">Respond</button>
+      <button class="filter-chip" data-filter="notes">Notes</button>
+    </div>
+  </div>
+
+  <div class="review-entry-nav" id="reviewEntryNav" hidden></div>
+
+  <div class="review-cards-container" id="reviewCardsContainer" hidden></div>
+
+  <div class="stage-panel print-stage-header" id="printStageHeader" hidden>
+    <div>
+      <div class="print-stage-eyebrow">Print Preview</div>
+      <div class="print-stage-title">Journal Pages</div>
+      <div class="stage-subtitle" id="printStageMeta">The preview matches the printable journal pages.</div>
+      <div class="print-page-count" id="printPageCount">0 Pages</div>
+    </div>
+  </div>
+
+  <div class="stage-panel print-settings-panel" id="printSettingsPanel" hidden>
+    <button class="print-settings-trigger" type="button" onclick="togglePrintSettings()" aria-expanded="false" aria-controls="printSettingsBody">
+      <span class="print-settings-label">Print &amp; Layout Settings</span>
+      <span class="acc-caret" aria-hidden="true">▾</span>
+    </button>
+    <div class="print-settings-body" id="printSettingsBody">
+      <div class="print-settings-inner">
+      <div class="form-block">
+        <div class="section-eyebrow">Page Layout</div>
+        <div class="field-row">
+          <div class="f-group">
+            <label for="pageStyle">Writing Area Style</label>
+            <select id="pageStyle" onchange="handlePageStyleChange()">
+              <option value="clean">Blank</option>
+              <option value="lined">Lined</option>
+              <option value="dotted">Dotted</option>
+            </select>
+          </div>
+          <div class="f-group">
+            <label for="printSize">Inner Page Layout</label>
+            <select id="printSize" onchange="handlePrintSizeChange()">
+              <option value="letter">Letter (8.5 × 11 in)</option>
+              <option value="a4">A4 (210 × 297 mm)</option>
+              <option value="halfletter">Half Letter (5.5 × 8.5 in)</option>
+              <option value="a5">A5 (148 × 210 mm)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-block">
+        <div class="section-eyebrow">Notes Pages</div>
+        <div class="field-row">
+          <div class="f-group">
+            <label for="notesStyle">Notes Page Style</label>
+            <select id="notesStyle" onchange="handleNotesStyleUiChange()">
+              <option value="none">None</option>
+              <option value="lined">Lined</option>
+              <option value="dotted">Dotted</option>
+              <option value="blank">Blank</option>
+            </select>
+          </div>
+          <div class="f-group">
+            <label for="notesPageCount">Number of Notes Pages</label>
+            <select id="notesPageCount" disabled onchange="handleNotesPageCountChange()">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-block">
+        <div class="section-eyebrow">Theme Customizer</div>
+        <div class="theme-presets">
+          <button class="preset-btn active" type="button" onclick="handleThemePresetChange('dove')" id="preset-dove" style="--preset-color:#630000">Burgundy</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('purple')" id="preset-purple" style="--preset-color:#6F5B7E">Purple</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('neutral')" id="preset-neutral" style="--preset-color:#4A4A4A">Neutral</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('gold')" id="preset-gold" style="--preset-color:#D4A24C">Gold</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('pink')" id="preset-pink" style="--preset-color:#8B2252">Pink</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('orange')" id="preset-orange" style="--preset-color:#A83E10">Orange</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('blue')" id="preset-blue" style="--preset-color:#1A4A7A">Blue</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('green')" id="preset-green" style="--preset-color:#2A5C3A">Green</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('brown')" id="preset-brown" style="--preset-color:#5C3317">Brown</button>
+          <button class="preset-btn" type="button" onclick="handleThemePresetChange('black')" id="preset-black" style="--preset-color:#1A1A1A">Black</button>
+        </div>
+        <div class="color-pickers-grid">
+          <div class="color-picker-group">
+            <label for="cpPrimary">Primary Heading</label>
+            <div class="color-swatch-wrap">
+              <input type="color" id="cpPrimary" value="#630000" oninput="handleThemeColorChange(this)">
+              <div class="color-swatch-display"></div>
+            </div>
+          </div>
+          <div class="color-picker-group">
+            <label for="cpText">Body Text</label>
+            <div class="color-swatch-wrap">
+              <input type="color" id="cpText" value="#2b2b2b" oninput="handleThemeColorChange(this)">
+              <div class="color-swatch-display"></div>
+            </div>
+          </div>
+          <div class="color-picker-group">
+            <label for="cpAccent">Divider / Accent</label>
+            <div class="color-swatch-wrap">
+              <input type="color" id="cpAccent" value="#C5A44D" oninput="handleThemeColorChange(this)">
+              <div class="color-swatch-display"></div>
+            </div>
+          </div>
+          <div class="color-picker-group">
+            <label for="cpPanel">Panel Background</label>
+            <div class="color-swatch-wrap">
+              <input type="color" id="cpPanel" value="#F0EBF8" oninput="handleThemeColorChange(this)">
+              <div class="color-swatch-display"></div>
+            </div>
+          </div>
+          <div class="color-picker-group">
+            <label for="cpDecor">Corner Tint</label>
+            <div class="color-swatch-wrap">
+              <input type="color" id="cpDecor" value="#EDE5F5" oninput="handleThemeColorChange(this)">
+              <div class="color-swatch-display"></div>
+            </div>
+          </div>
+          <div class="color-picker-group">
+            <label for="cpBg">Page Background</label>
+            <div class="color-swatch-wrap">
+              <input type="color" id="cpBg" value="#ffffff" oninput="handleThemeColorChange(this)">
+              <div class="color-swatch-display"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
   </div>
   <!-- Screen preview fitting happens at the wrapper level only.
        .journal-sheet elements inside remain at native dimensions so pagination
@@ -1307,6 +2127,18 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <div id="previewWrap">
       <div id="pagesContainer"></div>
     </div>
+  </div>
+
+  <div class="stage-action-bar" id="reviewActionBar" hidden>
+    <button class="btn-ghost" onclick="switchStage('form')">Back to Form</button>
+    <button class="btn-generate" onclick="handleContinueToPrint()">Continue to Print</button>
+  </div>
+
+  <div class="stage-action-bar" id="printActionBar" hidden>
+    <button class="btn-ghost" onclick="switchStage('review')">Back to Review</button>
+    <button class="btn-print" id="printBtn" onclick="handlePrint()">🖨️ Print / Save as PDF</button>
+    <button class="btn-save" onclick="saveAsPDF()">💾 Save as PDF</button>
+    <button class="btn-save-journal" id="saveJournalBtn" onclick="saveToJournal()">💜 Save to Journal</button>
   </div>
 </div>
 
@@ -1319,9 +2151,16 @@ if (typeof pdfjsLib !== 'undefined') {
 
 // Stores extracted data when multiple files are uploaded
 let pendingPages = [];
+let currentTheme = 'dove';
+
+// Stores data for the review card stage (before print pages are built)
+let pendingReviewData = [];
 
 // Stores the last generated data array for Supabase saving
 let lastGeneratedData = [];
+let currentGeneratorStage = 'form';
+let currentReviewEntryIndex = 0;
+let nextGeneratedStage = 'review';
 
 // ── SUPABASE ───────────────────────────────────────────
 const SUPABASE_URL      = 'https://jnlvvlkwskidloripvtp.supabase.co';
@@ -1370,8 +2209,51 @@ function onNotesStyleChange() {
   countEl.style.opacity = (style === 'none') ? '0.35' : '1';
 }
 
+function rerenderGeneratedOutput(stage = currentGeneratorStage) {
+  if (!lastGeneratedData.length) return;
+  nextGeneratedStage = stage === 'print' ? 'print' : 'review';
+  showPages(lastGeneratedData.map(entry => ({ ...entry })));
+}
+
+function handlePageStyleChange() {
+  rerenderGeneratedOutput('print');
+}
+
+function handlePrintSizeChange() {
+  updateLayoutSize();
+  rerenderGeneratedOutput('print');
+}
+
+function handleNotesStyleUiChange() {
+  onNotesStyleChange();
+  rerenderGeneratedOutput('print');
+}
+
+function handleNotesPageCountChange() {
+  rerenderGeneratedOutput('print');
+}
+
 // ── UPLOAD ─────────────────────────────────────────────
 document.getElementById('fileInput').addEventListener('change', handleUpload);
+
+document.getElementById('pasteNotes').addEventListener('input', handlePasteAutofill);
+
+let pasteAutofillTimer = null;
+
+function handlePasteAutofill() {
+  const pasted = document.getElementById('pasteNotes').value.trim();
+  if (pasteAutofillTimer) clearTimeout(pasteAutofillTimer);
+  if (!pasted) return;
+
+  pasteAutofillTimer = setTimeout(() => {
+    try {
+      populate(pasted);
+      setMsg('✓ Fields auto-filled from pasted notes.', 'ok');
+    } catch (err) {
+      console.warn('Paste autofill failed:', err);
+    }
+  }, 250);
+}
 
 async function handleUpload(e) {
   const files = e.target.files;
@@ -1382,6 +2264,8 @@ async function handleUpload(e) {
     if (files.length === 1) {
       // ── Single file ──────────────────────────────────────
       pendingPages = [];
+      pendingReviewData = [];
+      lastGeneratedData = [];
       const file = files[0];
       setMsg(isImg(file) ? '📤 Sending image to AI scanner…' : '📄 Reading document…', 'spin');
 
@@ -1413,6 +2297,7 @@ async function handleUpload(e) {
         await new Promise(r => setTimeout(r, 150));
         pendingPages = entries.map(entry => { const d = extractData(entry.text); d._raw = entry.text; return d; });
         setMsg(`✓ ${entries.length} entries found — click Generate to create ${entries.length} journal pages.`, 'ok');
+        updateMobileFormBarVisibility();
       } else {
         populate(combined);
         if (!combined.trim()) {
@@ -1441,10 +2326,27 @@ async function handleUpload(e) {
       }
       if (!dataArray.length) { setMsg('✗ No readable content found.', 'err'); return; }
       pendingPages = dataArray;
+      pendingReviewData = [];
+      lastGeneratedData = [];
+
+      const firstEntry = dataArray[0];
+      if (firstEntry) {
+        ['date','by','theme','word','interpretation','scripture','response','notes'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        const typeEl = document.getElementById('type');
+        if (typeEl) typeEl.value = '';
+        Object.entries(firstEntry).forEach(([key, val]) => {
+          if (val && key !== '_label') set(key, val);
+        });
+      }
+
       setMsg(
         `✓ ${dataArray.length} entr${dataArray.length > 1 ? 'ies' : 'y'} ready — click Generate to create ${dataArray.length} journal page${dataArray.length > 1 ? 's' : ''}.`,
         'ok'
       );
+      updateMobileFormBarVisibility();
     }
   } catch (err) {
     setMsg('✗ ' + (err.message || 'Could not process files.'), 'err');
@@ -1743,7 +2645,7 @@ function normalizePropheticHeading(line) {
   const t = String(line || '')
     .trim()
     .toLowerCase()
-    .replace(/[\s:;,.!?-–—]+$/g, '')
+    .replace(/[\s:;,.!?–—-]+$/g, '')
     .replace(/\s+/g, ' ');
   if (!t) return null;
   if (/^(date|given|received|date received)$/.test(t)) return 'date';
@@ -1753,7 +2655,7 @@ function normalizePropheticHeading(line) {
   if (/^(word|prophetic word|the word|what i heard|what was said|exact word)$/.test(t)) return 'word';
   if (/^(meaning|discernment|interpretation|understanding|what i believe god is saying|what i sense god is saying|what god is highlighting)$/.test(t)) return 'meaning';
   if (/^(scripture|scriptures|scripture confirmation|biblical confirmation|word confirmation)$/.test(t)) return 'scriptureConfirmation';
-  if (/^(response|application|action|my response|how i will respond|what i will do)$/.test(t)) return 'response';
+  if (/^(response|application|action|my response|my prayer|prayer response|how i will respond|what i will do)$/.test(t)) return 'response';
   if (/^(notes|additional notes|context|background|circumstances|confirmation notes)$/.test(t)) return 'additionalNotes';
   return null;
 }
@@ -1869,7 +2771,7 @@ function looksLikeMeaningBlock(text) {
 function looksLikeResponseLanguage(text) {
   const t = String(text || '').trim();
   if (!t) return false;
-  return /^(?:my prayer\b|in the name of jesus\b|thank you lord\b|hallelujah\b|i thank you\b|i pray\b|god i\b|lord i\b|my response is\b|how i will respond\b|what i will do\b|i will obey\b|i need to pray\b|i will pray\b|i will begin\b|i should\b|i will fast\b|i will seek\b|i will write\b|i will journal\b|i will submit\b|i will repent\b|i will spend time\b)/i.test(t);
+  return /^(?:my prayer\b|in the name of jesus\b|thank you lord\b|hallelujah\b|i thank you\b|i pray\b|god i\b|lord i\b|lord help me\b|god help me\b|lord teach me\b|god teach me\b|lord show me\b|god show me\b|lord strengthen me\b|god strengthen me\b|my response is\b|how i will respond\b|what i will do\b|i will obey\b|i need to pray\b|i will pray\b|i will begin\b|i should\b|i will fast\b|i will seek\b|i will write\b|i will journal\b|i will submit\b|i will repent\b|i will spend time\b)/i.test(t);
 }
 
 function looksLikeNoteLine(text) {
@@ -2004,6 +2906,9 @@ function classifyPropheticParagraph(paragraph) {
     if (looksLikeNoteLine(line)) noteLike += 1;
   });
 
+  const activeBuckets = [wordLike, meaningLike, responseLike, noteLike, scriptureLike].filter(score => score > 0).length;
+  if (lines.length > 1 && activeBuckets >= 2) return 'additionalNotes';
+
   if (scriptureLike > Math.max(wordLike, meaningLike, responseLike, noteLike)) return 'scriptureConfirmation';
   if (responseLike > Math.max(wordLike, meaningLike, noteLike)) return 'response';
   if (noteLike > 0 && (wordLike > 0 || meaningLike > 0 || responseLike > 0 || scriptureLike > 0)) return 'additionalNotes';
@@ -2027,6 +2932,7 @@ function pushChunkToPropheticBucket(buckets, field, text) {
 function distributeMixedPropheticParagraph(paragraph, buckets, result) {
   const rawLines = normalizePropheticText(paragraph).split('\n');
   let currentField = null;
+  let currentFieldLocked = false;
   let currentLines = [];
 
   const flush = () => {
@@ -2047,23 +2953,51 @@ function distributeMixedPropheticParagraph(paragraph, buckets, result) {
       .map(item => String(item || '').trim())
       .find(Boolean) || '';
 
-    if (!result.source && looksLikeSourceValue(line)) {
+    const inline = extractInlinePropheticHeading(line);
+    if (inline) {
       flush();
-      result.source = line.replace(/[.!?]+$/g, '').trim();
+      if (inline.field === 'date' && !result.date) result.date = inline.content;
+      else if (inline.field === 'source' && !result.source && looksLikeSourceValue(inline.content)) result.source = inline.content.replace(/[.!?]+$/g, '').trim();
+      else if (inline.field === 'type' && !result.type) result.type = inline.content;
+      else if (inline.field === 'theme' && !result.theme) result.theme = inline.content.replace(/[.!?]+$/g, '').trim();
+      else if (inline.field === 'word') pushChunkToPropheticBucket(buckets, 'word', inline.content);
+      else if (inline.field === 'meaning') pushChunkToPropheticBucket(buckets, 'meaning', inline.content);
+      else if (inline.field === 'scriptureConfirmation') pushChunkToPropheticBucket(buckets, 'scriptureConfirmation', inline.content);
+      else if (inline.field === 'response') pushChunkToPropheticBucket(buckets, 'response', inline.content);
+      else pushChunkToPropheticBucket(buckets, 'additionalNotes', inline.content);
       currentField = null;
+      currentFieldLocked = false;
+      return;
+    }
+
+    const heading = normalizePropheticHeading(line);
+    if (heading) {
+      flush();
+      currentField = heading;
+      currentFieldLocked = true;
+      return;
+    }
+
+    if ((!result.source || result.source.replace(/[.!?]+$/g, '').trim() === line.replace(/[.!?]+$/g, '').trim()) && looksLikeSourceValue(line)) {
+      flush();
+      if (!result.source) result.source = line.replace(/[.!?]+$/g, '').trim();
+      currentField = null;
+      currentFieldLocked = false;
       return;
     }
 
     if (isPropheticPrayerHeading(line)) {
       flush();
       currentField = 'response';
+      currentFieldLocked = true;
       return;
     }
 
-    if (!result.theme && looksLikeThemeLine(line) && !shouldKeepThemeLikeLineWithWord(line, nextLine)) {
+    if ((!result.theme || result.theme.replace(/[.!?]+$/g, '').trim() === line.replace(/[.!?]+$/g, '').trim()) && looksLikeThemeLine(line) && !shouldKeepThemeLikeLineWithWord(line, nextLine)) {
       flush();
-      result.theme = line.replace(/[.!?]+$/g, '').trim();
+      if (!result.theme) result.theme = line.replace(/[.!?]+$/g, '').trim();
       currentField = null;
+      currentFieldLocked = false;
       return;
     }
 
@@ -2071,11 +3005,18 @@ function distributeMixedPropheticParagraph(paragraph, buckets, result) {
     lineSegments.forEach(segment => {
       const cleanedSegment = String(segment || '').trim();
       if (!cleanedSegment) return;
+
+      if (currentFieldLocked && currentField) {
+        currentLines.push(cleanedSegment);
+        return;
+      }
+
       let field = classifyPropheticParagraph(cleanedSegment);
       if (field === 'additionalNotes' && looksLikeShortPropheticLine(cleanedSegment)) field = 'word';
 
       if (field !== currentField && currentLines.length) flush();
       currentField = field;
+      currentFieldLocked = false;
       currentLines.push(cleanedSegment);
     });
   });
@@ -2115,16 +3056,20 @@ function parsePropheticLabeledBlocks(text) {
   const lines = normalizePropheticText(text).split('\n');
   let currentField = null;
   let currentLines = [];
+  let currentMetaFieldTakesSingleValue = false;
   let sawHeading = false;
   const prefaceLines = [];
+  const isMetaField = (field) => ['date', 'source', 'type', 'theme'].includes(field);
 
   const flushCurrent = () => {
     if (!currentField) {
       currentLines = [];
+      currentMetaFieldTakesSingleValue = false;
       return;
     }
     appendPropheticChunk(buckets, currentField, currentLines.join('\n'));
     currentLines = [];
+    currentMetaFieldTakesSingleValue = false;
   };
 
   for (const rawLine of lines) {
@@ -2146,8 +3091,9 @@ function parsePropheticLabeledBlocks(text) {
     if (inline) {
       flushCurrent();
       sawHeading = true;
-      currentField = inline.field;
       appendPropheticChunk(buckets, inline.field, inline.content);
+      currentField = isMetaField(inline.field) ? null : inline.field;
+      currentMetaFieldTakesSingleValue = false;
       continue;
     }
 
@@ -2156,13 +3102,22 @@ function parsePropheticLabeledBlocks(text) {
       flushCurrent();
       sawHeading = true;
       currentField = heading;
+      currentMetaFieldTakesSingleValue = isMetaField(heading);
       continue;
     }
 
     if (!sawHeading) {
       prefaceLines.push(rawLine);
     } else {
+      if (!currentField) {
+        const inferredField = classifyPropheticParagraph(rawLine);
+        currentField = inferredField === 'additionalNotes' ? 'word' : inferredField;
+      }
       currentLines.push(rawLine);
+      if (currentMetaFieldTakesSingleValue) {
+        flushCurrent();
+        currentField = null;
+      }
     }
   }
   flushCurrent();
@@ -2202,7 +3157,14 @@ function parsePropheticFallback(text) {
     if (!result.date && isDateHeading(line)) {
       result.date = extractPropheticDateValue(line) || line;
       const trailing = line.replace(result.date, '').replace(/^[-–—:,.\s]+/, '').trim();
-      if (trailing) headerLines.push(trailing);
+      if (trailing) {
+        const inlineTrailing = extractInlinePropheticHeading(trailing);
+        if (inlineTrailing && ['source', 'type', 'theme'].includes(inlineTrailing.field) && !result[inlineTrailing.field]) {
+          result[inlineTrailing.field] = inlineTrailing.content;
+        } else {
+          headerLines.push(trailing.replace(/^theme[:\s-]*/i, '').trim() || trailing);
+        }
+      }
       continue;
     }
     const inline = extractInlinePropheticHeading(line);
@@ -2375,6 +3337,10 @@ function parsePropheticFallback(text) {
   result.scriptureConfirmation = joinPropheticChunks(scriptureChunks);
   result.response = joinPropheticChunks(responseChunks);
   result.additionalNotes = joinPropheticChunks(noteChunks);
+
+  if (!result.word) {
+    result.word = normalizePropheticText(text);
+  }
 
   return result;
 }
@@ -2647,7 +3613,20 @@ function planPages(data, layout, measure) {
 
 function populate(raw) {
   const data = extractData(raw);
-  Object.entries(data).forEach(([key, val]) => { if (val && key !== '_label') set(key, val); });
+
+  ['date','by','theme','word','interpretation','scripture','response','notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const typeEl = document.getElementById('type');
+  if (typeEl) typeEl.value = '';
+
+  Object.entries(data).forEach(([key, val]) => {
+    if (val && key !== '_label') set(key, val);
+  });
+
+  updateMobileFormBarVisibility();
 }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function set(id, val) {
@@ -2684,7 +3663,7 @@ function handleGenerate() {
       parseEntries(pasted).forEach(entry => allData.push(extractData(entry.text)));
     }
     window._debugState = 'GENERATED'; window._debugCaller = 'handleGenerate→multi-file batch';
-    showPages(allData);
+    showReview(allData);
     return;
   }
 
@@ -2695,14 +3674,14 @@ function handleGenerate() {
       // Multiple dated entries found — generate one page per entry
       setMsg(`Detected ${dateEntries.length} dated entries — generating ${dateEntries.length} separate journal pages.`, 'ok');
       window._debugState = 'GENERATED'; window._debugCaller = 'handleGenerate→multi-date paste';
-      showPages(dateEntries.map(e => { const d = extractData(e.text); d._raw = e.text; return d; }));
+      showReview(dateEntries.map(e => { const d = extractData(e.text); d._raw = e.text; return d; }));
       return;
     }
     const separatorEntries = splitTextEntries(pasted);
     if (separatorEntries.length > 1) {
       setMsg(`Found ${separatorEntries.length} entries separated by --- — generating ${separatorEntries.length} pages.`, 'ok');
       window._debugState = 'GENERATED'; window._debugCaller = 'handleGenerate→separator paste';
-      showPages(separatorEntries.map(e => { const d = extractData(e); d._raw = e; return d; }));
+      showReview(separatorEntries.map(e => { const d = extractData(e); d._raw = e; return d; }));
       return;
     }
     // Single paste entry — populate form then generate
@@ -2719,10 +3698,9 @@ function handleGenerate() {
   // ── Default: build one page from the form fields
   window._debugState = 'TEMPLATE'; window._debugCaller = 'handleGenerate→generateFromForm (form only)';
   generateFromForm();
-  document.getElementById('mobileActionBar')?.setAttribute('data-state', 'preview');
 }
 
-// Reads current form field values and generates a single journal page
+// Reads current form field values and routes to review stage
 function generateFromForm() {
   const data = {};
   ['date','by','type','theme','word','interpretation','scripture','response','notes'].forEach(id => {
@@ -2731,9 +3709,76 @@ function generateFromForm() {
   });
   const pasteEl = document.getElementById('pasteNotes');
   data._raw = pasteEl ? pasteEl.value.trim() : '';
-  showPages([data]);
-  removeTrailingBlankPage();
-  setTimeout(scalePreview, 50);
+  showReview([data]);
+}
+
+// ── REVIEW STAGE ────────────────────────────────────────
+// Stores data and shows card preview. showPages() is only called later
+// via handleContinueToPrint(), keeping print layout strictly in print stage.
+function showReview(dataArray) {
+  pendingReviewData = dataArray;
+  lastGeneratedData = dataArray;
+  const container = document.getElementById('reviewCardsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  dataArray.forEach((data, i) => container.appendChild(buildReviewCard(data, i, dataArray.length)));
+  const sec = document.getElementById('outputSection');
+  if (sec) sec.classList.add('show');
+  currentReviewEntryIndex = 0;
+  updateGeneratedStageMeta();
+  switchStage('review', { force: true });
+}
+
+function buildReviewCard(data, index, total) {
+  function esc(s) { return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  const card = document.createElement('div');
+  card.className = 'review-card';
+  const fields = [
+    { key: 'word',           label: 'Word'                         },
+    { key: 'interpretation', label: 'What I Believe God Is Saying' },
+    { key: 'scripture',      label: 'Scripture Confirmation'       },
+    { key: 'response',       label: 'How I Will Respond'           },
+    { key: 'notes',          label: 'Additional Notes'             },
+  ];
+  const meta = [];
+  if (data.date)  meta.push(`<span class="rv-meta-item">${esc(data.date)}</span>`);
+  if (data.by)    meta.push(`<span class="rv-meta-item">By ${esc(data.by)}</span>`);
+  if (data.type)  meta.push(`<span class="rv-meta-item rv-meta-type">${esc(data.type)}</span>`);
+  if (data.theme) meta.push(`<span class="rv-meta-item rv-meta-theme">${esc(data.theme)}</span>`);
+  let html = '';
+  if (total > 1) html += `<div class="rv-entry-label">Entry ${index + 1} of ${total}</div>`;
+  if (meta.length) html += `<div class="rv-meta">${meta.join('')}</div>`;
+  fields.forEach(f => {
+    const val = (data[f.key] || '').toString().trim();
+    if (!val) return;
+    html += `<div class="rv-field rv-field-${f.key}"><div class="rv-field-label">${esc(f.label)}</div><div class="rv-field-body">${esc(val).replace(/\n/g,'<br>')}</div></div>`;
+  });
+  card.innerHTML = html;
+  return card;
+}
+
+// Review filter handling
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('filter-chip')) {
+    const filter = e.target.dataset.filter;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    e.target.classList.add('active');
+    document.querySelectorAll('.rv-field').forEach(f => {
+      if (filter === 'all') {
+        f.style.display = '';
+      } else {
+        f.style.display = f.classList.contains(`rv-field-${filter}`) ? '' : 'none';
+      }
+    });
+  }
+});
+
+// Called by "Continue to Print" in reviewActionBar.
+// Sets nextGeneratedStage so _showPagesCore routes to print stage.
+function handleContinueToPrint() {
+  if (!pendingReviewData || !pendingReviewData.length) return;
+  nextGeneratedStage = 'print';
+  showPages(pendingReviewData);
 }
 
 function removeTrailingBlankPage() {
@@ -2770,6 +3815,7 @@ function buildJournalPageElement(data) {
   sheet.className = 'journal-sheet';
   const page = document.createElement('div');
   page.className = 'journal-page';
+  page.dataset.theme = currentTheme;
   page.innerHTML = `
     <div class="page-inner">
       <div class="page-header">
@@ -3073,7 +4119,7 @@ function buildPropheticPageFromDescriptor(desc, data) {
 
   const footer = document.createElement('div'); footer.className = 'page-footer';
   const verse = document.createElement('div'); verse.className = 'footer-verse';
-  verse.textContent = '"Draw near to God, and he will draw near to you." — James 4:8';
+  verse.textContent = '"Do not interpretations belong to God?" — Genesis 40:8';
   const brand2 = document.createElement('div'); brand2.className = 'footer-brand';
   brand2.innerHTML = 'Dove Expressions &nbsp;·&nbsp; doveexpressions.org';
   footer.appendChild(verse); footer.appendChild(brand2);
@@ -3166,7 +4212,7 @@ function buildPropheticSectionPage(sectionLabel, cssClass, content, data, option
   footer.className = 'page-footer';
   const verse = document.createElement('div');
   verse.className = 'footer-verse';
-  verse.textContent = '"Draw near to God, and he will draw near to you." — James 4:8';
+  verse.textContent = '"Do not interpretations belong to God?" — Genesis 40:8';
   const brand2 = document.createElement('div');
   brand2.className = 'footer-brand';
   brand2.innerHTML = 'Dove Expressions &nbsp;·&nbsp; doveexpressions.org';
@@ -3455,7 +4501,7 @@ function createNotesPage(style) {
       </div>
       ${notesBodyHTML}
       <div class="page-footer">
-        <div class="footer-verse">"Draw near to God, and he will draw near to you." — James 4:8</div>
+        <div class="footer-verse">"Do not interpretations belong to God?" — Genesis 40:8</div>
         <div class="footer-brand">Dove Expressions &nbsp;·&nbsp; doveexpressions.org</div>
       </div>
     </div>`;
@@ -3517,8 +4563,13 @@ function _showPagesCore(dataArray) {
   const pageStyle      = pageStyleEl ? pageStyleEl.value : 'clean'; // 'clean' | 'lined' | 'dotted'
 
   dataArray.forEach((data, entryIndex) => {
+    const entryLabel = getEntryLabel(data, entryIndex);
+
     // ── Main journal pages (content-aware pagination) ──
+    const beforeContentSheets = container.querySelectorAll('.journal-sheet').length;
     buildPropheticPages(container, data, pageStyle);
+    const newContentSheets = Array.from(container.querySelectorAll('.journal-sheet')).slice(beforeContentSheets);
+    newContentSheets.forEach(sheet => tagGeneratedSheet(sheet, entryIndex, 'content', entryLabel));
 
     // ── Notes pages ────────────────────────────────────
     if (addNotes) {
@@ -3528,6 +4579,7 @@ function _showPagesCore(dataArray) {
         spacer.style.cssText = 'height:2rem;';
         container.appendChild(spacer);
         const np = createNotesPage(notesStyle);
+        tagGeneratedSheet(np, entryIndex, 'notes', entryLabel);
         if (pageStyle === 'lined') np.classList.add('ps-lined');
         else if (pageStyle === 'dotted') np.classList.add('ps-dotted');
         container.appendChild(np);
@@ -3555,16 +4607,14 @@ function _showPagesCore(dataArray) {
       : '🖨️ Print / Save as PDF';
   }
 
-  setTimeout(scalePreview, 50);
-
   const sec = document.getElementById('outputSection');
   sec.classList.add('show');
-  scalePreview();
-  setMobileBarState('preview');
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    scalePreview();
-    sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }));
+  currentReviewEntryIndex = 0;
+  updateGeneratedStageMeta();
+  renderReviewEntryNav();
+  const stageAfterRender = nextGeneratedStage;
+  nextGeneratedStage = 'review';
+  switchStage(stageAfterRender);
 }
 
 // ── SCALING ─────────────────────────────────────────────
@@ -3591,21 +4641,20 @@ function scalePreview() {
   // Cap scale so scaled width never exceeds available width (prevents right-shift on mobile)
   const scale = Math.min(1, baseScale * boost, availableWidth / nativeW);
   const nativeH = pagesContainer.scrollHeight;
-  const scaledW = Math.ceil(nativeW * scale);
 
-  // Outer wrapper spans full available width; inner content is offset to center
+  // Outer wrapper spans the available width and centers the scaled preview.
   wrap.style.width = `${availableWidth}px`;
   wrap.style.height = `${Math.ceil(nativeH * scale)}px`;
 
-  // Inner content stays at native dimensions, scaled visually only
-  // marginLeft centers the scaled content within the available width
-  const offsetX = Math.max(0, Math.floor((availableWidth - scaledW) / 2));
+  // Inner content stays at native dimensions, scaled visually only.
   pagesContainer.style.width = `${nativeW}px`;
   pagesContainer.style.transform = `scale(${scale})`;
-  pagesContainer.style.transformOrigin = 'top left';
-  pagesContainer.style.marginLeft = `${offsetX}px`;
+  pagesContainer.style.transformOrigin = 'top center';
+  pagesContainer.style.marginLeft = '';
 }
 window.addEventListener('resize', scalePreview);
+window.addEventListener('orientationchange', () => requestAnimationFrame(scalePreview));
+window.visualViewport?.addEventListener('resize', scalePreview);
 
 // ── PRINT VISIBILITY GUARD ───────────────────────────────
 // CSS display:none !important can be beaten by JS inline styles when signed in.
@@ -3626,11 +4675,7 @@ window.addEventListener('afterprint', () => {
   // Restore correct tab state after print
   const myJSec = document.getElementById('myJournalSection');
   if (!currentUser && myJSec) { myJSec.style.display = 'none'; }
-  // Re-show generator tab content
-  const gen = document.getElementById('editorSection');
-  const out = document.getElementById('outputSection');
-  if (gen) gen.style.removeProperty('display');
-  if (out) out.style.removeProperty('display');
+  switchStage(currentGeneratorStage, { skipScroll: true });
 });
 // Inner page layout sizes — @page always stays US Letter (8.5×11).
 const LAYOUT_SIZES = {
@@ -3687,6 +4732,7 @@ const PRESETS = {
 };
 function applyPreset(key) {
   const p = PRESETS[key]; if (!p) return;
+  currentTheme = key;
   document.getElementById('cpPrimary').value = p.primary;
   document.getElementById('cpText').value    = p.text;
   document.getElementById('cpAccent').value  = p.accent;
@@ -3694,8 +4740,11 @@ function applyPreset(key) {
   document.getElementById('cpDecor').value   = p.decor;
   document.getElementById('cpBg').value      = p.bg;
   applyCustomColors();
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.print-settings-panel .preset-btn').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('preset-' + key); if (btn) btn.classList.add('active');
+  document.querySelectorAll('#pagesContainer .journal-page').forEach(page => {
+    page.dataset.theme = key;
+  });
 }
 function hexToRgb(hex) {
   const h = hex.replace('#','');
@@ -3711,11 +4760,36 @@ function applyCustomColors() {
   r.style.setProperty('--pg-panel',   document.getElementById('cpPanel').value);
   r.style.setProperty('--pg-decor',   document.getElementById('cpDecor').value);
   r.style.setProperty('--pg-bg',      document.getElementById('cpBg').value);
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  syncAllColorSwatches();
+  document.querySelectorAll('.print-settings-panel .preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+function syncColorSwatch(input) {
+  const display = input?.parentElement?.querySelector('.color-swatch-display');
+  if (display) display.style.background = input.value;
+}
+
+function syncAllColorSwatches() {
+  document.querySelectorAll('.color-swatch-wrap input[type="color"]').forEach(syncColorSwatch);
+}
+
+function handleThemePresetChange(key) {
+  applyPreset(key);
+  rerenderGeneratedOutput('print');
+}
+
+function handleThemeColorChange(input) {
+  syncColorSwatch(input);
+  applyCustomColors();
+  rerenderGeneratedOutput('print');
 }
 
 function clearAll() {
   pendingPages = [];
+  pendingReviewData = [];
+  lastGeneratedData = [];
+  currentReviewEntryIndex = 0;
+  nextGeneratedStage = 'review';
   ['date','by','theme','word','interpretation','scripture','response','notes','pasteNotes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3736,21 +4810,213 @@ function clearAll() {
   const pv = document.getElementById('previewViewport');
   if (pw) { pw.style.width = ''; pw.style.height = ''; }
   if (pv) pv.style.height = '';
-  setMobileBarState('editor');
+  const reviewNav = document.getElementById('reviewEntryNav');
+  if (reviewNav) {
+    reviewNav.innerHTML = '';
+    reviewNav.hidden = true;
+  }
+  const rcc = document.getElementById('reviewCardsContainer');
+  if (rcc) rcc.innerHTML = '';
+  togglePrintSettings(false);
+  updateGeneratedStageMeta();
+  updateMobileFormBarVisibility();
+  switchStage('form', { skipScroll: true });
 }
 
-function scrollToForm() {
-  setMobileBarState('editor');
-  document.getElementById('editorSection').scrollIntoView({ behavior: 'smooth' });
-  document.getElementById('mobileActionBar')?.setAttribute('data-state', 'editor');
+function getGeneratedSheets() {
+  return Array.from(document.querySelectorAll('#pagesContainer .journal-sheet'));
 }
 
-// ── MOBILE BAR STATE ─────────────────────────────────────
-// 'editor'  → Clear + Generate  (before generation or after clear)
-// 'preview' → Back to Editor + Print  (after generation)
-function setMobileBarState(state) {
-  const bar = document.getElementById('mobileActionBar');
-  if (bar) bar.setAttribute('data-state', state);
+function getGeneratedPageCount() {
+  return document.querySelectorAll('#pagesContainer .journal-page').length;
+}
+
+function hasGeneratedPages() {
+  return getGeneratedSheets().length > 0;
+}
+
+function getEntryLabel(data, index) {
+  const date = String(data?.date || '').trim();
+  const descriptor = String(data?.theme || data?.type || data?.by || '').trim();
+  let label = descriptor || date || `Entry ${index + 1}`;
+  if (date && descriptor) label = `${date} · ${descriptor}`;
+  return label.length > 34 ? `${label.slice(0, 31)}...` : label;
+}
+
+function tagGeneratedSheet(sheet, entryIndex, kind, label) {
+  if (!sheet) return;
+  sheet.dataset.entryIndex = String(entryIndex);
+  sheet.dataset.entryKind = kind;
+  sheet.dataset.entryLabel = label || `Entry ${entryIndex + 1}`;
+}
+
+function updateGeneratedStageMeta() {
+  const entryCount = lastGeneratedData.length;
+  const pageCount = getGeneratedPageCount();
+  const reviewMeta = document.getElementById('reviewStageMeta');
+  const printMeta = document.getElementById('printStageMeta');
+  const printCount = document.getElementById('printPageCount');
+  const entryLabel = entryCount === 1 ? 'entry' : 'entries';
+  const pageLabel = pageCount === 1 ? 'page' : 'pages';
+  const reviewSummary = pageCount
+    ? `${entryCount} ${entryLabel} confirmed — ${pageCount} ${pageLabel} ready to print.`
+    : `${entryCount} ${entryLabel} ready — confirm the content before continuing to print.`;
+  const printSummary = pageCount
+    ? `Print-safe preview of ${pageCount} ${pageLabel} generated from ${entryCount} ${entryLabel}.`
+    : 'The preview matches the printable journal pages.';
+  if (reviewMeta) reviewMeta.textContent = reviewSummary;
+  if (printMeta) printMeta.textContent = printSummary;
+  if (printCount) {
+    printCount.textContent = `${pageCount} ${pageLabel}`;
+    printCount.classList.toggle('visible', pageCount > 0);
+  }
+}
+
+function updateReviewEntryNavSelection() {
+  document.querySelectorAll('#reviewEntryNav .review-entry-btn').forEach(btn => {
+    btn.classList.toggle('is-active', Number(btn.dataset.entryIndex) === currentReviewEntryIndex);
+  });
+}
+
+/* Syncs only the mobile bottom-nav active state to the current stage.
+   Called from switchStage() so programmatic transitions (generate→review,
+   continue→print, back→review, back→form) keep the bottom nav in sync.
+   Does NOT call switchStage — no circular path. */
+function syncMobileNav(stage) {
+  const map = { form: 'mTabForm', review: 'mTabReview', print: 'mTabPrint', saved: 'mTabSaved' };
+  const targetId = map[stage] || 'mTabForm';
+  document.querySelectorAll('.m-tab-btn').forEach(btn => {
+    const active = btn.id === targetId;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+}
+
+function formHasMeaningfulContent() {
+  if (typeof pendingPages !== 'undefined' && pendingPages.length > 0) return true;
+  const pasteNotes = document.getElementById('pasteNotes');
+  if (pasteNotes && typeof pasteNotes.value === 'string' && pasteNotes.value.trim() !== '') {
+    return true;
+  }
+
+  const fieldIds = ['date', 'by', 'type', 'theme', 'word', 'interpretation', 'scripture', 'response', 'notes'];
+  return fieldIds.some(id => {
+    const el = document.getElementById(id);
+    if (!el) return false;
+    const value = (el.value ?? '').toString().trim();
+    return value !== '';
+  });
+}
+
+function updateMobileFormBarVisibility() {
+  const bar = document.querySelector('.mobile-form-bar');
+  if (!bar) return;
+
+  const isFormStage = (document.body.getAttribute('data-generator-stage') || 'form') === 'form';
+  const isSavedTab = document.body.getAttribute('data-active-tab') === 'saved';
+  const hasContent = formHasMeaningfulContent();
+
+  bar.classList.toggle('is-visible', isFormStage && !isSavedTab && hasContent);
+}
+
+function togglePrintSettings(forceState) {
+  const panel = document.getElementById('printSettingsPanel');
+  const trigger = panel?.querySelector('.print-settings-trigger');
+  if (!panel || !trigger) return;
+  const shouldOpen = typeof forceState === 'boolean'
+    ? forceState
+    : !panel.classList.contains('is-open');
+  panel.classList.toggle('is-open', shouldOpen);
+  trigger.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+}
+
+function focusReviewEntry(entryIndex) {
+  currentReviewEntryIndex = entryIndex;
+  updateReviewEntryNavSelection();
+  const target = document.querySelector(`#pagesContainer .journal-sheet[data-entry-index="${entryIndex}"]`);
+  if (!target) return;
+  requestAnimationFrame(() => {
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function renderReviewEntryNav() {
+  const nav = document.getElementById('reviewEntryNav');
+  if (!nav) return;
+  nav.innerHTML = '';
+  if (lastGeneratedData.length <= 1) {
+    nav.hidden = true;
+    return;
+  }
+  currentReviewEntryIndex = Math.min(currentReviewEntryIndex, lastGeneratedData.length - 1);
+  lastGeneratedData.forEach((entry, index) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'review-entry-btn';
+    btn.dataset.entryIndex = String(index);
+    btn.textContent = getEntryLabel(entry, index);
+    btn.addEventListener('click', () => focusReviewEntry(index));
+    nav.appendChild(btn);
+  });
+  nav.hidden = false;
+  updateReviewEntryNavSelection();
+}
+
+function switchStage(stage, options = {}) {
+  const editor = document.getElementById('editorSection');
+  const output = document.getElementById('outputSection');
+  const printSettingsPanel = document.getElementById('printSettingsPanel');
+  const reviewHeader = document.getElementById('reviewStageHeader');
+  const reviewNav = document.getElementById('reviewEntryNav');
+  const printHeader = document.getElementById('printStageHeader');
+  const reviewActionBar = document.getElementById('reviewActionBar');
+  const printActionBar = document.getElementById('printActionBar');
+  const reviewCardsContainer = document.getElementById('reviewCardsContainer');
+  const previewVp = document.getElementById('previewViewport');
+  // pendingReviewData is the single source of truth — it is populated by
+  // showReview() (after Generate) and cleared by clearAll(). Print pages are
+  // always built from pendingReviewData, so if it is non-empty we know the
+  // user has at least reached the Review stage.
+  const hasReview = pendingReviewData.length > 0;
+  const generated = hasReview;
+
+  const force = options && options.force === true;
+  currentGeneratorStage = force ? stage : (stage === 'form' ? 'form' : (generated ? stage : 'form'));
+  document.body.setAttribute('data-generator-stage', currentGeneratorStage);
+  updateMobileFormBarVisibility();
+
+  if (editor) editor.style.display = currentGeneratorStage === 'form' ? '' : 'none';
+  if (output) output.style.display = currentGeneratorStage === 'form' ? 'none' : '';
+
+  const isReview = currentGeneratorStage === 'review' && hasReview;
+  const isPrint  = currentGeneratorStage === 'print'  && hasReview;
+  syncMobileNav(currentGeneratorStage);
+  // Review-layer elements — visible only in Review stage
+  if (reviewHeader)        reviewHeader.hidden        = !isReview;
+  if (reviewCardsContainer) reviewCardsContainer.hidden = !isReview;
+  if (reviewActionBar)     reviewActionBar.hidden     = !isReview;
+  if (reviewNav)           reviewNav.hidden           = true; // entry nav only activates in Print via renderReviewEntryNav()
+  // Print-layer elements — visible only in Print stage
+  if (printHeader)         printHeader.hidden         = !isPrint;
+  if (printSettingsPanel)  printSettingsPanel.hidden  = !isPrint;
+  if (printActionBar)      printActionBar.hidden      = !isPrint;
+  if (previewVp)           previewVp.hidden           = !isPrint;
+  if (printSettingsPanel)  togglePrintSettings(isPrint);
+
+  if (currentGeneratorStage !== 'form' && output) {
+    updateGeneratedStageMeta();
+    if (isPrint) renderReviewEntryNav();
+    requestAnimationFrame(() => {
+      scalePreview();
+      if (!options.skipScroll) {
+        output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  } else if (currentGeneratorStage === 'form' && editor && !options.skipScroll) {
+    requestAnimationFrame(() => {
+      editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 }
 
 // ── PRINT ────────────────────────────────────────────────
@@ -3877,6 +5143,8 @@ function switchTab(tab) {
   const saved = document.getElementById('myJournalSection');
   const btnG  = document.getElementById('tabBtnGenerator');
   const btnS  = document.getElementById('tabBtnSaved');
+  document.body.setAttribute('data-active-tab', tab);
+  updateMobileFormBarVisibility();
   if (tab === 'saved') {
     if (gen)   gen.style.display = 'none';
     if (out)   out.style.display = 'none';
@@ -3886,12 +5154,31 @@ function switchTab(tab) {
     try { sessionStorage.setItem('pwTab', 'saved'); } catch {}
     loadMyJournal();
   } else {
-    if (gen)   gen.style.display = '';
-    if (out)   out.style.display = '';
     if (saved) saved.style.display = 'none';
     if (btnG)  btnG.classList.add('active');
     if (btnS)  btnS.classList.remove('active');
     try { sessionStorage.setItem('pwTab', 'generator'); } catch {}
+    switchStage(currentGeneratorStage, { skipScroll: true });
+  }
+}
+
+function switchMobileTab(tab) {
+  const stageToBtnId = {
+    form: 'mTabForm',
+    review: 'mTabReview',
+    print: 'mTabPrint',
+    saved: 'mTabSaved'
+  };
+  document.querySelectorAll('.m-tab-btn').forEach(btn => {
+    btn.classList.toggle('is-active', btn.id === stageToBtnId[tab]);
+    btn.setAttribute('aria-selected', btn.id === stageToBtnId[tab] ? 'true' : 'false');
+  });
+
+  if (tab === 'saved') {
+    switchTab('saved');
+  } else {
+    switchTab('generator');
+    switchStage(tab, { force: true });
   }
 }
 
@@ -4127,7 +5414,7 @@ async function fetchAsDataURL(src) {
     }
   }
   if (loaded > 0) {
-    setMsg('Entry loaded from journal app — review fields then click Generate Template.', 'ok');
+    setMsg('Entry loaded from journal app — review the fields, then click Generate & Review.', 'ok');
   }
 })();
 
@@ -4142,25 +5429,19 @@ async function fetchAsDataURL(src) {
 
 // ── INIT ──────────────────────────────────────────────
 applyPreset('dove');
+syncAllColorSwatches();
+updateStageFlowNav();
+togglePrintSettings(false);
 updateLayoutSize();
+document.body.setAttribute('data-active-tab', 'generator');
+const pasteNotesEl = document.getElementById('pasteNotes');
+if (pasteNotesEl) {
+  pasteNotesEl.addEventListener('input', updateMobileFormBarVisibility);
+}
+switchStage('form', { skipScroll: true });
+updateMobileFormBarVisibility();
 </script>
 <footer class="app-footer">Powered by Dove Expressions</footer>
-
-<div id="mobileActionBar" data-state="editor">
-
-  <!-- EDITOR STATE -->
-  <div class="mob-state-editor">
-    <button class="mob-btn-ghost" onclick="clearAll()">Clear</button>
-    <button class="mob-btn-generate" onclick="handleGenerate()">Generate</button>
-  </div>
-
-  <!-- PREVIEW STATE -->
-  <div class="mob-state-preview">
-    <button class="mob-btn-back" onclick="scrollToForm()">Back</button>
-    <button class="mob-btn-print" onclick="handlePrint()">Print</button>
-  </div>
-
-</div>
 
 </body>
 </html>
