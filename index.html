@@ -1996,6 +1996,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
       <div class="stage-subtitle" id="printStageMeta">The preview matches the printable journal pages.</div>
       <div class="print-page-count" id="printPageCount">0 Pages</div>
     </div>
+    <div class="print-stage-actions">
+      <button class="btn-save-journal" id="saveJournalBtn" type="button" onclick="saveToJournal()">Save to Journal</button>
+    </div>
   </div>
 
   <div class="stage-panel print-settings-panel" id="printSettingsPanel" hidden>
@@ -2138,7 +2141,6 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     <button class="btn-ghost" onclick="switchStage('review')">Back to Review</button>
     <button class="btn-print" id="printBtn" onclick="handlePrint()">🖨️ Print / Save as PDF</button>
     <button class="btn-save" onclick="saveAsPDF()">💾 Save as PDF</button>
-    <button class="btn-save-journal" id="saveJournalBtn" onclick="saveToJournal()">💜 Save to Journal</button>
   </div>
 </div>
 
@@ -5243,43 +5245,88 @@ function escAttr(s) {
 
 // ── SAVE TO JOURNAL ──────────────────────────────────────
 
-async function saveToJournal() {
-  if (!currentUser) {
-    const bar = document.getElementById('authBar');
-    if (bar) bar.scrollIntoView({ behavior: 'smooth' });
-    return;
+function getJournalAppOrigin() {
+  const navLink = document.querySelector('.gen-nav-link[href*="/my-journal"]');
+  if (navLink?.href) {
+    try { return new URL(navLink.href).origin; } catch {}
   }
+  return 'https://dove-expressions-journal-app.vercel.app';
+}
+
+function getFieldValue(id) {
+  const el = document.getElementById(id);
+  return (el?.value || '').trim();
+}
+
+function buildPropheticTitle(payload) {
+  const candidates = [
+    payload.title,
+    payload.theme,
+    payload.type && payload.source ? `${payload.type} - ${payload.source}` : '',
+    payload.type,
+    payload.source,
+    payload.word,
+  ].filter(Boolean);
+  const title = String(candidates[0] || '').replace(/\s+/g, ' ').trim();
+  if (!title) return 'Untitled Prophetic Word';
+  return title.length > 80 ? `${title.slice(0, 77).trimEnd()}...` : title;
+}
+
+function buildPendingJournalEntryPayload() {
+  const now = new Date().toISOString();
+  const payload = {
+    entryType: 'prophetic-word',
+    createdAt: now,
+    updatedAt: now,
+    title: '',
+    date: getFieldValue('date'),
+    source: getFieldValue('by'),
+    type: getFieldValue('type'),
+    theme: getFieldValue('theme'),
+    word: getFieldValue('word'),
+    interpretation: getFieldValue('interpretation'),
+    scripture: getFieldValue('scripture'),
+    response: getFieldValue('response'),
+    notes: getFieldValue('notes')
+  };
+  payload.title = buildPropheticTitle(payload);
+  return payload;
+}
+
+function encodePendingJournalEntry(payload) {
+  const json = JSON.stringify(payload);
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function buildJournalImportUrl(payload) {
+  const baseUrl = new URL('/prophetic-words', getJournalAppOrigin());
+  baseUrl.searchParams.set('pendingJournalEntry', encodePendingJournalEntry(payload));
+  return baseUrl.toString();
+}
+
+async function saveToJournal() {
   if (!lastGeneratedData.length) {
     alert('Generate your journal pages first, then click Save to Journal.');
     return;
   }
   const btn = document.getElementById('saveJournalBtn');
-  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Opening Journal…'; btn.disabled = true; }
   try {
-    const rows = lastGeneratedData.map(d => ({
-      user_id:        currentUser.id,
-      title:          d.theme          || '(Untitled)',
-      date:           parsePropheticDate(d.date),
-      source:         d.by             || null,
-      context:        JSON.stringify({ type: d.type || null, notes: d.notes || null }),
-      word_content:   d.word           || '',
-      interpretation: d.interpretation || null,
-      application:    d.response       || null,
-      scriptures:     d.scripture ? d.scripture.split('\n').map(s => s.trim()).filter(Boolean) : [],
-    }));
-    const { data, error } = await sb.from('prophetic_words').insert(rows).select();
-    if (error) throw error;
-    // Store saved IDs for print history linking
-    window._lastSavedEntryIds = (data || []).map(e => e.id);
-    if (btn) { btn.textContent = '✓ Saved!'; }
-    setTimeout(() => {
-      if (btn) { btn.textContent = '💜 Save to Journal'; btn.disabled = false; }
-    }, 2500);
-    // Switch to My Saved Entries tab and refresh
-    switchTab('saved');
+    const payload = buildPendingJournalEntryPayload();
+    if (!payload.word && !payload.interpretation && !payload.response && !payload.notes && !payload.theme) {
+      throw new Error('Add some entry content before saving to the journal app.');
+    }
+    try {
+      localStorage.setItem('pendingJournalEntry', JSON.stringify(payload));
+    } catch {}
+    setMsg('Opening the journal app to save this prophetic entry…', 'ok');
+    window.location.href = buildJournalImportUrl(payload);
   } catch (err) {
     alert('Could not save: ' + (err.message || 'Unknown error'));
-    if (btn) { btn.textContent = '💜 Save to Journal'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Save to Journal'; btn.disabled = false; }
   }
 }
 
