@@ -10,6 +10,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="../shared/journal-export-utils.js"></script>
 <!-- Image OCR handled via Supabase Edge Function + Google Gemini Vision -->
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,6 +41,10 @@
   --pg-decor:      #F9E8DC;
   --pg-text:       #1B1717;
   --pg-bg:         #FDFDFD;
+  --workspace-max: 1240px;
+  --workspace-inner: 1100px;
+  --workspace-stage-max: 1100px;
+  --workspace-card-max: 1100px;
 }
 body {
   font-family: 'Lato', sans-serif;
@@ -52,7 +58,7 @@ body {
 /* ── SITE HEADER ──────────────────────────────────────── */
 .site-header {
   text-align: left;
-  padding: 2rem 2rem 1.6rem;
+  padding: 2rem 1.5rem 1.6rem;
   background: linear-gradient(135deg, #ffffff 0%, #fdf5f0 55%, #fdf0e4 100%);
   border-bottom: 1px solid var(--pale-pink);
   position: relative;
@@ -63,6 +69,12 @@ body {
   position: absolute; top: 0; right: 0; width: 220px; height: 100%;
   background: linear-gradient(to left, rgba(217,121,4,0.08), transparent);
   pointer-events: none;
+}
+.site-header-inner {
+  width: min(100%, var(--workspace-inner));
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 .site-header .brand-tag {
   font-family: 'Lato', sans-serif;
@@ -86,9 +98,9 @@ body {
 .hero-banner {
   background: linear-gradient(to right, rgba(99,0,0,0.04), rgba(217,98,72,0.06), rgba(217,121,4,0.04));
   border-bottom: 1px solid rgba(242,223,216,0.8);
-  padding: 0.85rem 2rem; text-align: center;
+  padding: 0.85rem 1.5rem; text-align: center;
 }
-.hero-banner .hero-inner { display: inline-flex; align-items: center; gap: 0.7rem; }
+.hero-banner .hero-inner { display: flex; width: min(100%, var(--workspace-inner)); margin: 0 auto; align-items: center; justify-content: center; gap: 0.7rem; }
 .hero-banner .hero-icon {
   width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(to right, var(--ui-accent), var(--coral));
@@ -164,7 +176,7 @@ body {
 }
 
 /* ── EDITOR ───────────────────────────────────────────── */
-.editor-section { max-width: 820px; margin: 2.5rem auto; padding: 0 1.5rem; }
+.editor-section { max-width: var(--workspace-inner); margin: 2.5rem auto; padding: 0 1.5rem; }
 #editorSection {
   margin-top: 0;
   position: relative;
@@ -330,7 +342,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 .output-section.show { display: block; }
 .stage-panel {
-  width: min(100%, 960px);
+  width: min(100%, var(--workspace-inner));
   margin: 0 auto 0.7rem;
   padding: 1rem 1rem 0.8rem;
   background: rgba(255,255,255,0.92);
@@ -404,7 +416,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   border-color: var(--ui-accent);
 }
 .review-stage-header {
-  width: min(100%, 1120px);
+  width: min(100%, var(--workspace-inner));
   margin: 0 auto;
   padding: 1.2rem 1.5rem 1rem;
   display: flex;
@@ -448,7 +460,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   margin-top: 0;
 }
 .print-stage-header {
-  width: min(100%, 1120px);
+  width: min(100%, var(--workspace-inner));
   margin: 0 auto;
   padding: 1.2rem 1.5rem 1rem;
   display: flex;
@@ -495,7 +507,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
-  width: min(100%, 960px);
+  width: min(100%, var(--workspace-inner));
   margin: 0 auto 0.8rem;
   padding: 0 1rem;
 }
@@ -504,7 +516,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── REVIEW CARDS ─────────────────────────────────────── */
 .review-cards-container {
-  width: min(100%, 720px);
+  width: min(100%, var(--workspace-inner));
   margin: 0 auto;
   padding: 0.5rem 1rem 2rem;
   display: flex;
@@ -512,6 +524,8 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   gap: 1.6rem;
 }
 .review-card {
+  width: min(100%, var(--workspace-card-max));
+  margin: 0 auto;
   background: #ffffff;
   border-radius: 0.875rem;
   border: 1px solid rgba(99,0,0,0.1);
@@ -591,7 +605,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 /* Screen preview viewport contains visual scaling only; print dimensions stay native inside .journal-sheet. */
 .preview-viewport {
   width: 100%;
-  max-width: 1120px;
+  max-width: var(--workspace-max);
   overflow: hidden;
   padding: 0.2rem 1rem 0.85rem;
   display: flex;
@@ -1006,12 +1020,16 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── GENERATOR NAV ────────────────────────────────────── */
 .gen-nav {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
   padding: 0.6rem 1.5rem;
   background: var(--white);
   border-bottom: 1px solid var(--pale-pink);
+}
+.gen-nav-inner {
+  width: min(100%, var(--workspace-inner));
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -1077,27 +1095,25 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   }
 
   /* ── Nav ── */
-  .gen-nav, .tab-nav-inner {
+  .gen-nav {
     padding-left: 0.9rem;
     padding-right: 0.9rem;
   }
-  .gen-nav {
+  .gen-nav-inner {
     justify-content: flex-start;
     flex-wrap: nowrap;
     gap: 0.4rem;
     overflow-x: auto;
-    padding-top: 0.46rem;
-    padding-bottom: 0.12rem;
     scrollbar-width: none;
   }
-  .gen-nav::-webkit-scrollbar { display: none; }
+  .gen-nav-inner::-webkit-scrollbar { display: none; }
   .gen-nav-link {
     flex: 0 0 auto;
     min-height: 40px;
     font-size: 0.76rem;
     padding: 0.38rem 0.88rem;
   }
-  .gen-nav-link, .tab-btn {
+  .gen-nav-link {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
@@ -1491,7 +1507,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   body { background: white !important; }
   /* Hide all UI chrome — editor, header, auth bar, journal panel, controls */
   .site-header, .hero-banner, .gen-nav, .editor-section,
-  .auth-bar, .tab-nav, .m-tab-nav, .my-journal-section, .app-footer, .mobile-form-bar { display: none !important; }
+  .auth-bar, .m-tab-nav, .my-journal-section, .app-footer, .mobile-form-bar { display: none !important; }
   .page-spacer { display: none !important; }
   .output-section { display: block !important; max-width: none; margin: 0; padding: 0; overflow: visible; }
   .review-stage-header,
@@ -1546,7 +1562,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   padding: 0.38rem 1.5rem 0.48rem;
 }
 .auth-inner {
-  max-width: 820px; margin: 0 auto;
+  max-width: var(--workspace-inner); margin: 0 auto;
   display: flex; align-items: center; justify-content: center; gap: 0.7rem 1rem; flex-wrap: wrap;
 }
 .auth-label {
@@ -1639,13 +1655,14 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   font-style: italic; color: var(--text-light);
   text-align: center; padding: 2rem 0;
 }
-/* ── TAB NAVIGATION ───────────────────────────────────── */
-.tab-nav { background: var(--white); border-bottom: 1px solid var(--line); display: none; }
-.tab-nav.show { display: block; }
-.tab-nav-inner { max-width: 820px; margin: 0 auto; display: flex; padding: 0 1rem; }
-.tab-btn { font-family: 'Playfair Display', serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.78rem 1.2rem; cursor: pointer; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-soft); margin-bottom: -1px; transition: color 0.2s, border-color 0.2s; }
-.tab-btn:hover { color: var(--primary); }
-.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.saved-export-bar {
+  display: flex; gap: 0.65rem; flex-wrap: wrap;
+  align-items: center; margin: 0.35rem 0 1rem;
+}
+.saved-export-note {
+  font-family: 'Lora', serif; font-size: 0.76rem;
+  color: var(--text-light); margin-right: 0.25rem;
+}
 
 /* ── PAGE STYLE: LINED ────────────────────────────────── */
 /* Applies to writing-heavy sections only; header/meta stays clean */
@@ -1727,9 +1744,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 <!-- HEADER -->
 <header class="site-header">
-  <div class="brand-tag">Hearing God App</div>
-  <h1>Prophetic Word Generator</h1>
-  <p class="subtitle">Document your prophetic words with beauty and intention.</p>
+  <div class="site-header-inner">
+    <div class="brand-tag">Hearing God App</div>
+    <h1>Prophetic Word Generator</h1>
+    <p class="subtitle">Document your prophetic words with beauty and intention.</p>
+  </div>
 </header>
 <!-- HERO BANNER -->
 <div class="hero-banner">
@@ -1740,9 +1759,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 </div>
 <!-- GENERATOR NAV -->
 <nav class="gen-nav">
-  <a class="gen-nav-link" href="https://dreamjournaltemplategenerator-fez9.vercel.app/" target="_blank" rel="noopener">Dream Journal</a>
-  <span class="gen-nav-link is-active">Prophetic Word</span>
-  <a class="gen-nav-link" href="https://dove-expressions-journal-app.vercel.app/my-journal">← Back to App</a>
+  <div class="gen-nav-inner">
+    <a class="gen-nav-link" href="https://dreamjournaltemplategenerator-fez9.vercel.app/" target="_blank" rel="noopener">Dream Journal</a>
+    <span class="gen-nav-link is-active">Prophetic Word</span>
+    <a class="gen-nav-link" href="https://dove-expressions-journal-app.vercel.app/my-journal">← Back to App</a>
+  </div>
 </nav>
 <!-- AUTH BAR -->
 <div class="auth-bar" id="authBar">
@@ -1791,19 +1812,16 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   </button>
 </nav>
 
-<!-- TAB NAV (visible when signed in) -->
-<nav class="tab-nav" id="tabNav">
-  <div class="tab-nav-inner">
-    <button class="tab-btn active" id="tabBtnGenerator" onclick="switchTab('generator')">Generator</button>
-    <button class="tab-btn" id="tabBtnSaved" onclick="switchTab('saved')">My Saved Entries</button>
-  </div>
-</nav>
-
-
 <!-- MY JOURNAL SECTION -->
 <div class="my-journal-section" id="myJournalSection" style="display:none">
   <div class="editor-section" style="padding-top:1.5rem; padding-bottom:2rem;">
     <div class="section-eyebrow">My Saved Journal Entries</div>
+    <div class="saved-export-bar">
+      <span class="saved-export-note">Export saved entries:</span>
+      <button class="sec-btn" type="button" onclick="handleSavedEntriesExport('excel')">Export Excel</button>
+      <button class="sec-btn" type="button" onclick="handleSavedEntriesExport('copy')">Copy Entries</button>
+      <button class="sec-btn" type="button" onclick="handleSavedEntriesExport('word')">Export Word</button>
+    </div>
     <div class="saved-entries-list" id="savedEntriesList">
       <div class="saved-entries-empty">Loading…</div>
     </div>
@@ -1882,6 +1900,10 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
       <div class="f-group">
         <label for="interpretation">What I Believe God Is Saying</label>
         <textarea id="interpretation" rows="3" placeholder="A prayerful reflection on the personal meaning and heart of this word…"></textarea>
+      </div>
+      <div class="f-group">
+        <label for="prayer">Prayer</label>
+        <textarea id="prayer" rows="3" placeholder="Prayer is created and edited in the Hearing God App, then shown here for export." readonly></textarea>
       </div>
       <div class="f-group">
         <label for="scripture">Scripture Confirmation</label>
@@ -1979,6 +2001,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
       <button class="filter-chip active" data-filter="all">All</button>
       <button class="filter-chip" data-filter="word">Word</button>
       <button class="filter-chip" data-filter="interpretation">Meaning</button>
+      <button class="filter-chip" data-filter="prayer">Prayer</button>
       <button class="filter-chip" data-filter="scripture">Scripture</button>
       <button class="filter-chip" data-filter="response">Respond</button>
       <button class="filter-chip" data-filter="notes">Notes</button>
@@ -2176,14 +2199,11 @@ let authMode     = 'signin'; // 'signin' | 'signup'
 sb.auth.onAuthStateChange((event, session) => {
   currentUser = session?.user ?? null;
   renderAuthBar();
-  const tabNav = document.getElementById('tabNav');
   if (currentUser) {
-    if (tabNav) tabNav.classList.add('show');
     let lastTab = 'generator';
     try { lastTab = sessionStorage.getItem('pwTab') || 'generator'; } catch {}
     switchTab(lastTab);
   } else {
-    if (tabNav) tabNav.classList.remove('show');
     switchTab('generator');
   }
 });
@@ -2193,9 +2213,7 @@ sb.auth.onAuthStateChange((event, session) => {
   const { data: { session } } = await sb.auth.getSession();
   currentUser = session?.user ?? null;
   renderAuthBar();
-  const tabNav = document.getElementById('tabNav');
   if (currentUser) {
-    if (tabNav) tabNav.classList.add('show');
     let lastTab = 'generator';
     try { lastTab = sessionStorage.getItem('pwTab') || 'generator'; } catch {}
     switchTab(lastTab);
@@ -2333,7 +2351,7 @@ async function handleUpload(e) {
 
       const firstEntry = dataArray[0];
       if (firstEntry) {
-        ['date','by','theme','word','interpretation','scripture','response','notes'].forEach(id => {
+        ['date','by','theme','word','interpretation','prayer','scripture','response','notes'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.value = '';
         });
@@ -2472,11 +2490,38 @@ async function invokeOcrFunction(payload, meta) {
 }
 
 // ── FILE READERS ────────────────────────────────────────
+function normalizeText(text) {
+  return String(text || '')
+    .replace(/\u2018|\u2019/g, "'")
+    .replace(/\u201C|\u201D/g, '"')
+    .replace(/\u2013|\u2014/g, '-')
+    .replace(/\u2026/g, '...');
+}
+
+async function readTxtFile(file) {
+  const buffer = await file.arrayBuffer();
+
+  // First pass: UTF-8
+  let text = new TextDecoder('utf-8').decode(buffer);
+
+  // Detect bad decoding patterns
+  const hasBadChars = /�|Õ|â€™|â€œ|â€|Ã/.test(text);
+
+  if (hasBadChars) {
+    // Re-decode properly
+    text = new TextDecoder('windows-1252').decode(buffer);
+  }
+
+  return normalizeText(text);
+}
+
 async function readFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   if (ext === 'pdf') return await readPDF(file);
   if (ext === 'doc' || ext === 'docx') return await readDOCX(file);
-  if (ext === 'txt') return await file.text();
+  if (file.type === 'text/plain' || ext === 'txt') {
+    return await readTxtFile(file);
+  }
   if (['png','jpg','jpeg','webp','bmp','tiff'].includes(ext)) return await readImage(file);
   throw new Error('Unsupported file type: ' + file.name);
 }
@@ -2633,6 +2678,7 @@ function createEmptyPropheticFields() {
     theme: '',
     word: '',
     meaning: '',
+    prayer: '',
     scriptureConfirmation: '',
     response: '',
     additionalNotes: ''
@@ -2656,8 +2702,9 @@ function normalizePropheticHeading(line) {
   if (/^(theme|subject|topic)$/.test(t)) return 'theme';
   if (/^(word|prophetic word|the word|what i heard|what was said|exact word)$/.test(t)) return 'word';
   if (/^(meaning|discernment|interpretation|understanding|what i believe god is saying|what i sense god is saying|what god is highlighting)$/.test(t)) return 'meaning';
+  if (/^(prayer|my prayer|prayer response|response prayer)$/.test(t)) return 'prayer';
   if (/^(scripture|scriptures|scripture confirmation|biblical confirmation|word confirmation)$/.test(t)) return 'scriptureConfirmation';
-  if (/^(response|application|action|my response|my prayer|prayer response|how i will respond|what i will do)$/.test(t)) return 'response';
+  if (/^(response|application|action|my response|how i will respond|what i will do)$/.test(t)) return 'response';
   if (/^(notes|additional notes|context|background|circumstances|confirmation notes)$/.test(t)) return 'additionalNotes';
   return null;
 }
@@ -2770,10 +2817,16 @@ function looksLikeMeaningBlock(text) {
   return /\b(?:i believe god is saying|i believe god is showing|i sense god is saying|this means|this seems to be about|i believe this word is about|god may be highlighting|what i believe god is saying|what i sense god is saying|what god is highlighting)\b/i.test(t);
 }
 
+function looksLikePrayerLanguage(text) {
+  const t = String(text || '').trim();
+  if (!t) return false;
+  return /^(?:my prayer\b|in the name of jesus\b|thank you lord\b|hallelujah\b|i thank you\b|i pray\b|god i\b|lord i\b|lord help me\b|god help me\b|lord teach me\b|god teach me\b|lord show me\b|god show me\b|lord strengthen me\b|god strengthen me\b)/i.test(t);
+}
+
 function looksLikeResponseLanguage(text) {
   const t = String(text || '').trim();
   if (!t) return false;
-  return /^(?:my prayer\b|in the name of jesus\b|thank you lord\b|hallelujah\b|i thank you\b|i pray\b|god i\b|lord i\b|lord help me\b|god help me\b|lord teach me\b|god teach me\b|lord show me\b|god show me\b|lord strengthen me\b|god strengthen me\b|my response is\b|how i will respond\b|what i will do\b|i will obey\b|i need to pray\b|i will pray\b|i will begin\b|i should\b|i will fast\b|i will seek\b|i will write\b|i will journal\b|i will submit\b|i will repent\b|i will spend time\b)/i.test(t);
+  return /^(?:my response is\b|how i will respond\b|what i will do\b|i will obey\b|i need to pray\b|i will pray\b|i will begin\b|i should\b|i will fast\b|i will seek\b|i will write\b|i will journal\b|i will submit\b|i will repent\b|i will spend time\b)/i.test(t);
 }
 
 function looksLikeNoteLine(text) {
@@ -2835,6 +2888,7 @@ function looksLikeShortPropheticLine(text) {
   if (containsBibleReference(t)) return false;
   if (looksLikeSourceValue(t)) return false;
   if (looksLikeThemeLine(t)) return false;
+  if (looksLikePrayerLanguage(t)) return false;
   if (looksLikeResponseLanguage(t)) return false;
 
   const words = t.split(/\s+/).filter(Boolean);
@@ -2849,6 +2903,7 @@ function looksLikeImperativePropheticWord(text) {
   const t = String(text || '').trim();
   if (!t) return false;
   if (containsBibleReference(t)) return false;
+  if (looksLikePrayerLanguage(t)) return false;
   if (looksLikeResponseLanguage(t)) return false;
   if (/^(?:i|we)\b/i.test(t)) return false;
 
@@ -2873,17 +2928,15 @@ function shouldKeepThemeLikeLineWithWord(line, nextLine = '') {
 function classifyPropheticParagraph(paragraph) {
   const p = String(paragraph || '').trim();
   if (!p) return 'additionalNotes';
-  const prayerLikeRe = /^(in the name of jesus|thank you lord|hallelujah|i thank you|i pray|god i|lord i)/i;
-  const directSpeechStartRe = /^(you are|you will|i have|my daughter|my son|i am)/i;
 
   const lines = p.split('\n').map(line => line.trim()).filter(Boolean);
   if (!lines.length) return 'additionalNotes';
 
   if (lines.length === 1) {
     const single = lines[0];
-    if (isPropheticPrayerHeading(single)) return 'response';
+    if (isPropheticPrayerHeading(single)) return 'prayer';
     if (containsBibleReference(single)) return 'scriptureConfirmation';
-    if (prayerLikeRe.test(single)) return 'response';
+    if (looksLikePrayerLanguage(single)) return 'prayer';
     if (looksLikeImperativePropheticWord(single)) return 'word';
     if (looksLikeResponseLanguage(single)) return 'response';
     if (looksLikeMeaningBlock(single)) return 'meaning';
@@ -2893,14 +2946,15 @@ function classifyPropheticParagraph(paragraph) {
 
   let wordLike = 0;
   let meaningLike = 0;
+  let prayerLike = 0;
   let responseLike = 0;
   let noteLike = 0;
   let scriptureLike = 0;
 
   lines.forEach(line => {
-    if (isPropheticPrayerHeading(line)) responseLike += 4;
+    if (isPropheticPrayerHeading(line)) prayerLike += 4;
     if (containsBibleReference(line)) scriptureLike += 2;
-    if (prayerLikeRe.test(line)) responseLike += 3;
+    if (looksLikePrayerLanguage(line)) prayerLike += 3;
     if (looksLikeImperativePropheticWord(line)) wordLike += 3;
     if (looksLikeResponseLanguage(line)) responseLike += 2;
     if (looksLikeMeaningBlock(line)) meaningLike += 2;
@@ -2908,14 +2962,15 @@ function classifyPropheticParagraph(paragraph) {
     if (looksLikeNoteLine(line)) noteLike += 1;
   });
 
-  const activeBuckets = [wordLike, meaningLike, responseLike, noteLike, scriptureLike].filter(score => score > 0).length;
+  const activeBuckets = [wordLike, meaningLike, prayerLike, responseLike, noteLike, scriptureLike].filter(score => score > 0).length;
   if (lines.length > 1 && activeBuckets >= 2) return 'additionalNotes';
 
-  if (scriptureLike > Math.max(wordLike, meaningLike, responseLike, noteLike)) return 'scriptureConfirmation';
-  if (responseLike > Math.max(wordLike, meaningLike, noteLike)) return 'response';
-  if (noteLike > 0 && (wordLike > 0 || meaningLike > 0 || responseLike > 0 || scriptureLike > 0)) return 'additionalNotes';
-  if (meaningLike > Math.max(wordLike, responseLike, noteLike)) return 'meaning';
-  if (wordLike >= Math.max(meaningLike, responseLike, noteLike, 1)) return 'word';
+  if (scriptureLike > Math.max(wordLike, meaningLike, prayerLike, responseLike, noteLike)) return 'scriptureConfirmation';
+  if (prayerLike > Math.max(wordLike, meaningLike, responseLike, noteLike)) return 'prayer';
+  if (responseLike > Math.max(wordLike, meaningLike, prayerLike, noteLike)) return 'response';
+  if (noteLike > 0 && (wordLike > 0 || meaningLike > 0 || prayerLike > 0 || responseLike > 0 || scriptureLike > 0)) return 'additionalNotes';
+  if (meaningLike > Math.max(wordLike, prayerLike, responseLike, noteLike)) return 'meaning';
+  if (wordLike >= Math.max(meaningLike, prayerLike, responseLike, noteLike, 1)) return 'word';
   if (noteLike > 0) return 'additionalNotes';
 
   return 'word';
@@ -2926,6 +2981,7 @@ function pushChunkToPropheticBucket(buckets, field, text) {
   if (!cleaned) return;
   if (field === 'word') buckets.wordChunks.push(cleaned);
   else if (field === 'meaning') buckets.meaningChunks.push(cleaned);
+  else if (field === 'prayer') buckets.prayerChunks.push(cleaned);
   else if (field === 'scriptureConfirmation') buckets.scriptureChunks.push(cleaned);
   else if (field === 'response') buckets.responseChunks.push(cleaned);
   else buckets.noteChunks.push(cleaned);
@@ -2964,6 +3020,7 @@ function distributeMixedPropheticParagraph(paragraph, buckets, result) {
       else if (inline.field === 'theme' && !result.theme) result.theme = inline.content.replace(/[.!?]+$/g, '').trim();
       else if (inline.field === 'word') pushChunkToPropheticBucket(buckets, 'word', inline.content);
       else if (inline.field === 'meaning') pushChunkToPropheticBucket(buckets, 'meaning', inline.content);
+      else if (inline.field === 'prayer') pushChunkToPropheticBucket(buckets, 'prayer', inline.content);
       else if (inline.field === 'scriptureConfirmation') pushChunkToPropheticBucket(buckets, 'scriptureConfirmation', inline.content);
       else if (inline.field === 'response') pushChunkToPropheticBucket(buckets, 'response', inline.content);
       else pushChunkToPropheticBucket(buckets, 'additionalNotes', inline.content);
@@ -2990,7 +3047,7 @@ function distributeMixedPropheticParagraph(paragraph, buckets, result) {
 
     if (isPropheticPrayerHeading(line)) {
       flush();
-      currentField = 'response';
+      currentField = 'prayer';
       currentFieldLocked = true;
       return;
     }
@@ -3051,6 +3108,7 @@ function parsePropheticLabeledBlocks(text) {
     theme: [],
     word: [],
     meaning: [],
+    prayer: [],
     scriptureConfirmation: [],
     response: [],
     additionalNotes: []
@@ -3138,6 +3196,7 @@ function parsePropheticLabeledBlocks(text) {
     theme: joinPropheticChunks(buckets.theme),
     word: joinPropheticChunks(buckets.word),
     meaning: joinPropheticChunks(buckets.meaning),
+    prayer: joinPropheticChunks(buckets.prayer),
     scriptureConfirmation: joinPropheticChunks(buckets.scriptureConfirmation),
     response: joinPropheticChunks(buckets.response),
     additionalNotes: joinPropheticChunks(buckets.additionalNotes)
@@ -3185,10 +3244,11 @@ function parsePropheticFallback(text) {
 
   const wordChunks = [];
   const meaningChunks = [];
+  const prayerChunks = [];
   const scriptureChunks = [];
   const responseChunks = [];
   const noteChunks = [];
-  const bucketRefs = { wordChunks, meaningChunks, scriptureChunks, responseChunks, noteChunks };
+  const bucketRefs = { wordChunks, meaningChunks, prayerChunks, scriptureChunks, responseChunks, noteChunks };
   const consumedParagraphIndexes = new Set();
   let prayerSectionStarted = false;
 
@@ -3220,7 +3280,7 @@ function parsePropheticFallback(text) {
   paragraphs.forEach((paragraph, index) => {
     if (consumedParagraphIndexes.has(index)) return;
     if (prayerSectionStarted) {
-      responseChunks.push(paragraph);
+      prayerChunks.push(paragraph);
       return;
     }
 
@@ -3228,7 +3288,7 @@ function parsePropheticFallback(text) {
     if (prayerStartMatch) {
       prayerSectionStarted = true;
       const initialPrayer = String(prayerStartMatch[1] || '').trim();
-      if (initialPrayer) responseChunks.push(initialPrayer);
+      if (initialPrayer) prayerChunks.push(initialPrayer);
       return;
     }
 
@@ -3240,6 +3300,7 @@ function parsePropheticFallback(text) {
       else if (inline.field === 'theme' && !result.theme) result.theme = inline.content.replace(/[.!?]+$/g, '').trim();
       else if (inline.field === 'word') wordChunks.push(inline.content);
       else if (inline.field === 'meaning') meaningChunks.push(inline.content);
+      else if (inline.field === 'prayer') prayerChunks.push(inline.content);
       else if (inline.field === 'scriptureConfirmation') scriptureChunks.push(inline.content);
       else if (inline.field === 'response') responseChunks.push(inline.content);
       else if (inline.field === 'additionalNotes') noteChunks.push(inline.content);
@@ -3248,6 +3309,7 @@ function parsePropheticFallback(text) {
         const inlineClass = classifyPropheticParagraph(inline.content);
         if (inlineClass === 'word') wordChunks.push(inline.content);
         else if (inlineClass === 'meaning') meaningChunks.push(inline.content);
+        else if (inlineClass === 'prayer') prayerChunks.push(inline.content);
         else if (inlineClass === 'scriptureConfirmation') scriptureChunks.push(inline.content);
         else if (inlineClass === 'response') responseChunks.push(inline.content);
         else noteChunks.push(inline.content);
@@ -3272,6 +3334,8 @@ function parsePropheticFallback(text) {
       wordChunks.push(paragraph);
     } else if (classification === 'meaning') {
       meaningChunks.push(paragraph);
+    } else if (classification === 'prayer') {
+      prayerChunks.push(paragraph);
     } else if (classification === 'scriptureConfirmation') {
       scriptureChunks.push(paragraph);
     } else if (classification === 'response') {
@@ -3311,17 +3375,20 @@ function parsePropheticFallback(text) {
         const beforeCounts = {
           word: wordChunks.length,
           meaning: meaningChunks.length,
+          prayer: prayerChunks.length,
           scripture: scriptureChunks.length,
           response: responseChunks.length,
           notes: noteChunks.length
         };
         distributeMixedPropheticParagraph(chunk, bucketRefs, result);
-        const movedSomewhere = wordChunks.length !== beforeCounts.word || meaningChunks.length !== beforeCounts.meaning || scriptureChunks.length !== beforeCounts.scripture || responseChunks.length !== beforeCounts.response;
+        const movedSomewhere = wordChunks.length !== beforeCounts.word || meaningChunks.length !== beforeCounts.meaning || prayerChunks.length !== beforeCounts.prayer || scriptureChunks.length !== beforeCounts.scripture || responseChunks.length !== beforeCounts.response;
         if (!movedSomewhere) reclassifiedNotes.push(chunk);
       } else if (cls === 'word') {
         wordChunks.push(chunk);
       } else if (cls === 'meaning') {
         meaningChunks.push(chunk);
+      } else if (cls === 'prayer') {
+        prayerChunks.push(chunk);
       } else if (cls === 'scriptureConfirmation') {
         scriptureChunks.push(chunk);
       } else if (cls === 'response') {
@@ -3336,6 +3403,7 @@ function parsePropheticFallback(text) {
 
   result.word = joinPropheticChunks(wordChunks);
   result.meaning = joinPropheticChunks(meaningChunks);
+  result.prayer = joinPropheticChunks(prayerChunks);
   result.scriptureConfirmation = joinPropheticChunks(scriptureChunks);
   result.response = joinPropheticChunks(responseChunks);
   result.additionalNotes = joinPropheticChunks(noteChunks);
@@ -3356,6 +3424,7 @@ function adaptPropheticData(prophetic) {
     ...normalized,
     by: normalized.source || '',
     interpretation: normalized.meaning || '',
+    prayer: normalized.prayer || '',
     scripture: normalized.scriptureConfirmation || '',
     notes: normalized.additionalNotes || ''
   };
@@ -3616,7 +3685,7 @@ function planPages(data, layout, measure) {
 function populate(raw) {
   const data = extractData(raw);
 
-  ['date','by','theme','word','interpretation','scripture','response','notes'].forEach(id => {
+  ['date','by','theme','word','interpretation','prayer','scripture','response','notes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -3705,7 +3774,7 @@ function handleGenerate() {
 // Reads current form field values and routes to review stage
 function generateFromForm() {
   const data = {};
-  ['date','by','type','theme','word','interpretation','scripture','response','notes'].forEach(id => {
+  ['date','by','type','theme','word','interpretation','prayer','scripture','response','notes'].forEach(id => {
     const el = document.getElementById(id);
     data[id] = el ? el.value : '';
   });
@@ -3738,6 +3807,7 @@ function buildReviewCard(data, index, total) {
   const fields = [
     { key: 'word',           label: 'Word'                         },
     { key: 'interpretation', label: 'What I Believe God Is Saying' },
+    { key: 'prayer',         label: 'Prayer'                       },
     { key: 'scripture',      label: 'Scripture Confirmation'       },
     { key: 'response',       label: 'How I Will Respond'           },
     { key: 'notes',          label: 'Additional Notes'             },
@@ -3808,7 +3878,7 @@ function removeTrailingBlankPage() {
 // JOURNAL PAGE BUILDER
 // Constructs a .journal-page element from a data object.
 // Restructured section order:
-//   Word → What I Believe God Is Saying → Scripture Confirmation
+//   Word → What I Believe God Is Saying → Prayer → Scripture Confirmation
 //   → How I Will Respond (LARGEST) → Additional Notes
 // textContent is used for all user data (XSS-safe).
 // ──────────────────────────────────────────────────────
@@ -3851,6 +3921,15 @@ function buildJournalPageElement(data) {
           <div class="j-prose medium" data-f="interpretation"></div>
         </div>
 
+        <!-- Prayer — medium writing area -->
+        <div>
+          <div class="j-sec-head">
+            <span class="j-sec-label">Prayer</span>
+            <div class="j-sec-rule"></div>
+          </div>
+          <div class="j-prose medium" data-f="prayer"></div>
+        </div>
+
         <!-- Scripture Confirmation — compact italic section -->
         <div>
           <div class="j-sec-head">
@@ -3887,7 +3966,7 @@ function buildJournalPageElement(data) {
 
   // Inject content — simple fields use textContent, paragraph fields use
   // setParaText() which renders blank-line breaks as spaced <p> elements.
-  const paraFields = new Set(['word','interpretation','response','notes','scripture']);
+  const paraFields = new Set(['word','interpretation','prayer','response','notes','scripture']);
   page.querySelectorAll('[data-f]').forEach(el => {
     const key = el.getAttribute('data-f');
     const val = data[key] || '';
@@ -4392,6 +4471,7 @@ function buildPropheticPages(container, data, pageStyle) {
   const sectionOrder = [
     { key: 'word', label: 'Word', cssClass: 'j-word-area' },
     { key: 'interpretation', label: 'What I Believe God Is Saying', cssClass: 'j-prose medium' },
+    { key: 'prayer', label: 'Prayer', cssClass: 'j-prose medium' },
     { key: 'scripture', label: 'Scripture Confirmation', cssClass: 'j-scripture' },
     { key: 'response', label: 'How I Will Respond', cssClass: 'j-prose large' },
     { key: 'notes', label: 'Additional Notes', cssClass: 'j-prose medium' }
@@ -4663,17 +4743,13 @@ window.visualViewport?.addEventListener('resize', scalePreview);
 // beforeprint/afterprint guarantee auth chrome is hidden at the DOM level.
 window.addEventListener('beforeprint', () => {
   const authBar    = document.getElementById('authBar');
-  const tabNav     = document.getElementById('tabNav');
   const journalSec = document.getElementById('myJournalSection');
   if (authBar)    authBar.style.setProperty('display', 'none', 'important');
-  if (tabNav)     tabNav.style.setProperty('display', 'none', 'important');
   if (journalSec) journalSec.style.setProperty('display', 'none', 'important');
 });
 window.addEventListener('afterprint', () => {
   const authBar = document.getElementById('authBar');
-  const tabNav  = document.getElementById('tabNav');
   if (authBar) authBar.style.removeProperty('display');
-  if (tabNav)  tabNav.style.removeProperty('display');
   // Restore correct tab state after print
   const myJSec = document.getElementById('myJournalSection');
   if (!currentUser && myJSec) { myJSec.style.display = 'none'; }
@@ -4792,7 +4868,7 @@ function clearAll() {
   lastGeneratedData = [];
   currentReviewEntryIndex = 0;
   nextGeneratedStage = 'review';
-  ['date','by','theme','word','interpretation','scripture','response','notes','pasteNotes'].forEach(id => {
+  ['date','by','theme','word','interpretation','prayer','scripture','response','notes','pasteNotes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -4901,7 +4977,7 @@ function formHasMeaningfulContent() {
     return true;
   }
 
-  const fieldIds = ['date', 'by', 'type', 'theme', 'word', 'interpretation', 'scripture', 'response', 'notes'];
+  const fieldIds = ['date', 'by', 'type', 'theme', 'word', 'interpretation', 'prayer', 'scripture', 'response', 'notes'];
   return fieldIds.some(id => {
     const el = document.getElementById(id);
     if (!el) return false;
@@ -4965,6 +5041,15 @@ function renderReviewEntryNav() {
 }
 
 function switchStage(stage, options = {}) {
+  if ((stage === 'form' || stage === 'review' || stage === 'print') && !options._fromTab) {
+    switchTab('generator', {
+      preserveStage: stage,
+      skipScroll: options.skipScroll,
+      force: options.force === true
+    });
+    return;
+  }
+
   const editor = document.getElementById('editorSection');
   const output = document.getElementById('outputSection');
   const printSettingsPanel = document.getElementById('printSettingsPanel');
@@ -5139,28 +5224,27 @@ function toggleAuthMode() {
   renderAuthBar();
 }
 
-function switchTab(tab) {
+function switchTab(tab, options = {}) {
   const gen   = document.getElementById('editorSection');
   const out   = document.getElementById('outputSection');
   const saved = document.getElementById('myJournalSection');
-  const btnG  = document.getElementById('tabBtnGenerator');
-  const btnS  = document.getElementById('tabBtnSaved');
   document.body.setAttribute('data-active-tab', tab);
   updateMobileFormBarVisibility();
   if (tab === 'saved') {
     if (gen)   gen.style.display = 'none';
     if (out)   out.style.display = 'none';
     if (saved) saved.style.display = 'block';
-    if (btnG)  btnG.classList.remove('active');
-    if (btnS)  btnS.classList.add('active');
     try { sessionStorage.setItem('pwTab', 'saved'); } catch {}
     loadMyJournal();
   } else {
+    if (gen)   gen.style.display = '';
     if (saved) saved.style.display = 'none';
-    if (btnG)  btnG.classList.add('active');
-    if (btnS)  btnS.classList.remove('active');
     try { sessionStorage.setItem('pwTab', 'generator'); } catch {}
-    switchStage(currentGeneratorStage, { skipScroll: true });
+    switchStage(options.preserveStage || currentGeneratorStage || 'form', {
+      skipScroll: options.skipScroll ?? true,
+      force: options.force === true,
+      _fromTab: true
+    });
   }
 }
 
@@ -5179,8 +5263,7 @@ function switchMobileTab(tab) {
   if (tab === 'saved') {
     switchTab('saved');
   } else {
-    switchTab('generator');
-    switchStage(tab, { force: true });
+    switchTab('generator', { preserveStage: tab, force: true });
   }
 }
 
@@ -5285,6 +5368,7 @@ function buildPendingJournalEntryPayload() {
     theme: getFieldValue('theme'),
     word: getFieldValue('word'),
     interpretation: getFieldValue('interpretation'),
+    prayer: getFieldValue('prayer'),
     scripture: getFieldValue('scripture'),
     response: getFieldValue('response'),
     notes: getFieldValue('notes')
@@ -5308,22 +5392,56 @@ function buildJournalImportUrl(payload) {
 }
 
 async function saveToJournal() {
+  if (!currentUser) {
+    const bar = document.getElementById('authBar');
+    if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    alert('Sign in to save prophetic words.');
+    return;
+  }
   if (!lastGeneratedData.length) {
     alert('Generate your journal pages first, then click Save to Journal.');
     return;
   }
   const btn = document.getElementById('saveJournalBtn');
-  if (btn) { btn.textContent = 'Opening Journal…'; btn.disabled = true; }
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
   try {
     const payload = buildPendingJournalEntryPayload();
-    if (!payload.word && !payload.interpretation && !payload.response && !payload.notes && !payload.theme) {
-      throw new Error('Add some entry content before saving to the journal app.');
+    if (!payload.word && !payload.interpretation && !payload.prayer && !payload.response && !payload.notes && !payload.theme) {
+      throw new Error('Add some entry content before saving to My Saved Entries.');
     }
-    try {
-      localStorage.setItem('pendingJournalEntry', JSON.stringify(payload));
-    } catch {}
-    setMsg('Opening the journal app to save this prophetic entry…', 'ok');
-    window.location.href = buildJournalImportUrl(payload);
+
+    const row = {
+      user_id: currentUser.id,
+      date: payload.date || null,
+      title: payload.title || null,
+      source: payload.source || null,
+      word_content: payload.word || null,
+      interpretation: payload.interpretation || null,
+      prayer: payload.prayer || null,
+      application: payload.response || null,
+      scriptures: payload.scripture
+        ? payload.scripture.split(/\n|,/).map(s => s.trim()).filter(Boolean)
+        : [],
+      context: JSON.stringify({
+        type: payload.type || '',
+        theme: payload.theme || '',
+        notes: payload.notes || ''
+      })
+    };
+
+    const { data, error } = await sb.from('prophetic_words').insert([row]).select('id');
+    if (error) throw error;
+
+    window._lastSavedEntryIds = (data || []).map(entry => entry.id);
+    setMsg('Saved to My Saved Entries.', 'ok');
+    switchTab('saved');
+    if (btn) {
+      btn.textContent = 'Saved!';
+      setTimeout(() => {
+        btn.textContent = 'Save to Journal';
+        btn.disabled = false;
+      }, 1800);
+    }
   } catch (err) {
     alert('Could not save: ' + (err.message || 'Unknown error'));
     if (btn) { btn.textContent = 'Save to Journal'; btn.disabled = false; }
@@ -5332,6 +5450,63 @@ async function saveToJournal() {
 
 // ── MY JOURNAL LOADER ────────────────────────────────────
 
+function parseSavedPropheticContext(entry) {
+  try { return entry && entry.context ? JSON.parse(entry.context) : {}; } catch { return {}; }
+}
+
+function normalizePropheticEntryForExport(entry) {
+  const ctx = parseSavedPropheticContext(entry);
+  const scripture = Array.isArray(entry.scriptures) ? entry.scriptures.join('\n') : (entry.scriptures || '');
+  return {
+    id: entry.id || '',
+    entryType: 'Prophetic Word',
+    title: entry.title || 'Untitled Prophetic Word',
+    date: entry.date || '',
+    createdAt: entry.created_at || '',
+    updatedAt: entry.updated_at || '',
+    source: entry.source || '',
+    theme: entry.title || ctx.theme || '',
+    content: entry.word_content || '',
+    interpretation: entry.interpretation || '',
+    prayer: entry.prayer || '',
+    scripture,
+    response: entry.application || '',
+    notes: ctx.notes || ''
+  };
+}
+
+async function fetchAllSavedPropheticEntriesForExport() {
+  if (!currentUser) return [];
+  const { data, error } = await sb.from('prophetic_words')
+    .select('id, date, title, source, context, word_content, interpretation, prayer, application, scriptures, created_at, updated_at')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(normalizePropheticEntryForExport);
+}
+
+async function handleSavedEntriesExport(action) {
+  if (!currentUser) {
+    alert('Sign in to export saved entries.');
+    return;
+  }
+  try {
+    const result = await JournalExportUtils.runAction({
+      action,
+      fetchEntries: fetchAllSavedPropheticEntriesForExport,
+      filenameBase: 'prophetic-words',
+      title: 'Saved Prophetic Words',
+      emptyMessage: 'No saved prophetic words exist yet.'
+    });
+    if (action === 'copy' && result.count) {
+      alert(`Copied ${result.count} saved entr${result.count === 1 ? 'y' : 'ies'} to your clipboard.`);
+    }
+  } catch (error) {
+    console.error('[handleSavedEntriesExport] Error:', error);
+    alert('Could not export saved entries: ' + (error.message || 'Unknown error'));
+  }
+}
+
 async function loadMyJournal() {
   if (!currentUser) return;
   const list = document.getElementById('savedEntriesList');
@@ -5339,7 +5514,7 @@ async function loadMyJournal() {
   list.innerHTML = '<div class="saved-entries-empty" style="font-style:normal;color:var(--text-light)">Loading…</div>';
 
   const { data, error } = await sb.from('prophetic_words')
-    .select('id, date, title, source, context, word_content, interpretation, application, scriptures, created_at')
+    .select('id, date, title, source, context, word_content, interpretation, prayer, application, scriptures, created_at')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -5398,6 +5573,7 @@ function loadEntryIntoForm(entry) {
     by:             entry.source,
     word:           entry.word_content,
     interpretation: entry.interpretation,
+    prayer:         entry.prayer,
     response:       entry.application,
     notes:          ctx.notes || '',
     scripture:      (entry.scriptures || []).join('\n'),
@@ -5439,10 +5615,10 @@ async function fetchAsDataURL(src) {
 
 // ── URL PARAM LOADER ──────────────────────────────────────
 // Detects entry data passed from the Dove Expressions journal app via URL params.
-// Supported params: date, by, type, theme, word, interpretation, scripture, response, notes
+// Supported params: date, by, type, theme, word, interpretation, prayer, scripture, response, notes
 (function loadFromURLParams() {
   const params = new URLSearchParams(window.location.search);
-  const textFields = ['date','by','theme','word','interpretation','scripture','response','notes'];
+  const textFields = ['date','by','theme','word','interpretation','prayer','scripture','response','notes'];
   let loaded = 0;
   textFields.forEach(id => {
     const val = params.get(id);
