@@ -1616,6 +1616,21 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   border-bottom: 1px solid var(--line);
 }
 .saved-entries-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.8rem; }
+.saved-library-controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.8rem; }
+.saved-library-search {
+  flex: 1;
+  min-width: 220px;
+  font-family: 'Lora', serif;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.saved-library-search:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99,0,0,0.08); }
 .saved-entry-card {
   display: flex; align-items: flex-start; gap: 1rem;
   padding: 0.9rem 1rem;
@@ -1816,6 +1831,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 <div class="my-journal-section" id="myJournalSection" style="display:none">
   <div class="editor-section" style="padding-top:1.5rem; padding-bottom:2rem;">
     <div class="section-eyebrow">My Saved Journal Entries</div>
+    <div class="saved-library-controls">
+      <input class="saved-library-search" type="text" id="savedEntriesSearch" placeholder="Search word, theme, source, or notes..." oninput="onSavedEntriesSearchInput()">
+    </div>
     <div class="saved-export-bar">
       <span class="saved-export-note">Export saved entries:</span>
       <button class="sec-btn" type="button" onclick="handleSavedEntriesExport('excel')">Export Excel</button>
@@ -2194,6 +2212,18 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser  = null;
 let authMode     = 'signin'; // 'signin' | 'signup'
+let savedJournalSearch = '';
+let pendingAppPropheticIds = [];
+let hasLoadedPendingAppPropheticSelection = false;
+let hasLoadedFromHandoff = false;
+
+function parseIdsFromUrl(paramName) {
+  const raw = new URLSearchParams(window.location.search).get(paramName) || '';
+  const seen = new Set();
+  return raw.split(',')
+    .map(s => parseInt(s.trim(), 10))
+    .filter(n => Number.isFinite(n) && n > 0 && !seen.has(n) && seen.add(n));
+}
 
 // Auth state listener — fires on sign in, sign out, token refresh
 sb.auth.onAuthStateChange((event, session) => {
@@ -2203,6 +2233,7 @@ sb.auth.onAuthStateChange((event, session) => {
     let lastTab = 'generator';
     try { lastTab = sessionStorage.getItem('pwTab') || 'generator'; } catch {}
     switchTab(lastTab);
+    loadFromHandoff();
   } else {
     switchTab('generator');
   }
@@ -2217,6 +2248,7 @@ sb.auth.onAuthStateChange((event, session) => {
     let lastTab = 'generator';
     try { lastTab = sessionStorage.getItem('pwTab') || 'generator'; } catch {}
     switchTab(lastTab);
+    loadFromHandoff();
   }
 })();
 
@@ -5198,11 +5230,8 @@ function renderAuthBar() {
       <span class="auth-label">Signed in as</span>
       <span class="auth-email-label">${escAttr(currentUser.email)}</span>
       <span class="auth-sep">·</span>
-      <button class="auth-link" id="myJournalBtn">My Journal</button>
-      <span class="auth-sep">·</span>
       <button class="auth-btn ghost" id="signOutBtn">Sign Out</button>
     `;
-    document.getElementById('myJournalBtn')?.addEventListener('click', () => switchTab('saved'));
     document.getElementById('signOutBtn')?.addEventListener('click', signOut);
   } else {
     inner.innerHTML = `
@@ -5417,7 +5446,6 @@ async function saveToJournal() {
       source: payload.source || null,
       word_content: payload.word || null,
       interpretation: payload.interpretation || null,
-      prayer: payload.prayer || null,
       application: payload.response || null,
       scriptures: payload.scripture
         ? payload.scripture.split(/\n|,/).map(s => s.trim()).filter(Boolean)
@@ -5468,7 +5496,7 @@ function normalizePropheticEntryForExport(entry) {
     theme: entry.title || ctx.theme || '',
     content: entry.word_content || '',
     interpretation: entry.interpretation || '',
-    prayer: entry.prayer || '',
+    prayer: ctx.prayer || '',
     scripture,
     response: entry.application || '',
     notes: ctx.notes || ''
@@ -5478,7 +5506,7 @@ function normalizePropheticEntryForExport(entry) {
 async function fetchAllSavedPropheticEntriesForExport() {
   if (!currentUser) return [];
   const { data, error } = await sb.from('prophetic_words')
-    .select('id, date, title, source, context, word_content, interpretation, prayer, application, scriptures, created_at, updated_at')
+    .select('id, date, title, source, context, word_content, interpretation, application, scriptures, created_at, updated_at')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false });
   if (error) throw error;
@@ -5513,11 +5541,17 @@ async function loadMyJournal() {
   if (!list) return;
   list.innerHTML = '<div class="saved-entries-empty" style="font-style:normal;color:var(--text-light)">Loading…</div>';
 
-  const { data, error } = await sb.from('prophetic_words')
-    .select('id, date, title, source, context, word_content, interpretation, prayer, application, scriptures, created_at')
+  let query = sb.from('prophetic_words')
+    .select('id, date, title, source, context, word_content, interpretation, application, scriptures, created_at')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false })
     .limit(50);
+
+  if (savedJournalSearch) {
+    query = query.or(`title.ilike.%${savedJournalSearch}%,source.ilike.%${savedJournalSearch}%,word_content.ilike.%${savedJournalSearch}%,interpretation.ilike.%${savedJournalSearch}%`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error('[loadMyJournal] Supabase error:', error);
@@ -5525,7 +5559,9 @@ async function loadMyJournal() {
     return;
   }
   if (!data || data.length === 0) {
-    list.innerHTML = '<div class="saved-entries-empty">No saved entries yet — generate journal pages and click "Save to Journal."</div>';
+    list.innerHTML = savedJournalSearch
+      ? '<div class="saved-entries-empty">No saved prophetic entries match the current search.</div>'
+      : '<div class="saved-entries-empty">No saved entries yet — generate journal pages and click "Save to Journal."</div>';
     return;
   }
 
@@ -5564,23 +5600,94 @@ async function loadMyJournal() {
   });
 }
 
+function onSavedEntriesSearchInput() {
+  const value = document.getElementById('savedEntriesSearch')?.value || '';
+  savedJournalSearch = value.trim();
+  loadMyJournal();
+}
+
+function mapSavedPropheticEntryToGeneratorData(entry) {
+  const ctx = parseSavedPropheticContext(entry);
+  return {
+    date: entry.date || '',
+    theme: entry.title || '',
+    by: entry.source || '',
+    type: ctx.type || '',
+    word: entry.word_content || '',
+    interpretation: entry.interpretation || '',
+    prayer: ctx.prayer || '',
+    response: entry.application || '',
+    notes: ctx.notes || '',
+    scripture: Array.isArray(entry.scriptures) ? entry.scriptures.join('\n') : (entry.scriptures || ''),
+    _raw: ctx.rawText || '',
+  };
+}
+
 function loadEntryIntoForm(entry) {
-  let ctx = {};
-  try { ctx = entry.context ? JSON.parse(entry.context) : {}; } catch {}
+  const mapped = mapSavedPropheticEntryToGeneratorData(entry);
   const fieldMap = {
-    date:           entry.date,
-    theme:          entry.title,
-    by:             entry.source,
-    word:           entry.word_content,
-    interpretation: entry.interpretation,
-    prayer:         entry.prayer,
-    response:       entry.application,
-    notes:          ctx.notes || '',
-    scripture:      (entry.scriptures || []).join('\n'),
+    date:           mapped.date,
+    theme:          mapped.theme,
+    by:             mapped.by,
+    word:           mapped.word,
+    interpretation: mapped.interpretation,
+    prayer:         mapped.prayer,
+    response:       mapped.response,
+    notes:          mapped.notes,
+    scripture:      mapped.scripture,
   };
   Object.entries(fieldMap).forEach(([id, val]) => set(id, val || ''));
-  if (ctx.type) set('type', ctx.type);
+  if (mapped.type) set('type', mapped.type);
   document.getElementById('editorSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function loadSelectedPropheticEntriesFromApp(ids) {
+  if (!currentUser || !Array.isArray(ids) || !ids.length) return;
+  const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+  if (!uniqueIds.length) return;
+
+  const { data, error } = await sb.from('prophetic_words')
+    .select('id, date, title, source, context, word_content, interpretation, application, scriptures, created_at, updated_at')
+    .eq('user_id', currentUser.id)
+    .in('id', uniqueIds);
+
+  if (error) throw error;
+
+  const entriesById = new Map((data || []).map(entry => [entry.id, entry]));
+  const orderedEntries = uniqueIds.map(id => entriesById.get(id)).filter(Boolean);
+  if (!orderedEntries.length) return;
+
+  showReview(orderedEntries.map(mapSavedPropheticEntryToGeneratorData));
+  setMsg(
+    `${orderedEntries.length} saved prophetic entr${orderedEntries.length === 1 ? 'y was' : 'ies were'} loaded from the Hearing God app. Review the content, then continue to print.`,
+    'ok'
+  );
+}
+
+async function maybeLoadPendingAppPropheticSelection() {
+  if (hasLoadedPendingAppPropheticSelection || !currentUser || !pendingAppPropheticIds.length) return;
+  hasLoadedPendingAppPropheticSelection = true;
+  try {
+    await loadSelectedPropheticEntriesFromApp(pendingAppPropheticIds);
+  } catch (error) {
+    console.error('[app handoff] Could not load selected prophetic entries:', error);
+    setMsg('Could not load the selected prophetic entries from the Hearing God app.', 'err');
+    hasLoadedPendingAppPropheticSelection = false;
+  }
+}
+
+async function loadFromHandoff() {
+  if (hasLoadedFromHandoff) return;
+  const ids = parseIdsFromUrl('savedPropheticIds');
+  if (!ids.length) return;
+  if (!currentUser) return;
+  hasLoadedFromHandoff = true;
+  setMsg('Loading selected entries...', '');
+  try {
+    await loadSelectedPropheticEntriesFromApp(ids);
+  } catch {
+    setMsg('Unable to load selected entries. You can continue manually.', 'err');
+  }
 }
 
 async function deleteEntry(id) {
@@ -5618,6 +5725,8 @@ async function fetchAsDataURL(src) {
 // Supported params: date, by, type, theme, word, interpretation, prayer, scripture, response, notes
 (function loadFromURLParams() {
   const params = new URLSearchParams(window.location.search);
+  pendingAppPropheticIds = parseIdsFromUrl('savedPropheticIds');
+  loadFromHandoff();
   const textFields = ['date','by','theme','word','interpretation','prayer','scripture','response','notes'];
   let loaded = 0;
   textFields.forEach(id => {
