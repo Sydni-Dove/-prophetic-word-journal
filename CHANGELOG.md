@@ -1,5 +1,18 @@
 # Prophetic Word Generator Changelog
 
+## 2026-04-15
+
+### Improvements
+- widened the desktop workspace shell for the Prophetic Word Generator
+- expanded settings, review, and preview stages so the generator feels less boxed in on desktop
+- widened review cards and stage containers while keeping centered margins and padding
+
+### Notes
+- printable page preview sizing remains unchanged
+- only the surrounding workspace shell was widened
+
+---
+
 ## [Update] Prophetic Generator — UI System Alignment with Dream Generator
 
 ### Changed
