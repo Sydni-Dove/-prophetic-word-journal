@@ -11,8 +11,40 @@ High-level flow:
 - Form collects or autofills entry data.
 - Review renders card-based confirmation from structured entries.
 - Print renders paginated journal pages and exposes print-specific layout/theme controls.
+- Saved entries are accessed through the primary shell tab system rather than the Form -> Review -> Print stage flow.
 
-## 2. CORE ARCHITECTURE
+## 2. SHELL ARCHITECTURE
+
+### A. ACTIVE SHELL PATTERN
+
+- The active Prophetic shell follows the Dream-aligned generator pattern:
+  - `gen-nav`
+  - `auth-bar`
+  - primary `m-tab-nav`
+  - stage content / saved-entry content below the primary tab bar
+- `m-tab-nav` is the primary visible navigation under the auth bar.
+- The visible `1-2-3` stage-flow / stepper shell is not part of the intended architecture.
+- Review, Print, and Saved remain structurally separate, but Saved is entered through the primary tab system.
+
+### B. LEGACY COMPATIBILITY LAYER
+
+- The old `Generator / My Saved Entries` top tab layer remains in the DOM only as a hidden compatibility layer for existing JS references.
+- That legacy tab layer is not intended to be user-visible navigation.
+- Shell behavior should not be rebuilt around the old visible two-tab layout.
+
+### C. SAVED SECTION IN THE SHELL
+
+- The Saved section is opened through the primary `m-tab-nav`.
+- Saved search and export controls live inside the saved section.
+- Saved export logic is local to the Prophetic generator and does not rely on shared external export utilities.
+- Saved entry cards are the load interaction:
+  - clicking a card loads the entry into the Review stage (not the Form)
+  - form fields are also populated during load so "Back to Form" works for editing
+  - `pendingReviewData` is populated via `showReview([mapped])` before stage switch — required for `switchStage` to route to Review
+  - there is no separate `Load` button on each card
+  - `Delete` remains a separate action and must not trigger card load
+
+## 3. CORE ARCHITECTURE
 
 ### A. INPUT / FORM LAYER
 
@@ -125,14 +157,14 @@ High-level flow:
 - `switchStage()` is the main stage visibility controller.
 - Visibility logic is stage-based, not route-based.
 
-## 3. DATA FLOW
+## 4. DATA FLOW
 
 User Input  
 -> Structured Data (`extractData`, `parseEntries`, form fields)  
 -> Review Cards (`pendingReviewData`, `buildReviewCard`)  
 -> Final Print Pages (`showPages`, paginated sheets in `#pagesContainer`)
 
-## 4. CURRENT KNOWN ISSUES
+## 5. CURRENT KNOWN ISSUES
 
 - Mobile access issue:
   - no hardcoded localhost URL is used for navigation
@@ -148,7 +180,7 @@ User Input
   - current behavior is controlled inside `switchStage()` through `togglePrintSettings(isPrint)`
   - this is correct for current UX, but easy to regress if Print visibility logic is refactored separately
 
-## 5. DESIGN + UI CONSTRAINTS
+## 6. DESIGN + UI CONSTRAINTS
 
 - Must follow Dove Expressions design system.
 - Primary form container width is approximately `820px`.
@@ -157,14 +189,14 @@ User Input
   - editor shell spacing must not alter page dimensions
   - print pages render inside dedicated journal-sheet/page containers
 
-## 6. NON-NEGOTIABLE RULES
+## 7. NON-NEGOTIABLE RULES
 
 - Parser output is final.
 - Pagination does not modify content.
 - Rendering does not reinterpret data.
 - No cross-layer hacks.
 
-## 7. RECENT FIXES (CHANGE SUMMARY)
+## 8. RECENT FIXES (CHANGE SUMMARY)
 
 - Theme preset button resizing:
   - reduced preset controls from heavier card-style buttons to smaller pill-style controls
@@ -175,3 +207,24 @@ User Input
 - Print settings toggle behavior:
   - entering Print now auto-opens settings
   - leaving Print collapses settings
+- Shell restoration:
+  - restored the Dream-aligned shell with `m-tab-nav` as the primary visible nav under the auth bar
+  - removed the visible legacy `1-2-3` stepper shell
+  - kept the legacy `Generator / My Saved Entries` tab layer only as hidden JS compatibility
+- Saved-entry UX restoration:
+  - saved cards now load on card click
+  - the separate `Load` button was removed
+  - saved search remains in the saved section
+  - saved exports remain inline in the saved section
+  - saved exports use local Prophetic export helpers instead of shared external utils
+- Saved-entry load flow update (2026-04-23):
+  - card click now routes to Review stage instead of Form
+  - form fields still populated during load so "Back to Form" remains functional
+  - `showReview([mapped])` populates `pendingReviewData` before stage switch
+- Review stage header centering fix (2026-04-23):
+  - removed `.review-stage-header` from `.stage-panel.*` joint selector that overrode centering
+  - review header now aligns to `var(--workspace-stage-max)` like review cards
+  - `.stage-panel.print-stage-header` and `.stage-panel.print-settings-panel` remain full-width
+- Review stage spacing alignment (2026-04-23):
+  - header gap and bottom padding matched to Dream generator rhythm
+  - card style flattened to Dream's pale-pink border, no shadow

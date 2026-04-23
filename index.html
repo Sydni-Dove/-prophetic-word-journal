@@ -11,7 +11,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="../shared/journal-export-utils.js"></script>
 <!-- Image OCR handled via Supabase Edge Function + Google Gemini Vision -->
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -110,6 +109,32 @@ body {
 .hero-banner .hero-quote {
   font-family: 'Playfair Display', serif; font-style: italic;
   font-size: 0.88rem; color: var(--text-mid); line-height: 1.4;
+}
+/* Old 2-tab nav: kept in DOM for JS refs, permanently hidden in Dream-aligned shell */
+.tab-nav { display: none !important; }
+.tab-nav-inner {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem 0.45rem;
+}
+.tab-btn {
+  font-family: 'Lato', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 0.55rem 0.5rem;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+.tab-btn:hover { color: var(--ui-accent); }
+.tab-btn.active {
+  color: var(--ui-accent);
+  border-bottom-color: var(--ui-accent);
 }
 .m-tab-nav {
   display: flex;
@@ -341,6 +366,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   background: #f5f0ec;
 }
 .output-section.show { display: block; }
+body[data-generator-stage="review"] .output-section {
+  background: transparent;
+  padding-top: 0.4rem;
+}
+.review-stage-header .review-filters { margin-top: 0.2rem; }
 .stage-panel {
   width: min(100%, var(--workspace-inner));
   margin: 0 auto 0.7rem;
@@ -416,14 +446,15 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   border-color: var(--ui-accent);
 }
 .review-stage-header {
-  width: min(100%, var(--workspace-inner));
+  width: 100%;
+  max-width: var(--workspace-stage-max);
   margin: 0 auto;
-  padding: 1.2rem 1.5rem 1rem;
+  padding: 1.4rem 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  border-bottom: 1px solid rgba(242,223,216,0.7);
-  background: rgba(255,255,255,0.92);
+  gap: 1.4rem;
+  background: transparent;
+  border-bottom: none;
 }
 .review-stage-head {
   display: flex;
@@ -431,6 +462,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-bottom: 0;
 }
 .review-stage-eyebrow,
 .print-stage-eyebrow {
@@ -439,16 +471,18 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   letter-spacing: 0.32em;
   text-transform: uppercase;
   color: var(--primary);
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.35rem;
 }
 .review-stage-title,
 .print-stage-title {
   font-family: 'Playfair Display', serif;
-  font-size: 1.2rem;
+  font-size: 1.35rem;
   font-weight: 400;
   font-style: italic;
   color: var(--text);
   line-height: 1.1;
+  margin-top: 0.1rem;
+  word-break: break-word;
 }
 .review-stage-header .stage-subtitle,
 .print-stage-header .stage-subtitle {
@@ -460,8 +494,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   margin-top: 0;
 }
 .print-stage-header {
-  width: min(100%, var(--workspace-inner));
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   padding: 1.2rem 1.5rem 1rem;
   display: flex;
   align-items: flex-start;
@@ -507,8 +542,9 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   display: flex;
   gap: 0.55rem;
   flex-wrap: wrap;
-  width: min(100%, var(--workspace-inner));
-  margin: 0 auto 0.8rem;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 0.8rem;
   padding: 0 1rem;
 }
 .review-entry-nav[hidden] { display: none !important; }
@@ -516,25 +552,29 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── REVIEW CARDS ─────────────────────────────────────── */
 .review-cards-container {
-  width: min(100%, var(--workspace-inner));
+  width: 100%;
+  max-width: var(--workspace-stage-max);
   margin: 0 auto;
-  padding: 0.5rem 1rem 2rem;
+  padding: 0 1.5rem 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: 0.9rem;
 }
 .review-card {
-  width: min(100%, var(--workspace-card-max));
-  margin: 0 auto;
-  background: #ffffff;
-  border-radius: 0.875rem;
-  border: 1px solid rgba(99,0,0,0.1);
-  box-shadow: 0 2px 10px rgba(27,23,23,0.06), 0 6px 24px rgba(27,23,23,0.04);
-  padding: 1.65rem 1.9rem 1.5rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background: var(--white);
+  border: 1px solid var(--pale-pink);
+  border-radius: 0.75rem;
+  box-shadow: none;
+  padding: 1rem 1.1rem 1.1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 0.85rem;
+  transition: border-color 0.16s;
 }
+.review-card:hover { border-color: rgba(99,0,0,0.22); }
 .rv-entry-label {
   font-family: 'Playfair Display', serif;
   font-size: 0.6rem;
@@ -604,10 +644,10 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 }
 /* Screen preview viewport contains visual scaling only; print dimensions stay native inside .journal-sheet. */
 .preview-viewport {
-  width: 100%;
-  max-width: var(--workspace-max);
+  width: min(100%, var(--workspace-stage-max));
+  max-width: var(--workspace-stage-max);
   overflow: hidden;
-  padding: 0.2rem 1rem 0.85rem;
+  padding: 0.35rem 1rem 1rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -615,9 +655,11 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   margin: 0 auto;
 }
 #pagesContainer {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1rem;
   transform-origin: top center;
 }
 #pagesContainer .journal-sheet {
@@ -625,11 +667,13 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   margin-right: auto;
 }
 #previewWrap {
+  width: 100%;
   overflow: visible;
   margin: 0 auto;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  padding-top: 0.1rem;
 }
 .stage-action-bar {
   width: min(100%, 960px);
@@ -656,7 +700,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   width: 8.5in;
   flex-shrink: 0; /* never let a flex container shrink native print dimensions */
   background: white;
-  margin: 1.5rem auto;
+  margin: 0.9rem auto 1.4rem;
   position: relative;
   box-shadow: 0 4px 30px rgba(27,23,23,0.12);
   break-after: page;
@@ -859,13 +903,22 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── THEME CUSTOMIZER ─────────────────────────────────── */
 .print-settings-panel {
-  width: min(100%, 1120px);
-  margin: 0 auto 0.8rem;
+  width: 100%;
+  max-width: none;
+  margin: 0 0 0.8rem;
   padding: 0 1.5rem;
   border-bottom: 1px solid rgba(242,223,216,0.7);
   background: rgba(255,255,255,0.92);
   box-shadow: none;
 }
+.stage-panel.print-stage-header,
+.stage-panel.print-settings-panel {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+/* Review header stays centered via its own rule (max-width: var(--workspace-stage-max)) */
 .print-settings-trigger {
   width: 100%;
   display: flex;
@@ -1113,7 +1166,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     font-size: 0.76rem;
     padding: 0.38rem 0.88rem;
   }
-  .gen-nav-link {
+  .gen-nav-link, .tab-btn {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
@@ -1507,6 +1560,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   body { background: white !important; }
   /* Hide all UI chrome — editor, header, auth bar, journal panel, controls */
   .site-header, .hero-banner, .gen-nav, .editor-section,
+  .tab-nav,
   .auth-bar, .m-tab-nav, .my-journal-section, .app-footer, .mobile-form-bar { display: none !important; }
   .page-spacer { display: none !important; }
   .output-section { display: block !important; max-width: none; margin: 0; padding: 0; overflow: visible; }
@@ -1787,7 +1841,7 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
   </div>
 </div>
 
-<!-- STAGE NAV -->
+<!-- PRIMARY STAGE NAV -->
 <nav class="m-tab-nav" id="mobileTabNav" role="tablist" aria-label="Generator sections">
   <button class="m-tab-btn is-active" id="mTabForm" role="tab" aria-selected="true" onclick="switchMobileTab('form')">
     <span class="m-tab-icon" aria-hidden="true">
@@ -1825,6 +1879,14 @@ select:disabled { opacity: 0.35; cursor: not-allowed; }
     </span>
     <span>Saved</span>
   </button>
+</nav>
+
+<!-- LEGACY 2-TAB NAV — kept in DOM for JS refs, hidden via CSS .tab-nav{display:none!important} -->
+<nav class="tab-nav" id="tabNav">
+  <div class="tab-nav-inner">
+    <button class="tab-btn active" id="tabBtnGenerator" onclick="switchTab('generator')">Generator</button>
+    <button class="tab-btn" id="tabBtnSaved" onclick="switchTab('saved')">My Saved Entries</button>
+  </div>
 </nav>
 
 <!-- MY JOURNAL SECTION -->
@@ -2213,6 +2275,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser  = null;
 let authMode     = 'signin'; // 'signin' | 'signup'
 let savedJournalSearch = '';
+let _allSavedEntries = [];
+let _filteredSavedEntries = [];
 let pendingAppPropheticIds = [];
 let hasLoadedPendingAppPropheticSelection = false;
 let hasLoadedFromHandoff = false;
@@ -5257,17 +5321,22 @@ function switchTab(tab, options = {}) {
   const gen   = document.getElementById('editorSection');
   const out   = document.getElementById('outputSection');
   const saved = document.getElementById('myJournalSection');
+  const btnG  = document.getElementById('tabBtnGenerator');
+  const btnS  = document.getElementById('tabBtnSaved');
   document.body.setAttribute('data-active-tab', tab);
   updateMobileFormBarVisibility();
   if (tab === 'saved') {
     if (gen)   gen.style.display = 'none';
     if (out)   out.style.display = 'none';
     if (saved) saved.style.display = 'block';
+    if (btnG) btnG.classList.remove('active');
+    if (btnS) btnS.classList.add('active');
     try { sessionStorage.setItem('pwTab', 'saved'); } catch {}
     loadMyJournal();
   } else {
-    if (gen)   gen.style.display = '';
     if (saved) saved.style.display = 'none';
+    if (btnG) btnG.classList.add('active');
+    if (btnS) btnS.classList.remove('active');
     try { sessionStorage.setItem('pwTab', 'generator'); } catch {}
     switchStage(options.preserveStage || currentGeneratorStage || 'form', {
       skipScroll: options.skipScroll ?? true,
@@ -5482,6 +5551,29 @@ function parseSavedPropheticContext(entry) {
   try { return entry && entry.context ? JSON.parse(entry.context) : {}; } catch { return {}; }
 }
 
+function matchesSavedPropheticEntry(entry, query) {
+  const q = String(query || '').toLowerCase().trim();
+  if (!q) return true;
+  const normalized = normalizePropheticEntryForExport(entry);
+  return [
+    normalized.date,
+    normalized.source,
+    normalized.entryType,
+    normalized.theme,
+    normalized.title,
+    normalized.content,
+    normalized.interpretation,
+    normalized.prayer,
+    normalized.scripture,
+    normalized.response,
+    normalized.notes
+  ].some(value => String(value || '').toLowerCase().includes(q));
+}
+
+function filterSavedPropheticEntries(entries, query) {
+  return (entries || []).filter(entry => matchesSavedPropheticEntry(entry, query));
+}
+
 function normalizePropheticEntryForExport(entry) {
   const ctx = parseSavedPropheticContext(entry);
   const scripture = Array.isArray(entry.scriptures) ? entry.scriptures.join('\n') : (entry.scriptures || '');
@@ -5510,29 +5602,177 @@ async function fetchAllSavedPropheticEntriesForExport() {
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data || []).map(normalizePropheticEntryForExport);
+  return data || [];
 }
 
 async function handleSavedEntriesExport(action) {
-  if (!currentUser) {
-    alert('Sign in to export saved entries.');
-    return;
-  }
+  if (!currentUser) { alert('Sign in to export saved entries.'); return; }
   try {
-    const result = await JournalExportUtils.runAction({
-      action,
-      fetchEntries: fetchAllSavedPropheticEntriesForExport,
-      filenameBase: 'prophetic-words',
-      title: 'Saved Prophetic Words',
-      emptyMessage: 'No saved prophetic words exist yet.'
-    });
-    if (action === 'copy' && result.count) {
-      alert(`Copied ${result.count} saved entr${result.count === 1 ? 'y' : 'ies'} to your clipboard.`);
+    const entries = filterSavedPropheticEntries(
+      await fetchAllSavedPropheticEntriesForExport(),
+      savedJournalSearch
+    ).map(normalizePropheticEntryForExport);
+
+    if (!entries.length) {
+      alert(savedJournalSearch ? 'No saved entries match your current search.' : 'No saved prophetic words exist yet.');
+      return;
+    }
+
+    if (action === 'excel') {
+      if (!window.XLSX) { alert('Excel library is not loaded. Please refresh and try again.'); return; }
+      const headers = ['id','entryType','title','date','createdAt','updatedAt','source','theme','content','interpretation','prayer','scripture','response','notes'];
+      const rows = entries.map(entry => {
+        const row = {};
+        headers.forEach(key => { row[key] = entry[key] || ''; });
+        return row;
+      });
+      const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
+      ws['!cols'] = headers.map(key =>
+        ['content','interpretation','prayer','response','notes'].includes(key) ? { wch: 42 } :
+        ['title','theme','source'].includes(key) ? { wch: 24 } : { wch: 18 }
+      );
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Prophetic Words');
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+      const buf = new ArrayBuffer(wbout.length);
+      const view = new Uint8Array(buf);
+      for (let i = 0; i < wbout.length; i++) view[i] = wbout.charCodeAt(i) & 0xFF;
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prophetic-words-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      return;
+    }
+
+    if (action === 'copy') {
+      const text = entries.map(entry => [
+        `Theme: ${entry.title || 'Untitled'}`,
+        `Date: ${entry.date}`,
+        `Speaker: ${entry.source}`,
+        `Type: ${entry.entryType}`,
+        '',
+        'Word:',
+        entry.content,
+        '',
+        'Interpretation:',
+        entry.interpretation,
+        '',
+        'Prayer:',
+        entry.prayer,
+        '',
+        'Scripture:',
+        entry.scripture,
+        '',
+        'Response:',
+        entry.response,
+        '',
+        'Notes:',
+        entry.notes,
+        '----------------------------------------'
+      ].join('\n')).join('\n\n');
+      await navigator.clipboard.writeText(text);
+      alert(`Copied ${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}${savedJournalSearch ? ' from your current search' : ''} to your clipboard.`);
+      return;
+    }
+
+    if (action === 'word') {
+      const esc = (value) => String(value || '')
+        .replace(/\\/g, '\\\\')
+        .replace(/{/g, '\\{')
+        .replace(/}/g, '\\}')
+        .replace(/\r\n|\r|\n/g, '\\par ')
+        .replace(/\t/g, '\\tab ')
+        .replace(/[^\x00-\x7F]/g, char => {
+          const n = char.charCodeAt(0);
+          return '\\u' + (n > 32767 ? n - 65536 : n) + '?';
+        });
+      const blocks = entries.map((entry, index) =>
+        `\\b ${esc(entry.title || ('Entry ' + (index + 1)))}\\b0\\par` +
+        `Date: ${esc(entry.date)}\\par Speaker: ${esc(entry.source)}\\par Type: ${esc(entry.entryType)}\\par\\par` +
+        `\\b Word:\\b0\\par ${esc(entry.content)}\\par\\par` +
+        `\\b Interpretation:\\b0\\par ${esc(entry.interpretation)}\\par\\par` +
+        `\\b Prayer:\\b0\\par ${esc(entry.prayer)}\\par\\par` +
+        `\\b Scripture:\\b0\\par ${esc(entry.scripture)}\\par\\par` +
+        `\\b Response:\\b0\\par ${esc(entry.response)}\\par\\par` +
+        `\\b Notes:\\b0\\par ${esc(entry.notes)}\\par\\par------------------------------\\par\\par`
+      ).join('');
+      const rtf = `{\\rtf1\\ansi\\deff0\\fs24 \\b Saved Prophetic Words\\b0\\par\\par ${blocks}}`;
+      const blob = new Blob([rtf], { type: 'application/rtf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prophetic-words-${new Date().toISOString().slice(0, 10)}.rtf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
     }
   } catch (error) {
     console.error('[handleSavedEntriesExport] Error:', error);
     alert('Could not export saved entries: ' + (error.message || 'Unknown error'));
   }
+}
+
+function renderSavedEntriesList(entries, listEl) {
+  const list = listEl || document.getElementById('savedEntriesList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  if (!entries.length) {
+    list.innerHTML = _allSavedEntries.length
+      ? '<div class="saved-entries-empty">No entries match your search.</div>'
+      : '<div class="saved-entries-empty">No saved entries yet — generate journal pages and click "Save to Journal."</div>';
+    return;
+  }
+
+  entries.forEach(entry => {
+    const normalized = normalizePropheticEntryForExport(entry);
+    const card = document.createElement('div');
+    card.className = 'saved-entry-card';
+    card.style.cursor = 'pointer';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Open saved entry from ${normalized.date || 'unknown date'}`);
+
+    const savedDate = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const wordPreview = (entry.word_content || 'No word recorded').substring(0, 160);
+
+    card.innerHTML = `
+      <div class="sec-date">${escAttr(normalized.date || '—')}</div>
+      <div class="sec-body">
+        <div class="sec-word">${escAttr(wordPreview)}</div>
+        <div class="sec-meta">Saved ${savedDate}${normalized.title ? ' · ' + escAttr(normalized.title) : ''}${normalized.source ? ' · ' + escAttr(normalized.source) : ''}${normalized.entryType ? ' · ' + escAttr(normalized.entryType) : ''}</div>
+      </div>
+      <div class="sec-actions"></div>
+    `;
+
+    card.addEventListener('click', (event) => {
+      if (!event.target.closest('.sec-btn')) loadEntryIntoForm(entry);
+    });
+    card.addEventListener('keydown', (event) => {
+      if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.sec-btn')) {
+        event.preventDefault();
+        loadEntryIntoForm(entry);
+      }
+    });
+
+    const actions = card.querySelector('.sec-actions');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'sec-btn del';
+    delBtn.textContent = 'Delete';
+    delBtn.onclick = (event) => {
+      event.stopPropagation();
+      deleteEntry(entry.id);
+    };
+    actions.appendChild(delBtn);
+
+    list.appendChild(card);
+  });
 }
 
 async function loadMyJournal() {
@@ -5541,69 +5781,40 @@ async function loadMyJournal() {
   if (!list) return;
   list.innerHTML = '<div class="saved-entries-empty" style="font-style:normal;color:var(--text-light)">Loading…</div>';
 
-  let query = sb.from('prophetic_words')
+  const { data, error } = await sb.from('prophetic_words')
     .select('id, date, title, source, context, word_content, interpretation, application, scriptures, created_at')
     .eq('user_id', currentUser.id)
     .order('created_at', { ascending: false })
     .limit(50);
 
-  if (savedJournalSearch) {
-    query = query.or(`title.ilike.%${savedJournalSearch}%,source.ilike.%${savedJournalSearch}%,word_content.ilike.%${savedJournalSearch}%,interpretation.ilike.%${savedJournalSearch}%`);
-  }
-
-  const { data, error } = await query;
-
   if (error) {
     console.error('[loadMyJournal] Supabase error:', error);
+    _allSavedEntries = [];
+    _filteredSavedEntries = [];
     list.innerHTML = `<div class="saved-entries-empty">Could not load entries: ${error.message || error.code || 'unknown error'}. Check console for details.</div>`;
     return;
   }
   if (!data || data.length === 0) {
-    list.innerHTML = savedJournalSearch
-      ? '<div class="saved-entries-empty">No saved prophetic entries match the current search.</div>'
-      : '<div class="saved-entries-empty">No saved entries yet — generate journal pages and click "Save to Journal."</div>';
+    _allSavedEntries = [];
+    _filteredSavedEntries = [];
+    list.innerHTML = '<div class="saved-entries-empty">No saved entries yet — generate journal pages and click "Save to Journal."</div>';
     return;
   }
 
-  list.innerHTML = '';
-  data.forEach(entry => {
-    const card = document.createElement('div');
-    card.className = 'saved-entry-card';
-
-    const savedDate = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const wordPreview = (entry.word_content || 'No word recorded').substring(0, 160);
-
-    card.innerHTML = `
-      <div class="sec-date">${escAttr(entry.date || '—')}</div>
-      <div class="sec-body">
-        <div class="sec-word">${escAttr(wordPreview)}</div>
-        <div class="sec-meta">Saved ${savedDate}${entry.title ? ' · ' + escAttr(entry.title) : ''}</div>
-      </div>
-      <div class="sec-actions"></div>
-    `;
-
-    const actions = card.querySelector('.sec-actions');
-
-    const loadBtn = document.createElement('button');
-    loadBtn.className = 'sec-btn';
-    loadBtn.textContent = 'Load';
-    loadBtn.onclick = () => loadEntryIntoForm(entry);
-    actions.appendChild(loadBtn);
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'sec-btn del';
-    delBtn.textContent = 'Delete';
-    delBtn.onclick = () => deleteEntry(entry.id);
-    actions.appendChild(delBtn);
-
-    list.appendChild(card);
-  });
+  _allSavedEntries = data;
+  _filteredSavedEntries = filterSavedPropheticEntries(data, savedJournalSearch);
+  renderSavedEntriesList(_filteredSavedEntries, list);
 }
 
 function onSavedEntriesSearchInput() {
   const value = document.getElementById('savedEntriesSearch')?.value || '';
   savedJournalSearch = value.trim();
-  loadMyJournal();
+  _filteredSavedEntries = filterSavedPropheticEntries(_allSavedEntries, savedJournalSearch);
+  if (!_allSavedEntries.length) {
+    loadMyJournal();
+    return;
+  }
+  renderSavedEntriesList(_filteredSavedEntries);
 }
 
 function mapSavedPropheticEntryToGeneratorData(entry) {
@@ -5638,7 +5849,10 @@ function loadEntryIntoForm(entry) {
   };
   Object.entries(fieldMap).forEach(([id, val]) => set(id, val || ''));
   if (mapped.type) set('type', mapped.type);
-  document.getElementById('editorSection').scrollIntoView({ behavior: 'smooth' });
+  // Route to Review as the landing stage for a loaded saved entry.
+  // Form fields are still populated above so "Back to Form" works for editing.
+  switchTab('generator', { preserveStage: 'review', force: true, skipScroll: true });
+  showReview([mapped]);
 }
 
 async function loadSelectedPropheticEntriesFromApp(ids) {
@@ -5762,7 +5976,6 @@ async function fetchAsDataURL(src) {
 // ── INIT ──────────────────────────────────────────────
 applyPreset('dove');
 syncAllColorSwatches();
-updateStageFlowNav();
 togglePrintSettings(false);
 updateLayoutSize();
 document.body.setAttribute('data-active-tab', 'generator');
