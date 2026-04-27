@@ -1859,19 +1859,56 @@ body[data-generator-stage="review"] .output-section {
 
 /* ── PAGE STYLE: DOTTED ───────────────────────────────── */
 /* Dots applied per writing section — header, metadata, and titles stay clean */
+.ps-dotted {
+  --dotted-guide-step: 0.28125in;
+  --dotted-guide-position-y: calc(var(--dotted-guide-step) / 2);
+  --dotted-guide-column: 0.24in;
+}
 .ps-dotted .j-word-area,
 .ps-dotted .j-prose,
 .ps-dotted .j-panel-body,
-.ps-dotted .j-interpretation {
+.ps-dotted .j-scripture {
   background-image: radial-gradient(circle, var(--pg-accent) 1px, transparent 1px);
-  background-size: 18px 18px;
-  background-position: 0 0;
+  background-size: var(--dotted-guide-column) var(--dotted-guide-step);
+  background-position: 0 var(--dotted-guide-position-y);
+  background-repeat: repeat;
   -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 .ps-dotted .j-word-area   { min-height: 2in; }
 .ps-dotted .j-prose        { min-height: 1.5in; }
 .ps-dotted .j-panel-body   { min-height: 1.5in; }
-.ps-dotted .j-interpretation { min-height: 1.5in; }
+.ps-dotted .j-scripture    { min-height: 0.35in; }
+.ps-dotted .j-word-area,
+.ps-dotted .j-prose,
+.ps-dotted .j-scripture {
+  line-height: var(--dotted-guide-step);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.ps-dotted .j-panel-body {
+  line-height: var(--dotted-guide-step);
+  padding-top: 0;
+}
+.ps-dotted .j-word-area p,
+.ps-dotted .j-prose p,
+.ps-dotted .j-scripture p,
+.ps-dotted .j-panel-body p {
+  margin: 0;
+}
+@media screen and (max-width: 699px) {
+  #pagesContainer.preview-screen .ps-dotted .j-word-area {
+    font-size: 0.92rem;
+    line-height: var(--dotted-guide-step);
+  }
+  #pagesContainer.preview-screen .ps-dotted .j-prose {
+    font-size: 0.88rem;
+    line-height: var(--dotted-guide-step);
+  }
+  #pagesContainer.preview-screen .ps-dotted .j-scripture {
+    font-size: 0.88rem;
+    line-height: var(--dotted-guide-step);
+  }
+}
 
 
 /* ── APP FOOTER ─────────────────────────────────────────────── */
@@ -3903,7 +3940,8 @@ function planPages(data, layout, measure) {
 function populate(raw) {
   const data = extractData(raw);
 
-  ['date','by','theme','word','interpretation','prayer','scripture','response','notes'].forEach(id => {
+  // Date field is intentionally excluded from the clear list — manual input must persist
+  ['by','theme','word','interpretation','prayer','scripture','response','notes'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -3912,7 +3950,13 @@ function populate(raw) {
   if (typeEl) typeEl.value = '';
 
   Object.entries(data).forEach(([key, val]) => {
-    if (val && key !== '_label') set(key, val);
+    if (!val || key === '_label') return;
+    if (key === 'date') {
+      const el = document.getElementById('date');
+      if (el && !el.value.trim()) el.value = val;
+      return;
+    }
+    set(key, val);
   });
 
   updateMobileFormBarVisibility();
@@ -6183,6 +6227,72 @@ async function fetchAsDataURL(src) {
     return src; // fallback to original path
   }
 }
+
+// ── HASH PAYLOAD LOADER ───────────────────────────────────
+// Reads a base64-encoded JSON payload from the URL hash (#exportData=...) sent
+// by the Dove Expressions Hearing God app. Cross-origin safe (no localStorage
+// dependency between apps). The hash is cleared after a successful read.
+(function loadFromHashPayload() {
+  try {
+    const hash = window.location.hash || '';
+    const match = hash.match(/(?:^#|&)exportData=([^&]+)/);
+    if (!match) return;
+    const b64 = decodeURIComponent(match[1]);
+    const utf8 = atob(b64);
+    const json = decodeURIComponent(escape(utf8));
+    const payload = JSON.parse(json);
+    const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+    if (!entries.length) return;
+
+    // Strip the exportData fragment but preserve any other hash params (e.g. auth tokens).
+    const cleanedHash = hash
+      .replace(/(?:^#|&)exportData=[^&]+/, '')
+      .replace(/^#&/, '#')
+      .replace(/^#$/, '');
+    history.replaceState(null, '', window.location.pathname + window.location.search + cleanedHash);
+
+    // Map each entry to the data shape showReview() expects (same fields the
+    // parser normally emits). No parser invocation — data is already structured.
+    const mapped = entries.map(e => ({
+      date: e.date || '',
+      by: e.by || '',
+      type: e.type || '',
+      theme: e.theme || '',
+      word: e.word || '',
+      interpretation: e.interpretation || '',
+      prayer: e.prayer || '',
+      scripture: e.scripture || '',
+      response: e.response || '',
+      notes: e.notes || '',
+      _raw: e.word || ''
+    }));
+
+    if (mapped.length === 1) {
+      // Single entry: populate the form fields directly so the user can edit
+      // before generating, matching the existing single-entry handoff behavior.
+      Object.entries(mapped[0]).forEach(([k, v]) => {
+        if (k === '_raw' || !v) return;
+        const el = document.getElementById(k);
+        if (!el) return;
+        if (el.tagName === 'SELECT') {
+          const opt = [...el.options].find(o => o.value.toLowerCase() === String(v).toLowerCase());
+          if (opt) el.value = opt.value;
+        } else {
+          el.value = v;
+        }
+      });
+      setMsg('Entry loaded from journal app — review the fields, then click Generate & Review.', 'ok');
+    } else {
+      // Multi-entry: jump straight to the review stage with one card per entry,
+      // mirroring the multi-dated-paste flow.
+      window._debugState = 'GENERATED'; window._debugCaller = 'loadFromHashPayload→multi-entry';
+      showReview(mapped);
+      setMsg(`Loaded ${mapped.length} entries from journal app — review and click Continue to Print.`, 'ok');
+    }
+  } catch (err) {
+    console.warn('[hash payload] failed to load export data:', err);
+  }
+})();
 
 // ── URL PARAM LOADER ──────────────────────────────────────
 // Detects entry data passed from the Dove Expressions journal app via URL params.
