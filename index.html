@@ -3990,7 +3990,7 @@ function handleGenerate() {
   const hasFiles = document.getElementById('fileInput').files.length > 0;
 
   // ── Multi-file batch: pendingPages already populated by upload handler
-  if (pendingPages.length > 1) {
+  if (pendingPages.length >= 1) {
     const allData = [...pendingPages];
     if (pasted) {
       parseEntries(pasted).forEach(entry => allData.push(extractData(entry.text)));
@@ -6343,7 +6343,7 @@ const pasteNotesEl = document.getElementById('pasteNotes');
 if (pasteNotesEl) {
   pasteNotesEl.addEventListener('input', updateMobileFormBarVisibility);
 }
-switchStage('form', { skipScroll: true });
+if (!pendingReviewData.length) switchStage('form', { skipScroll: true });
 updateMobileFormBarVisibility();
 </script>
 <footer class="app-footer">Powered by Dove Expressions</footer>
