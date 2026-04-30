@@ -684,6 +684,15 @@ body[data-generator-stage="review"] .output-section {
   flex-wrap: wrap;
   align-items: center;
 }
+.export-hint {
+  flex-basis: 100%;
+  margin-top: -0.1rem;
+  font-family: 'Lora', serif;
+  font-size: 0.76rem;
+  color: var(--text-soft);
+  line-height: 1.4;
+  text-align: center;
+}
 .btn-print {
   font-family: 'Lato', sans-serif; font-size: 0.88rem; font-weight: 700;
   color: var(--white); background: var(--ui-accent);
@@ -1481,14 +1490,19 @@ body[data-generator-stage="review"] .output-section {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   #printActionBar .btn-print {
-    grid-column: 1 / -1;
+    grid-column: 2;
     min-height: 48px;
   }
   #printActionBar .btn-ghost {
     grid-column: 1;
   }
   #printActionBar .btn-save {
-    grid-column: 2;
+    grid-column: 1;
+  }
+  #printActionBar .export-hint {
+    grid-column: 1 / -1;
+    margin: -0.1rem 0 0;
+    font-size: 0.73rem;
   }
   #printActionBar .btn-save-journal {
     grid-column: 1 / -1;
@@ -1692,6 +1706,21 @@ body[data-generator-stage="review"] .output-section {
   border-radius: 0.75rem; transition: border-color 0.2s, box-shadow 0.2s;
 }
 .saved-entry-card:hover { border-color: rgba(99,0,0,0.3); box-shadow: 0 2px 8px rgba(27,23,23,0.07); }
+.saved-entry-select {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  min-height: 34px;
+  margin-top: -0.15rem;
+  cursor: pointer;
+}
+.saved-entry-select input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ui-accent);
+  cursor: pointer;
+}
 .sec-date {
   font-family: 'Playfair Display', serif; font-size: 0.7rem;
   letter-spacing: 0.16em; text-transform: uppercase;
@@ -1731,6 +1760,47 @@ body[data-generator-stage="review"] .output-section {
 .saved-export-note {
   font-family: 'Lora', serif; font-size: 0.76rem;
   color: var(--text-light); margin-right: 0.25rem;
+}
+.saved-export-divider {
+  width: 1px;
+  height: 1.35rem;
+  background: var(--line);
+}
+.saved-selection-status {
+  font-family: 'Lora', serif;
+  font-size: 0.76rem;
+  color: var(--text-soft);
+}
+.sec-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.sec-btn:disabled:hover {
+  background: transparent;
+  color: var(--ui-accent);
+}
+@media (max-width: 680px) {
+  .saved-entry-card {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+  .saved-entry-select {
+    order: 0;
+  }
+  .sec-date {
+    min-width: 0;
+  }
+  .sec-body {
+    flex-basis: calc(100% - 48px);
+  }
+  .sec-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .saved-export-divider {
+    display: none;
+  }
 }
 .edit-modal-backdrop {
   position: fixed;
@@ -2026,10 +2096,17 @@ body[data-generator-stage="review"] .output-section {
       <input class="saved-library-search" type="text" id="savedEntriesSearch" placeholder="Search word, theme, source, or notes..." oninput="onSavedEntriesSearchInput()">
     </div>
     <div class="saved-export-bar">
-      <span class="saved-export-note">Export saved entries:</span>
+      <span class="saved-export-note">Export current list:</span>
       <button class="sec-btn" type="button" onclick="handleSavedEntriesExport('excel')">Export Excel</button>
       <button class="sec-btn" type="button" onclick="handleSavedEntriesExport('copy')">Copy Entries</button>
       <button class="sec-btn" type="button" onclick="handleSavedEntriesExport('word')">Export Word</button>
+      <span class="saved-export-divider" aria-hidden="true"></span>
+      <span class="saved-selection-status" id="savedSelectionStatus">0 selected</span>
+      <button class="sec-btn" type="button" onclick="selectAllVisibleSavedEntries()">Select Shown</button>
+      <button class="sec-btn" type="button" onclick="clearSavedEntrySelection()">Clear Selection</button>
+      <button class="sec-btn saved-selected-action" type="button" onclick="handleSavedEntriesExport('excel', 'selected')" disabled>Export Selected Excel</button>
+      <button class="sec-btn saved-selected-action" type="button" onclick="handleSavedEntriesExport('copy', 'selected')" disabled>Copy Selected</button>
+      <button class="sec-btn saved-selected-action" type="button" onclick="handleSavedEntriesExport('word', 'selected')" disabled>Export Selected Word</button>
     </div>
     <div class="saved-entries-list" id="savedEntriesList">
       <div class="saved-entries-empty">Loading…</div>
@@ -2171,8 +2248,8 @@ body[data-generator-stage="review"] .output-section {
       <li>
         <span class="hiw-num">6</span>
         <div class="hiw-body">
-          <span class="hiw-label">Save as PDF</span>
-          <span class="hiw-desc">Downloads a formatted PDF directly to your computer — no print dialog needed. You can also use the Print button and choose "Save as PDF" as the destination for the highest-quality output.</span>
+          <span class="hiw-label">Export PDF</span>
+          <span class="hiw-desc">Use Export PDF to open a clean print-ready journal view, then choose "Save as PDF" in your browser dialog. Print remains available for paper copies.</span>
         </div>
       </li>
     </ol>
@@ -2371,8 +2448,9 @@ body[data-generator-stage="review"] .output-section {
 
   <div class="stage-action-bar" id="printActionBar" hidden>
     <button class="btn-ghost" onclick="switchStage('review')">Back to Review</button>
-    <button class="btn-print" id="printBtn" onclick="handlePrint()">🖨️ Print / Save as PDF</button>
-    <button class="btn-save" onclick="saveAsPDF()">💾 Save as PDF</button>
+    <button class="btn-save" id="exportPdfBtn" onclick="saveAsPDF()">Export PDF</button>
+    <button class="btn-print" id="printBtn" onclick="handlePrint()">Print</button>
+    <div class="export-hint">Export PDF opens the save-as-PDF print flow for the finished journal pages.</div>
   </div>
 </div>
 
@@ -2436,6 +2514,7 @@ let authMode     = 'signin'; // 'signin' | 'signup'
 let savedJournalSearch = '';
 let _allSavedEntries = [];
 let _filteredSavedEntries = [];
+let selectedSavedEntryIds = new Set();
 let pendingAppPropheticIds = [];
 let hasLoadedPendingAppPropheticSelection = false;
 let hasLoadedFromHandoff = false;
@@ -4947,8 +5026,8 @@ function _showPagesCore(dataArray) {
   const printBtn = document.getElementById('printBtn');
   if (printBtn) {
     printBtn.textContent = totalPages > 1
-      ? `🖨️ Print All ${totalPages} Pages`
-      : '🖨️ Print / Save as PDF';
+      ? `Print All ${totalPages} Pages`
+      : 'Print';
   }
 
   const sec = document.getElementById('outputSection');
@@ -5386,7 +5465,7 @@ async function saveAsPDF() {
     return;
   }
 
-  const btn  = document.querySelector('.btn-save');
+  const btn  = document.getElementById('exportPdfBtn');
   const orig = btn ? btn.innerHTML : '';
   if (btn) { btn.textContent = 'Preparing…'; btn.disabled = true; }
 
@@ -5740,6 +5819,41 @@ function filterSavedPropheticEntries(entries, query) {
   return (entries || []).filter(entry => matchesSavedPropheticEntry(entry, query));
 }
 
+function getSelectedSavedEntryIds() {
+  return Array.from(selectedSavedEntryIds).filter(Boolean);
+}
+
+function updateSavedExportSelectionUi() {
+  const count = selectedSavedEntryIds.size;
+  const status = document.getElementById('savedSelectionStatus');
+  if (status) status.textContent = `${count} selected`;
+  document.querySelectorAll('.saved-selected-action').forEach(btn => {
+    btn.disabled = count === 0;
+  });
+  document.querySelectorAll('.saved-entry-select-input').forEach(input => {
+    input.checked = selectedSavedEntryIds.has(input.value);
+  });
+}
+
+function toggleSavedEntrySelection(entryId, checked) {
+  if (!entryId) return;
+  if (checked) selectedSavedEntryIds.add(entryId);
+  else selectedSavedEntryIds.delete(entryId);
+  updateSavedExportSelectionUi();
+}
+
+function selectAllVisibleSavedEntries() {
+  (_filteredSavedEntries || []).forEach(entry => {
+    if (entry?.id) selectedSavedEntryIds.add(entry.id);
+  });
+  updateSavedExportSelectionUi();
+}
+
+function clearSavedEntrySelection() {
+  selectedSavedEntryIds.clear();
+  updateSavedExportSelectionUi();
+}
+
 function normalizePropheticEntryForExport(entry) {
   const ctx = parseSavedPropheticContext(entry);
   const scripture = Array.isArray(entry.scriptures) ? entry.scriptures.join('\n') : (entry.scriptures || '');
@@ -5771,16 +5885,36 @@ async function fetchAllSavedPropheticEntriesForExport() {
   return data || [];
 }
 
-async function handleSavedEntriesExport(action) {
+async function handleSavedEntriesExport(action, scope) {
   if (!currentUser) { alert('Sign in to export saved entries.'); return; }
   try {
-    const entries = filterSavedPropheticEntries(
-      await fetchAllSavedPropheticEntriesForExport(),
-      savedJournalSearch
-    ).map(normalizePropheticEntryForExport);
+    const allEntries = await fetchAllSavedPropheticEntriesForExport();
+    let sourceEntries = filterSavedPropheticEntries(allEntries, savedJournalSearch);
+    let exportLabel = savedJournalSearch ? ' from your current search' : '';
+    let fileScope = savedJournalSearch ? 'filtered' : 'all';
+
+    if (scope === 'selected') {
+      const selectedIds = new Set(getSelectedSavedEntryIds());
+      if (!selectedIds.size) {
+        alert('Select one or more saved entries first.');
+        return;
+      }
+      sourceEntries = allEntries.filter(entry => selectedIds.has(entry.id));
+      exportLabel = ' selected';
+      fileScope = 'selected';
+    } else if (Array.isArray(scope)) {
+      const selectedIds = new Set(scope.filter(Boolean));
+      sourceEntries = allEntries.filter(entry => selectedIds.has(entry.id));
+      exportLabel = sourceEntries.length === 1 ? ' single entry' : ' selected';
+      fileScope = sourceEntries.length === 1 ? 'single' : 'selected';
+    }
+
+    const entries = sourceEntries.map(normalizePropheticEntryForExport);
 
     if (!entries.length) {
-      alert(savedJournalSearch ? 'No saved entries match your current search.' : 'No saved prophetic words exist yet.');
+      alert(scope === 'selected'
+        ? 'None of the selected entries could be found.'
+        : savedJournalSearch ? 'No saved entries match your current search.' : 'No saved prophetic words exist yet.');
       return;
     }
 
@@ -5807,7 +5941,7 @@ async function handleSavedEntriesExport(action) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `prophetic-words-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `prophetic-words-${fileScope}-${new Date().toISOString().slice(0, 10)}.xlsx`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -5842,7 +5976,7 @@ async function handleSavedEntriesExport(action) {
         '----------------------------------------'
       ].join('\n')).join('\n\n');
       await navigator.clipboard.writeText(text);
-      alert(`Copied ${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}${savedJournalSearch ? ' from your current search' : ''} to your clipboard.`);
+      alert(`Copied ${entries.length} saved entr${entries.length === 1 ? 'y' : 'ies'}${exportLabel} to your clipboard.`);
       return;
     }
 
@@ -5872,7 +6006,7 @@ async function handleSavedEntriesExport(action) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `prophetic-words-${new Date().toISOString().slice(0, 10)}.rtf`;
+      a.download = `prophetic-words-${fileScope}-${new Date().toISOString().slice(0, 10)}.rtf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -5893,6 +6027,7 @@ function renderSavedEntriesList(entries, listEl) {
     list.innerHTML = _allSavedEntries.length
       ? '<div class="saved-entries-empty">No entries match your search.</div>'
       : '<div class="saved-entries-empty">No saved entries yet — generate journal pages and click "Save to Journal."</div>';
+    updateSavedExportSelectionUi();
     return;
   }
 
@@ -5909,6 +6044,9 @@ function renderSavedEntriesList(entries, listEl) {
     const wordPreview = (entry.word_content || 'No word recorded').substring(0, 160);
 
     card.innerHTML = `
+      <label class="saved-entry-select" aria-label="Select saved entry">
+        <input class="saved-entry-select-input" type="checkbox" value="${escAttr(entry.id || '')}" ${selectedSavedEntryIds.has(entry.id) ? 'checked' : ''}>
+      </label>
       <div class="sec-date">${escAttr(normalized.date || '—')}</div>
       <div class="sec-body">
         <div class="sec-word">${escAttr(wordPreview)}</div>
@@ -5918,16 +6056,48 @@ function renderSavedEntriesList(entries, listEl) {
     `;
 
     card.addEventListener('click', (event) => {
-      if (!event.target.closest('.sec-btn')) loadEntryIntoForm(entry);
+      if (!event.target.closest('.sec-btn, .saved-entry-select')) loadEntryIntoForm(entry);
     });
     card.addEventListener('keydown', (event) => {
-      if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.sec-btn')) {
+      if ((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.sec-btn, .saved-entry-select')) {
         event.preventDefault();
         loadEntryIntoForm(entry);
       }
     });
 
+    const selectInput = card.querySelector('.saved-entry-select-input');
+    if (selectInput) {
+      selectInput.addEventListener('click', event => event.stopPropagation());
+      selectInput.addEventListener('change', event => {
+        toggleSavedEntrySelection(entry.id, event.target.checked);
+      });
+    }
+
     const actions = card.querySelector('.sec-actions');
+    const excelBtn = document.createElement('button');
+    excelBtn.className = 'sec-btn';
+    excelBtn.textContent = 'Excel';
+    excelBtn.onclick = (event) => {
+      event.stopPropagation();
+      handleSavedEntriesExport('excel', [entry.id]);
+    };
+    actions.appendChild(excelBtn);
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'sec-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = (event) => {
+      event.stopPropagation();
+      handleSavedEntriesExport('copy', [entry.id]);
+    };
+    actions.appendChild(copyBtn);
+    const wordBtn = document.createElement('button');
+    wordBtn.className = 'sec-btn';
+    wordBtn.textContent = 'Word';
+    wordBtn.onclick = (event) => {
+      event.stopPropagation();
+      handleSavedEntriesExport('word', [entry.id]);
+    };
+    actions.appendChild(wordBtn);
     const editBtn = document.createElement('button');
     editBtn.className = 'sec-btn';
     editBtn.textContent = 'Edit';
@@ -5947,6 +6117,7 @@ function renderSavedEntriesList(entries, listEl) {
 
     list.appendChild(card);
   });
+  updateSavedExportSelectionUi();
 }
 
 async function loadMyJournal() {
@@ -5965,17 +6136,23 @@ async function loadMyJournal() {
     console.error('[loadMyJournal] Supabase error:', error);
     _allSavedEntries = [];
     _filteredSavedEntries = [];
+    selectedSavedEntryIds.clear();
+    updateSavedExportSelectionUi();
     list.innerHTML = `<div class="saved-entries-empty">Could not load entries: ${error.message || error.code || 'unknown error'}. Check console for details.</div>`;
     return;
   }
   if (!data || data.length === 0) {
     _allSavedEntries = [];
     _filteredSavedEntries = [];
+    selectedSavedEntryIds.clear();
+    updateSavedExportSelectionUi();
     list.innerHTML = '<div class="saved-entries-empty">No saved entries yet — generate journal pages and click "Save to Journal."</div>';
     return;
   }
 
   _allSavedEntries = data;
+  const validIds = new Set(data.map(entry => entry.id).filter(Boolean));
+  selectedSavedEntryIds = new Set(getSelectedSavedEntryIds().filter(id => validIds.has(id)));
   _filteredSavedEntries = filterSavedPropheticEntries(data, savedJournalSearch);
   renderSavedEntriesList(_filteredSavedEntries, list);
 }

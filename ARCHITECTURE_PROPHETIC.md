@@ -13,6 +13,8 @@ High-level flow:
 - Print renders paginated journal pages and exposes print-specific layout/theme controls.
 - Saved entries are accessed through the primary shell tab system rather than the Form -> Review -> Print stage flow.
 
+Cross-app payload ownership and deprecated export paths are documented in the shared [`../dreamjournaltemplategenerator/DoveExpressionsArchitecture.md`](../dreamjournaltemplategenerator/DoveExpressionsArchitecture.md). This document only describes Prophetic Generator internals.
+
 ## 2. SHELL ARCHITECTURE
 
 ### A. ACTIVE SHELL PATTERN
@@ -87,6 +89,17 @@ High-level flow:
   - form editing remains in the Form stage
   - print pages are not built here
   - `showPages()` is deferred until `handleContinueToPrint()`
+
+### B.1 HASH IMPORT LAYER
+
+- `loadFromHashPayload` reads structured imported entries from `window.location.hash`.
+- Imported hash entries are mapped directly into the data shape expected by `showReview(dataArray)`.
+- Structured hash payloads are already clean data and are not routed through `extractData`.
+- Single imported entries populate the form and open the Review flow.
+- Multiple imported entries call `showReview(mappedEntries)` so Review owns the full batch.
+- `pendingReviewData` remains the Review source of truth before Print.
+- `lastGeneratedData` mirrors the review batch for generated/exported state.
+- `pendingPages.length >= 1` is valid for staged imported-entry generation.
 
 ### C. PRINT LAYER
 

@@ -1,5 +1,28 @@
 # Prophetic Word Generator Changelog
 
+## 2026-04-28 — Hash Import + Prophetic Review Batch Rendering
+
+### Hash Receiver
+- added support for structured `#exportData` payloads
+- decoded imported entries on page load
+- mapped imported entries directly into the Prophetic review data shape
+- did not run structured hash payloads through `extractData`
+
+### Review + Print Flow
+- multiple imported entries now render through `showReview(...)`
+- Review displays batch-ready text including `N entries ready`
+- Review cards label entries as `Entry 1 of N`, `Entry 2 of N`, etc.
+- `pendingPages.length >= 1` is accepted when generating staged imported entries
+- initialization no longer lets a default `switchStage('form')` override an imported review state
+- Print continues to build from the staged review data
+
+### Scope
+- Prophetic Generator hash receiver and review staging only
+- no parser, pagination, print layout, saved-entry schema, or TTS changes
+- cross-app payload ownership and deprecated paths are documented in the shared [`../dreamjournaltemplategenerator/DoveExpressionsArchitecture.md`](../dreamjournaltemplategenerator/DoveExpressionsArchitecture.md)
+
+---
+
 ## 2026-04-23 — Review Stage Alignment + Saved Entry Flow
 
 ### Review Stage Header — Centering Fix
