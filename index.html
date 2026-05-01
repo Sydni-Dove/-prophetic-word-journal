@@ -950,11 +950,47 @@ body[data-generator-stage="review"] .output-section {
   text-transform: uppercase;
   color: var(--primary);
 }
+/* ── FORM ACCORDION ─────────────────────────────────────────── */
+.acc-group { border-bottom: 1px solid rgba(242,223,216,0.8); }
+.acc-group:first-child { border-top: 1px solid rgba(242,223,216,0.8); margin-top: 1rem; }
+.acc-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  background: none; border: none; padding: 0.88rem 0; cursor: pointer;
+  text-align: left; gap: 0.5rem; -webkit-tap-highlight-color: transparent;
+}
+.acc-trigger-label {
+  font-family: 'Playfair Display', serif; font-size: 0.62rem; letter-spacing: 0.32em;
+  text-transform: uppercase; color: var(--primary); display: flex; align-items: center; gap: 0.65rem;
+}
+.acc-trigger-label::after {
+  content: ''; display: inline-block; width: 36px; height: 1px;
+  background: linear-gradient(to right, var(--gold), transparent); opacity: 0.45;
+}
+.acc-trigger-tag {
+  font-family: 'Lato', sans-serif; font-size: 0.64rem; letter-spacing: 0.02em;
+  text-transform: none; color: var(--text-light); font-weight: 400; font-style: italic;
+  margin-left: auto; margin-right: 0.35rem; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 130px;
+}
 .acc-caret {
-  font-size: 0.85rem;
-  color: var(--text-light);
-  transition: transform 0.22s ease;
-  flex-shrink: 0;
+  font-size: 0.68rem; color: var(--text-light);
+  transition: transform 0.22s ease; flex-shrink: 0; line-height: 1;
+}
+.acc-group.is-open .acc-caret { transform: rotate(180deg); }
+.acc-body {
+  overflow: hidden; max-height: 0; opacity: 0; pointer-events: none;
+  transition: max-height 0.28s ease-out, opacity 0.2s ease;
+}
+.acc-group.is-open .acc-body {
+  max-height: 6000px; opacity: 1; pointer-events: auto; padding-bottom: 1.2rem;
+  transition: max-height 0.38s ease-in, opacity 0.25s ease 0.04s;
+}
+@media (max-width: 767px) {
+  .acc-group:first-child { margin-top: 0; }
+}
+@media print {
+  .acc-trigger { display: none !important; }
+  .acc-body { max-height: none !important; opacity: 1 !important; pointer-events: auto !important; transition: none !important; }
 }
 .print-settings-body {
   overflow: hidden;
@@ -1686,8 +1722,9 @@ body[data-generator-stage="review"] .output-section {
 .saved-entries-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.8rem; }
 .saved-library-controls { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.8rem; }
 .saved-library-search {
-  flex: 1 1 22rem;
-  min-width: min(100%, 220px);
+  flex: 1;
+  min-width: 160px;
+  width: auto;
   font-family: 'Lora', serif;
   font-size: 0.85rem;
   color: var(--text);
@@ -1752,6 +1789,11 @@ body[data-generator-stage="review"] .output-section {
   font-family: 'Lora', serif; font-size: 0.72rem;
   color: var(--text-light); margin-top: 0.28rem;
 }
+.sec-date-col { display: flex; flex-direction: column; gap: 0.3rem; flex-shrink: 0; min-width: 5rem; }
+.sec-type-badge { font-family: 'Playfair Display', serif; font-size: 0.57rem; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(99,0,0,0.08); color: var(--primary); border-radius: 4px; padding: 0.12rem 0.35rem; display: inline-block; max-width: 5.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sec-title { font-family: 'Playfair Display', serif; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 0.15rem; }
+.lib-select { font-family: 'Lora', serif; font-size: 0.8rem; color: var(--text); background: white; border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.65rem; outline: none; cursor: pointer; width: auto; flex-shrink: 0; }
+.lib-select:focus { border-color: var(--primary); }
 .sec-actions { display: flex; gap: 0.5rem; flex-shrink: 0; align-items: center; justify-content: flex-end; }
 .sec-btn {
   font-family: 'Playfair Display', serif; font-size: 0.65rem;
@@ -1890,7 +1932,10 @@ body[data-generator-stage="review"] .output-section {
     margin-left: auto;
   }
   .saved-library-search,
+  .lib-select,
   .saved-library-controls > .sec-btn,
+  .saved-library-controls > .saved-menu,
+  .saved-library-controls .saved-menu-trigger,
   .saved-selection-bar,
   .saved-selection-actions,
   .saved-selection-actions > .sec-btn,
@@ -2108,6 +2153,216 @@ body[data-generator-stage="review"] .output-section {
 .btn-save-journal:hover { background: rgba(99,0,0,0.07); }
 .btn-generate, .btn-save, .btn-save-journal, .btn-print, .btn-ghost { -webkit-font-smoothing: antialiased; }
 
+/* ── HEARING GOD PRODUCT ALIGNMENT — UI shell only ───────────── */
+body {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(242,223,216,0.42), transparent 32rem),
+    linear-gradient(160deg, #ffffff 0%, rgba(242,223,216,0.24) 55%, rgba(230,167,66,0.14) 100%);
+  background-attachment: fixed;
+}
+@media print { body { background: white !important; } }
+
+.site-header {
+  background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(242,223,216,0.52) 58%, rgba(230,167,66,0.24) 100%);
+  border-bottom: 1px solid rgba(242,223,216,0.72);
+  box-shadow: 0 12px 34px rgba(99,0,0,0.05);
+}
+.site-header::before {
+  width: 210px;
+  background: linear-gradient(to left, rgba(217,121,4,0.16), transparent);
+}
+.site-header .brand-tag {
+  font-family: 'Lato', sans-serif;
+  letter-spacing: 0.16em;
+  color: var(--ui-accent);
+}
+.site-header h1 {
+  background: linear-gradient(90deg, var(--ui-accent) 0%, var(--coral) 54%, var(--sunrise) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-banner {
+  background: linear-gradient(90deg, rgba(242,223,216,0.32), rgba(230,167,66,0.18), rgba(217,98,72,0.12));
+  border-bottom: 1px solid rgba(242,223,216,0.62);
+}
+.hero-banner .hero-icon,
+.gen-nav-link.is-active,
+.btn-generate,
+.btn-print,
+.btn-save:hover,
+.btn-save-journal:hover {
+  background: linear-gradient(90deg, var(--ui-accent) 0%, var(--coral) 58%, var(--sunrise) 100%);
+}
+.btn-save:hover,
+.btn-save-journal:hover {
+  color: var(--white);
+}
+.btn-generate,
+.btn-print {
+  box-shadow: 0 10px 26px rgba(99,0,0,0.22);
+}
+.btn-generate:hover,
+.btn-print:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(99,0,0,0.28);
+}
+.btn-ghost,
+.sec-btn {
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: rgba(255,255,255,0.82);
+  border-color: rgba(242,223,216,0.95);
+}
+.btn-ghost:hover,
+.sec-btn:hover {
+  background: rgba(242,223,216,0.58);
+  color: var(--ui-accent);
+  border-color: rgba(99,0,0,0.22);
+}
+.sec-btn.del:hover {
+  background: #b87070;
+  color: var(--white);
+  border-color: #b87070;
+}
+.sec-btn:disabled:hover {
+  background: rgba(255,255,255,0.82);
+  color: var(--ui-accent);
+}
+
+.section-eyebrow {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.22rem, 2.2vw, 1.55rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--ui-accent);
+  margin-bottom: 0.72rem;
+  gap: 0.65rem;
+}
+.section-eyebrow::after {
+  flex: 0 0 52px;
+  width: 52px;
+  opacity: 0.24;
+}
+.saved-export-note,
+label {
+  font-family: 'Lato', sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.section-support {
+  font-family: 'Lato', sans-serif;
+}
+.my-journal-section .section-eyebrow:first-child {
+  font-size: clamp(1.65rem, 3vw, 2rem);
+  margin-bottom: 1rem;
+}
+.my-journal-section .section-eyebrow:first-child::after {
+  flex-basis: 72px;
+  width: 72px;
+}
+.editor-section,
+.review-card,
+.saved-entry-card,
+.upload-zone,
+.saved-export-bar {
+  border-color: rgba(242,223,216,0.72);
+  box-shadow: 0 10px 28px rgba(58,28,28,0.055);
+}
+.review-card,
+.saved-entry-card,
+.upload-zone {
+  background: linear-gradient(145deg, rgba(255,255,255,0.96), rgba(242,223,216,0.18));
+}
+.saved-export-bar {
+  background: linear-gradient(135deg, rgba(255,255,255,0.82), rgba(242,223,216,0.24), rgba(230,167,66,0.1));
+}
+.my-journal-section {
+  background: transparent;
+  border-top: none;
+  border-bottom: none;
+}
+.app-footer {
+  background: transparent;
+  border-top: 1px solid rgba(242,223,216,0.55);
+}
+
+/* ── PROPHETIC FORM ALIGNMENT WITH DREAM — styling only ─────── */
+#editorSection {
+  margin-top: 1.35rem;
+  padding-bottom: 5rem;
+}
+#editorSection .form-block,
+#editorSection .form-block.form-block-entry,
+#editorSection .form-block.form-block-entry:nth-of-type(2) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#editorSection .form-block {
+  margin-bottom: 1.65rem;
+}
+#editorSection .form-block.form-block-entry {
+  margin-top: 0;
+}
+#editorSection .form-block.form-block-entry:first-of-type {
+  padding-top: 0;
+  border-top: 0;
+}
+#editorSection .form-block.form-block-entry:first-of-type .section-eyebrow::before {
+  content: none;
+  display: none;
+}
+#editorSection .section-eyebrow {
+  margin-top: 1.65rem;
+  margin-bottom: 0.55rem;
+}
+#editorSection .form-block:first-child .section-eyebrow {
+  margin-top: 0;
+}
+#editorSection .section-support {
+  margin: 0 0 0.8rem;
+}
+#editorSection .upload-zone {
+  margin-top: 0.1rem;
+}
+@media (max-width: 767px) {
+  #editorSection {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  }
+  #editorSection .form-block,
+  #editorSection .form-block.form-block-entry,
+  #editorSection .form-block.form-block-entry:nth-of-type(2) {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* ── GENERATOR TAB SURFACE — styling only ─────────────────── */
+.m-tab-nav {
+  background: #FFFFFF;
+  background-image: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 1px solid rgba(99, 0, 0, 0.08);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.03);
+}
+@media (max-width: 767px) {
+  .m-tab-nav {
+    background: #FFFFFF;
+    border-top: 1px solid rgba(99, 0, 0, 0.08);
+    border-bottom: none;
+    box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.04);
+  }
+}
 </style>
 </head>
 <body>
@@ -2193,9 +2448,32 @@ body[data-generator-stage="review"] .output-section {
 <!-- MY JOURNAL SECTION -->
 <div class="my-journal-section" id="myJournalSection" style="display:none">
   <div class="editor-section" style="padding-top:1.5rem; padding-bottom:2rem;">
-    <div class="section-eyebrow">My Saved Journal Entries</div>
+    <div class="section-eyebrow">My Prophetic Journal</div>
     <div class="saved-library-controls">
       <input class="saved-library-search" type="text" id="savedEntriesSearch" placeholder="Search word, theme, source, or notes..." oninput="onSavedEntriesSearchInput()">
+      <select class="lib-select" id="libSort" onchange="onLibFilter()">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+      </select>
+      <select class="lib-select" id="libType" onchange="onLibFilter()">
+        <option value="">All Types</option>
+        <option value="Prophetic Word">Prophetic Word</option>
+        <option value="Vision">Vision</option>
+        <option value="Dream">Dream</option>
+        <option value="Confirmation">Confirmation</option>
+        <option value="Direction">Direction</option>
+        <option value="Warning">Warning</option>
+      </select>
+      <div class="saved-menu" id="savedExportMenu">
+        <button class="sec-btn saved-menu-trigger" type="button" onclick="toggleSavedMenu(event, 'savedExportMenu')" aria-haspopup="menu" aria-expanded="false">Export</button>
+        <div class="saved-menu-list" role="menu">
+          <button class="saved-menu-item" type="button" role="menuitem" onclick="handleSavedEntriesExport('excel'); closeSavedMenus()">Export Excel</button>
+          <button class="saved-menu-item" type="button" role="menuitem" onclick="handleSavedEntriesExport('copy'); closeSavedMenus()">Copy Entries</button>
+          <button class="saved-menu-item" type="button" role="menuitem" onclick="handleSavedEntriesExport('word'); closeSavedMenus()">Export Word</button>
+        </div>
+      </div>
       <button class="sec-btn" type="button" id="savedSelectEntriesBtn" onclick="enterSavedEntriesSelectionMode()">Select entries</button>
     </div>
     <div class="saved-export-bar saved-selection-bar" id="savedSelectionBar" hidden>
@@ -2223,94 +2501,143 @@ body[data-generator-stage="review"] .output-section {
 <!-- EDITOR -->
 <div class="editor-section" id="editorSection">
 
-  <!-- Upload -->
-  <div class="form-block form-block-entry">
-    <div class="section-eyebrow">Document Upload</div>
-    <p class="section-support">Start here with a document, typed note, or handwritten-page photo. If the upload fills the fields well, you can move straight to Review.</p>
-    <div class="upload-zone">
-      <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" multiple>
-      <div class="upload-glyph">📄</div>
-      <p>Click or drag to upload documents (PDF, DOCX, TXT, PNG, JPG)</p>
-      <p class="upload-hint">Upload PDF, DOCX, TXT, or a photo of handwritten notes • Multiple dated entries split into separate pages automatically • Sections labeled Word:, Dream:, Scripture:, etc. map to the right fields</p>
-    </div>
-    <div class="upload-msg" id="uploadMsg"></div>
-  </div>
+  <!-- ══ ACCORDION: INPUT ══════════════════════════════════════ -->
+  <div class="acc-group is-open" id="acc-input">
+    <button class="acc-trigger" onclick="toggleAccordion('acc-input')" type="button" aria-expanded="true" aria-controls="acc-body-input">
+      <span class="acc-trigger-label">Input</span>
+      <span class="acc-trigger-tag">Upload or paste</span>
+      <span class="acc-caret" aria-hidden="true">▾</span>
+    </button>
+    <div class="acc-body" id="acc-body-input">
 
-  <!-- Paste -->
-  <div class="form-block form-block-entry">
-    <div class="section-eyebrow">Paste Prophetic Notes</div>
-    <p class="section-support">Use this when your notes are already copied. Multiple dated entries still split into separate pages automatically.</p>
-    <textarea id="pasteNotes" rows="5" placeholder="Paste journal entries here. Multiple dated entries (e.g. March 14, 2026 / March 15, 2026) will automatically generate separate pages. You can also separate entries with --- on its own line."></textarea>
-  </div>
+      <!-- Upload -->
+      <div class="form-block form-block-entry">
+        <div class="section-eyebrow">Document Upload</div>
+        <p class="section-support">Start here with a document, typed note, or handwritten-page photo. If the upload fills the fields well, you can move straight to Review.</p>
+        <div class="upload-zone">
+          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" multiple>
+          <div class="upload-glyph">📄</div>
+          <p>Click or drag to upload documents (PDF, DOCX, TXT, PNG, JPG)</p>
+          <p class="upload-hint">Upload PDF, DOCX, TXT, or a photo of handwritten notes • Multiple dated entries split into separate pages automatically • Sections labeled Word:, Dream:, Scripture:, etc. map to the right fields</p>
+        </div>
+        <div class="upload-msg" id="uploadMsg"></div>
+      </div>
 
-  <!-- Header Info -->
-  <div class="form-block form-block-meta">
-    <div class="section-eyebrow">Header Information</div>
-    <p class="section-support">These fields are optional if your upload already filled them. Update only what you want to refine before Review.</p>
-    <div class="field-row cols-4">
-      <div class="f-group">
-        <label for="date">Date</label>
-        <input type="text" id="date" placeholder="e.g. March 5, 2026">
+      <!-- Paste -->
+      <div class="form-block form-block-entry">
+        <div class="section-eyebrow">Paste Prophetic Notes</div>
+        <p class="section-support">Use this when your notes are already copied. Multiple dated entries still split into separate pages automatically.</p>
+        <textarea id="pasteNotes" rows="5" placeholder="Paste journal entries here. Multiple dated entries (e.g. March 14, 2026 / March 15, 2026) will automatically generate separate pages. You can also separate entries with --- on its own line."></textarea>
       </div>
-      <div class="f-group">
-        <label for="by">By / Source</label>
-        <input type="text" id="by" placeholder="Personal Prayer">
-      </div>
-      <div class="f-group">
-        <label for="type">Type</label>
-        <select id="type">
-          <option value="">— Select —</option>
-          <option>Dream</option>
-          <option>Vision</option>
-          <option>Prophetic Word</option>
-          <option>Prayer</option>
-          <option>Encouragement</option>
-          <option>Instruction</option>
-          <option>Promise</option>
-          <option>Warning</option>
-          <option>Correction</option>
-          <option>Preparation</option>
-          <option>Identity</option>
-        </select>
-      </div>
-      <div class="f-group">
-        <label for="theme">Theme</label>
-        <input type="text" id="theme" placeholder="e.g. The Gospel">
-      </div>
-    </div>
-  </div>
 
-  <!-- Journal Content -->
-  <div class="form-block form-block-content">
-    <div class="section-eyebrow">Journal Content</div>
-    <p class="section-support">Refine the word, meaning, response, and notes here. Leave untouched fields exactly as they were imported.</p>
-    <div style="display:flex; flex-direction:column; gap:1.1rem;">
-      <div class="f-group">
-        <label for="word">Word</label>
-        <textarea id="word" rows="6" placeholder="The prophetic word as received — exact phrases, impressions, declarations…"></textarea>
+    </div><!-- /acc-body-input -->
+  </div><!-- /acc-input -->
+
+  <!-- ══ ACCORDION: ENTRY INFO ════════════════════════════════ -->
+  <div class="acc-group is-open" id="acc-header">
+    <button class="acc-trigger" onclick="toggleAccordion('acc-header')" type="button" aria-expanded="true" aria-controls="acc-body-header">
+      <span class="acc-trigger-label">Entry Info</span>
+      <span class="acc-trigger-tag">Title, date &amp; type</span>
+      <span class="acc-caret" aria-hidden="true">▾</span>
+    </button>
+    <div class="acc-body" id="acc-body-header">
+
+      <div class="form-block form-block-meta">
+        <p class="section-support">These fields are optional if your upload already filled them. Update only what you want to refine before Review.</p>
+        <div class="field-row cols-4">
+          <div class="f-group">
+            <label for="date">Date</label>
+            <input type="text" id="date" placeholder="e.g. March 5, 2026">
+          </div>
+          <div class="f-group">
+            <label for="by">By / Source</label>
+            <input type="text" id="by" placeholder="Personal Prayer">
+          </div>
+          <div class="f-group">
+            <label for="type">Type</label>
+            <select id="type">
+              <option value="">— Select —</option>
+              <option>Dream</option>
+              <option>Vision</option>
+              <option>Prophetic Word</option>
+              <option>Prayer</option>
+              <option>Encouragement</option>
+              <option>Instruction</option>
+              <option>Promise</option>
+              <option>Warning</option>
+              <option>Correction</option>
+              <option>Preparation</option>
+              <option>Identity</option>
+            </select>
+          </div>
+          <div class="f-group">
+            <label for="theme">Theme</label>
+            <input type="text" id="theme" placeholder="e.g. The Gospel">
+          </div>
+        </div>
       </div>
-      <div class="f-group">
-        <label for="interpretation">What I Believe God Is Saying</label>
-        <textarea id="interpretation" rows="3" placeholder="A prayerful reflection on the personal meaning and heart of this word…"></textarea>
+
+    </div><!-- /acc-body-header -->
+  </div><!-- /acc-header -->
+
+  <!-- ══ ACCORDION: WORD ══════════════════════════════════════ -->
+  <div class="acc-group is-open" id="acc-word">
+    <button class="acc-trigger" onclick="toggleAccordion('acc-word')" type="button" aria-expanded="true" aria-controls="acc-body-word">
+      <span class="acc-trigger-label">Word</span>
+      <span class="acc-trigger-tag">Content &amp; meaning</span>
+      <span class="acc-caret" aria-hidden="true">▾</span>
+    </button>
+    <div class="acc-body" id="acc-body-word">
+
+      <div class="form-block form-block-content">
+        <p class="section-support">Refine the word, meaning, response, and notes here. Leave untouched fields exactly as they were imported.</p>
+        <div style="display:flex; flex-direction:column; gap:1.1rem;">
+          <div class="f-group">
+            <label for="word">Word</label>
+            <textarea id="word" rows="6" placeholder="The prophetic word as received — exact phrases, impressions, declarations…"></textarea>
+          </div>
+          <div class="f-group">
+            <label for="interpretation">What I Believe God Is Saying</label>
+            <textarea id="interpretation" rows="3" placeholder="A prayerful reflection on the personal meaning and heart of this word…"></textarea>
+          </div>
+          <div class="f-group">
+            <label for="prayer">Prayer</label>
+            <textarea id="prayer" rows="3" placeholder="Prayer is created and edited in the Hearing God App, then shown here for export." readonly></textarea>
+          </div>
+          <div class="f-group">
+            <label for="scripture">Scripture Confirmation</label>
+            <textarea id="scripture" rows="2" placeholder="e.g. Habakkuk 2:2 — Write the vision, make it plain…"></textarea>
+          </div>
+        </div>
       </div>
-      <div class="f-group">
-        <label for="prayer">Prayer</label>
-        <textarea id="prayer" rows="3" placeholder="Prayer is created and edited in the Hearing God App, then shown here for export." readonly></textarea>
+
+    </div><!-- /acc-body-word -->
+  </div><!-- /acc-word -->
+
+  <!-- ══ ACCORDION: RESPONSE & NOTES ══════════════════════════ -->
+  <div class="acc-group is-open" id="acc-response">
+    <button class="acc-trigger" onclick="toggleAccordion('acc-response')" type="button" aria-expanded="true" aria-controls="acc-body-response">
+      <span class="acc-trigger-label">Response &amp; Notes</span>
+      <span class="acc-trigger-tag">Obedience &amp; context</span>
+      <span class="acc-caret" aria-hidden="true">▾</span>
+    </button>
+    <div class="acc-body" id="acc-body-response">
+
+      <div class="form-block">
+        <div style="display:flex; flex-direction:column; gap:1.1rem;">
+          <div class="f-group">
+            <label for="response">How I Will Respond</label>
+            <textarea id="response" rows="4" placeholder="Steps of obedience, prayer posture, personal commitment…"></textarea>
+          </div>
+          <div class="f-group">
+            <label for="notes">Additional Notes</label>
+            <textarea id="notes" rows="3" placeholder="Context, circumstances, confirmations, impressions, timing…"></textarea>
+          </div>
+        </div>
       </div>
-      <div class="f-group">
-        <label for="scripture">Scripture Confirmation</label>
-        <textarea id="scripture" rows="2" placeholder="e.g. Habakkuk 2:2 — Write the vision, make it plain…"></textarea>
-      </div>
-      <div class="f-group">
-        <label for="response">How I Will Respond</label>
-        <textarea id="response" rows="4" placeholder="Steps of obedience, prayer posture, personal commitment…"></textarea>
-      </div>
-      <div class="f-group">
-        <label for="notes">Additional Notes</label>
-        <textarea id="notes" rows="3" placeholder="Context, circumstances, confirmations, impressions, timing…"></textarea>
-      </div>
-    </div>
-  </div>
+
+    </div><!-- /acc-body-response -->
+  </div><!-- /acc-response -->
 
   <!-- How It Works -->
   <div class="how-it-works">
@@ -2618,6 +2945,8 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser  = null;
 let authMode     = 'signin'; // 'signin' | 'signup'
 let savedJournalSearch = '';
+let savedJournalSort = 'newest';
+let savedJournalType = '';
 let _allSavedEntries = [];
 let _filteredSavedEntries = [];
 let selectedSavedEntryIds = new Set();
@@ -5445,6 +5774,15 @@ function updateMobileFormBarVisibility() {
   bar.classList.toggle('is-visible', isFormStage && !isSavedTab && hasContent);
 }
 
+function toggleAccordion(groupId) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  const isOpen = group.classList.contains('is-open');
+  group.classList.toggle('is-open', !isOpen);
+  const trigger = group.querySelector('.acc-trigger');
+  if (trigger) trigger.setAttribute('aria-expanded', String(!isOpen));
+}
+
 function togglePrintSettings(forceState) {
   const panel = document.getElementById('printSettingsPanel');
   const trigger = panel?.querySelector('.print-settings-trigger');
@@ -5987,9 +6325,11 @@ function updateSavedExportSelectionUi() {
   const selectionBar = document.getElementById('savedSelectionBar');
   const selectEntriesBtn = document.getElementById('savedSelectEntriesBtn');
 
+  const exportMenu = document.getElementById('savedExportMenu');
   if (status) status.textContent = `${count} selected`;
   if (selectionBar) selectionBar.hidden = !savedEntriesSelectionMode;
   if (selectEntriesBtn) selectEntriesBtn.hidden = savedEntriesSelectionMode;
+  if (exportMenu) exportMenu.hidden = savedEntriesSelectionMode;
   document.querySelectorAll('.saved-selected-action').forEach(btn => {
     btn.disabled = count === 0;
   });
@@ -6254,17 +6594,22 @@ function renderSavedEntriesList(entries, listEl) {
     card.setAttribute('aria-label', `Open saved entry from ${normalized.date || 'unknown date'}`);
 
     const savedDate = new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const wordPreview = (entry.word_content || 'No word recorded').substring(0, 160);
+    const wordPreview = (entry.word_content || '').replace(/\n+/g, ' ').substring(0, 180);
+    const ctx = parseSavedPropheticContext(entry);
+    const typeLabel = ctx.type || normalized.entryType || 'Prophetic Word';
+    const typeBadge = typeLabel ? `<span class="sec-type-badge">${escAttr(typeLabel)}</span>` : '';
+    const sourceMeta = normalized.source ? ` · ${escAttr(normalized.source)}` : '';
 
     card.innerHTML = `
       ${savedEntriesSelectionMode ? `
       <label class="saved-entry-select" aria-label="Select saved entry">
         <input class="saved-entry-select-input" type="checkbox" value="${escAttr(entry.id || '')}" ${selectedSavedEntryIds.has(entry.id) ? 'checked' : ''}>
       </label>` : ''}
-      <div class="sec-date">${escAttr(normalized.date || '—')}</div>
+      <div class="sec-date-col"><span class="sec-date">${escAttr(normalized.date || '—')}</span>${typeBadge}</div>
       <div class="sec-body">
+        <div class="sec-title">${escAttr((entry.title || '').trim() || 'Untitled')}</div>
         <div class="sec-word">${escAttr(wordPreview)}</div>
-        <div class="sec-meta">Saved ${savedDate}${normalized.title ? ' · ' + escAttr(normalized.title) : ''}${normalized.source ? ' · ' + escAttr(normalized.source) : ''}${normalized.entryType ? ' · ' + escAttr(normalized.entryType) : ''}</div>
+        <div class="sec-meta">Saved ${savedDate}${sourceMeta}</div>
       </div>
       <div class="sec-actions"></div>
     `;
@@ -6346,11 +6691,18 @@ async function loadMyJournal() {
   if (!list) return;
   list.innerHTML = '<div class="saved-entries-empty" style="font-style:normal;color:var(--text-light)">Loading…</div>';
 
-  const { data, error } = await sb.from('prophetic_words')
+  const sortField = (savedJournalSort === 'az' || savedJournalSort === 'za') ? 'title' : 'created_at';
+  const ascending = (savedJournalSort === 'oldest' || savedJournalSort === 'az');
+  let q = sb.from('prophetic_words')
     .select('id, date, title, source, context, word_content, interpretation, application, scriptures, created_at')
     .eq('user_id', currentUser.id)
-    .order('created_at', { ascending: false })
+    .order(sortField, { ascending, nullsFirst: false })
     .limit(50);
+  if (savedJournalSearch) {
+    q = q.or(`title.ilike.%${savedJournalSearch}%,word_content.ilike.%${savedJournalSearch}%,source.ilike.%${savedJournalSearch}%`);
+  }
+
+  const { data, error } = await q;
 
   if (error) {
     console.error('[loadMyJournal] Supabase error:', error);
@@ -6388,6 +6740,12 @@ function onSavedEntriesSearchInput() {
     return;
   }
   renderSavedEntriesList(_filteredSavedEntries);
+}
+
+function onLibFilter() {
+  savedJournalSort = document.getElementById('libSort')?.value || 'newest';
+  savedJournalType = document.getElementById('libType')?.value || '';
+  loadMyJournal();
 }
 
 function mapSavedPropheticEntryToGeneratorData(entry) {
