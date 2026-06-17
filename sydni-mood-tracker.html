@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sydni's Mood Tracker — PMDD & Xulane</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --bg:#0f0810;
+  --card:rgba(35,12,35,0.92);
+  --border:rgba(210,120,160,0.14);
+  --border2:rgba(210,120,160,0.3);
+  --rose:#E87FA0;
+  --rose-l:#F5B8CC;
+  --rose-d:#C4587A;
+  --gold:#C9A96E;
+  --gold-l:#E0C88A;
+  --green:#7ED3A0;
+  --blue:#A8D4E6;
+  --yellow:#F0D080;
+  --text:#F5E6EC;
+  --muted:rgba(245,230,236,0.55);
+  --faint:rgba(245,230,236,0.25);
+  --gr:linear-gradient(135deg,#E87FA0,#C4587A);
+  --gg:linear-gradient(135deg,#D4BC7A,#A07848);
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 10% 10%,rgba(180,60,100,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 60% at 90% 80%,rgba(100,20,80,0.15) 0%,transparent 60%);
+}
+
+/* ── Header ── */
+.hdr{
+  padding:18px 20px 12px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);background:rgba(15,8,16,0.9);
+  backdrop-filter:blur(30px);position:sticky;top:0;z-index:200;
+}
+.logo{font-size:15px;font-weight:300;letter-spacing:.18em;text-transform:uppercase;
+  background:var(--gr);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-sub{font-size:9px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:2px;}
+.streak{font-size:11px;color:var(--rose-l);letter-spacing:.05em;}
+
+/* ── Nav ── */
+.nav{
+  display:flex;justify-content:center;flex-wrap:wrap;padding:8px 12px;gap:5px;
+  background:rgba(15,8,16,0.97);backdrop-filter:blur(30px);
+  border-bottom:1px solid var(--border);position:sticky;top:63px;z-index:100;
+}
+.nb{
+  padding:6px 13px;border:1px solid var(--border);border-radius:100px;
+  background:transparent;color:var(--muted);font-size:11px;letter-spacing:.05em;
+  cursor:pointer;transition:all .2s;font-family:inherit;
+}
+.nb.on{background:var(--gr);border-color:transparent;color:#fff;}
+.nb:hover:not(.on){border-color:var(--border2);color:var(--text);}
+
+/* ── Layout ── */
+.main{max-width:640px;margin:0 auto;padding:18px 14px 70px;}
+.tab{display:none;}.tab.on{display:block;}
+
+/* ── Cards ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:18px 20px;margin-bottom:13px;
+  backdrop-filter:blur(20px);
+}
+.ct{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--rose);margin-bottom:13px;font-weight:500;}
+.sl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:8px;margin-top:4px;}
+.divider{height:1px;background:var(--border);margin:13px 0;}
+
+/* ── Date ── */
+.date-block{text-align:center;margin-bottom:20px;padding-top:4px;}
+.dow{font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:var(--rose);}
+.ddate{font-size:24px;font-weight:200;letter-spacing:.04em;margin:4px 0 2px;}
+
+/* ── Patch banner ── */
+.pbanner{
+  background:linear-gradient(135deg,rgba(201,169,110,.12),rgba(201,169,110,.04));
+  border:1px solid rgba(201,169,110,.28);border-radius:14px;
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;
+}
+.pb-label{font-size:13px;color:var(--gold);}
+.pb-sub{font-size:10px;color:rgba(201,169,110,.5);margin-top:2px;}
+.pb-right{font-size:26px;font-weight:200;color:var(--gold);}
+
+/* ── Mood ── */
+.mood-row{display:flex;gap:6px;}
+.mb{
+  flex:1;min-width:48px;padding:11px 5px;border:1px solid var(--border);border-radius:14px;
+  background:transparent;color:var(--muted);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:10px;letter-spacing:.03em;transition:all .2s;font-family:inherit;
+}
+.mb .em{font-size:20px;}
+.mb:hover{border-color:var(--border2);color:var(--text);}
+.mb.on{border-color:var(--rose);background:rgba(232,127,160,.1);color:var(--rose-l);}
+
+/* ── Dot sliders ── */
+.dot-row{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.dot-lbl{font-size:12px;color:var(--muted);width:92px;flex-shrink:0;}
+.dots{display:flex;gap:5px;flex:1;}
+.d{
+  width:27px;height:27px;border-radius:50%;border:1.5px solid var(--border);
+  background:transparent;cursor:pointer;transition:all .15s;
+  font-size:10px;color:var(--faint);font-family:inherit;
+  display:flex;align-items:center;justify-content:center;
+}
+.d.on{background:var(--gr);border-color:transparent;color:#fff;}
+
+/* ── Stepper ── */
+.num-row{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.nrlbl{font-size:12px;color:var(--muted);width:92px;flex-shrink:0;}
+.stepper{display:flex;align-items:center;gap:10px;}
+.step{
+  width:29px;height:29px;border-radius:50%;border:1.5px solid var(--border);
+  background:transparent;color:var(--text);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit;
+}
+.step:hover{border-color:var(--rose);color:var(--rose);}
+.sval{font-size:20px;font-weight:200;min-width:28px;text-align:center;}
+.sunit{font-size:11px;color:var(--faint);}
+
+/* ── Symptom tags ── */
+.sg{display:flex;flex-wrap:wrap;gap:6px;}
+.st{
+  padding:6px 13px;border:1px solid var(--border);border-radius:100px;
+  background:transparent;color:var(--muted);font-size:11px;cursor:pointer;
+  transition:all .18s;user-select:none;font-family:inherit;
+}
+.st:hover{border-color:var(--border2);color:var(--text);}
+.st.on{border-color:var(--rose);background:rgba(232,127,160,.12);color:var(--rose-l);}
+
+/* ── Add Custom ── */
+.add-custom-row{display:flex;align-items:center;gap:7px;margin-top:10px;}
+.add-custom-toggle{
+  padding:5px 12px;border:1px dashed rgba(210,120,160,.3);border-radius:100px;
+  background:transparent;color:var(--faint);font-size:11px;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.add-custom-toggle:hover{border-color:var(--rose);color:var(--rose);}
+.custom-input-wrap{display:none;}
+.custom-input-wrap.open{display:block;margin-top:10px;}
+.suggest-sg{max-height:150px;overflow-y:auto;padding:2px;display:flex;flex-wrap:wrap;gap:6px;}
+.custom-type-row{display:flex;align-items:center;gap:6px;margin-top:10px;}
+.cin{
+  flex:1;background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:100px;padding:5px 13px;color:var(--text);font-size:12px;
+  outline:none;font-family:inherit;transition:border-color .2s;
+}
+.cin:focus{border-color:var(--border2);}
+.cin::placeholder{color:var(--faint);}
+.cadd{
+  padding:5px 14px;background:var(--gr);border:none;border-radius:100px;
+  color:#fff;font-size:12px;cursor:pointer;font-family:inherit;
+  white-space:nowrap;
+}
+
+/* ── Symptom timing ── */
+.time-row{margin-bottom:13px;}
+.time-row:last-child{margin-bottom:0;}
+.time-sym-name{font-size:12px;color:var(--text);margin-bottom:7px;}
+.time-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.time-chip{
+  padding:5px 12px;border:1px solid var(--border);border-radius:100px;
+  background:transparent;color:var(--muted);font-size:10px;cursor:pointer;
+  transition:all .18s;font-family:inherit;
+}
+.time-chip:hover{border-color:var(--border2);color:var(--text);}
+.time-chip.on{border-color:var(--rose);background:rgba(232,127,160,.12);color:var(--rose-l);}
+
+/* ── Go Deeper ── */
+.dd-q{margin-bottom:17px;}
+.dd-q:last-child{margin-bottom:0;}
+.dd-q-text{font-size:13px;color:var(--text);margin-bottom:8px;line-height:1.4;}
+.dd-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.dd-chip{
+  padding:7px 14px;border:1px solid var(--border);border-radius:100px;
+  background:transparent;color:var(--muted);font-size:11px;cursor:pointer;
+  transition:all .18s;font-family:inherit;
+}
+.dd-chip:hover{border-color:var(--border2);color:var(--text);}
+.dd-chip.on{border-color:var(--gold);background:rgba(201,169,110,.14);color:var(--gold-l);}
+
+/* ── Patch weeks ── */
+.pw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.pwb{
+  padding:13px 5px;border:1px solid var(--border);border-radius:13px;
+  background:transparent;color:var(--muted);cursor:pointer;
+  text-align:center;transition:all .2s;font-size:10px;font-family:inherit;
+}
+.pwb .wn{font-size:17px;font-weight:200;display:block;margin-bottom:3px;}
+.pwb.on{border-color:var(--gold);background:rgba(201,169,110,.1);color:var(--gold);}
+.pwb.free{border-style:dashed;}
+.pwb.free.on{border-color:var(--rose);background:rgba(232,127,160,.1);color:var(--rose-l);border-style:dashed;}
+
+/* ── Notes ── */
+.ntxt{
+  width:100%;background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:12px;padding:12px 14px;color:var(--text);font-size:13px;
+  line-height:1.65;resize:vertical;min-height:76px;
+  font-family:inherit;outline:none;transition:border-color .2s;
+}
+.ntxt:focus{border-color:var(--border2);}
+.ntxt::placeholder{color:var(--faint);}
+
+/* ── Save btn ── */
+.sbtn{
+  width:100%;padding:15px;background:var(--gr);border:none;border-radius:14px;
+  color:#fff;font-size:14px;font-weight:500;letter-spacing:.06em;cursor:pointer;
+  transition:opacity .2s,transform .1s;font-family:inherit;
+}
+.sbtn:hover{opacity:.9;}
+.sbtn:active{transform:scale(.99);}
+
+/* ── Calendar ── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;}
+.cal-lbl{font-size:13px;letter-spacing:.1em;text-transform:uppercase;}
+.cnb{
+  padding:6px 14px;border:1px solid var(--border);border-radius:100px;
+  background:transparent;color:var(--muted);font-size:18px;
+  cursor:pointer;transition:all .2s;line-height:1;
+}
+.cnb:hover{border-color:var(--border2);color:var(--text);}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.ch{font-size:9px;text-align:center;color:var(--faint);letter-spacing:.1em;padding:3px 0 6px;}
+.cd{
+  aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer;
+  transition:all .15s;position:relative;
+}
+.cd:hover{filter:brightness(1.2);}
+.cd.emp{opacity:0;pointer-events:none;}
+.cd.td{border:1.5px solid var(--rose);}
+.cd.has-data{cursor:pointer;}
+.dn{font-size:11px;color:var(--muted);line-height:1;}
+.cd.td .dn{color:var(--rose-l);}
+.mdot{width:5px;height:5px;border-radius:50%;margin-top:2px;}
+.sym-pip{
+  width:4px;height:4px;border-radius:50%;
+  background:var(--faint);margin-top:1px;
+}
+.sym-count-badge{
+  position:absolute;top:3px;right:3px;
+  font-size:8px;color:var(--faint);line-height:1;
+}
+
+/* ── Legend ── */
+.lg{display:flex;flex-wrap:wrap;gap:10px;}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+.ldot{width:8px;height:8px;border-radius:50%;}
+
+/* ── Stats grid ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:13px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:13px;text-align:center;}
+.sv{font-size:26px;font-weight:200;color:var(--rose-l);}
+.slb{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin-top:3px;}
+
+/* ── Patterns ── */
+.pat-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.pat-name{font-size:12px;color:var(--muted);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pat-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;}
+.pat-bar-fill{height:100%;background:var(--gr);border-radius:3px;transition:width .4s ease;}
+.pat-count{font-size:11px;color:var(--faint);width:40px;text-align:right;flex-shrink:0;}
+
+.pw-stat-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.pw-stat-row:last-child{border-bottom:none;}
+.pw-label{font-size:12px;color:var(--muted);}
+.pw-avg{font-size:12px;font-weight:500;}
+.pw-mood-bar{height:4px;border-radius:2px;margin-top:4px;}
+
+/* ── History ── */
+.he{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:13px 17px;margin-bottom:9px;cursor:pointer;transition:border-color .2s;}
+.he:hover{border-color:var(--border2);}
+.hed{font-size:10px;letter-spacing:.07em;color:var(--faint);text-transform:uppercase;}
+.hes{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;}
+.hec{font-size:10px;padding:3px 9px;border-radius:100px;background:rgba(232,127,160,.1);border:1px solid rgba(232,127,160,.2);color:var(--rose-l);}
+.hen{font-size:11px;color:var(--faint);font-style:italic;margin-top:6px;}
+
+/* ── Export ── */
+.ea{
+  background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;
+  padding:14px;font-family:'Courier New',monospace;font-size:11.5px;
+  color:var(--muted);line-height:1.75;max-height:320px;overflow-y:auto;white-space:pre-wrap;
+}
+.ebrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px;align-items:center;}
+.eb{
+  padding:9px 18px;border:1px solid var(--border);border-radius:100px;
+  background:transparent;color:var(--muted);font-size:12px;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.eb.pri{background:var(--gr);border-color:transparent;color:#fff;}
+.eb:hover:not(.pri){border-color:var(--border2);color:var(--text);}
+.esel{
+  padding:8px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:100px;color:var(--text);font-size:12px;cursor:pointer;outline:none;font-family:inherit;
+}
+.export-check-grid{display:flex;flex-direction:column;gap:11px;}
+.exp-check{display:flex;align-items:center;gap:11px;font-size:13px;color:var(--muted);cursor:pointer;}
+.exp-check input[type=checkbox]{
+  width:18px;height:18px;flex-shrink:0;accent-color:var(--rose);cursor:pointer;
+}
+.exp-check-actions{display:flex;gap:8px;margin-top:14px;}
+.aihint{
+  font-size:12px;line-height:1.8;padding:12px;background:rgba(255,255,255,.02);
+  border-radius:10px;border:1px solid var(--border);font-style:italic;color:var(--faint);
+}
+.aihintlbl{color:var(--rose-l);font-style:normal;font-size:12px;margin-bottom:6px;display:block;}
+
+/* ── Day detail modal ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(12px);display:flex;align-items:flex-end;
+  justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-card{
+  background:#1e0a1e;border:1px solid var(--border2);border-radius:24px;
+  padding:22px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;
+  transform:translateY(30px);transition:transform .28s ease;
+}
+.modal-overlay.open .modal-card{transform:translateY(0);}
+.modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.modal-date{font-size:14px;font-weight:300;color:var(--text);}
+.modal-close{
+  width:28px;height:28px;border-radius:50%;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
+}
+.modal-close:hover{border-color:var(--rose);color:var(--rose);}
+.modal-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.modal-lbl{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--faint);width:80px;flex-shrink:0;}
+.modal-val{font-size:13px;color:var(--text);}
+.modal-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.mchip{font-size:10px;padding:3px 9px;border-radius:100px;background:rgba(232,127,160,.1);border:1px solid rgba(232,127,160,.2);color:var(--rose-l);}
+.modal-notes{font-size:12px;color:var(--faint);font-style:italic;line-height:1.6;margin-top:4px;padding:10px;background:rgba(255,255,255,.02);border-radius:8px;border:1px solid var(--border);}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:rgba(35,12,35,.97);border:1px solid var(--border2);border-radius:100px;
+  padding:11px 22px;font-size:12px;color:var(--rose-l);backdrop-filter:blur(20px);
+  transition:transform .3s ease;z-index:999;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.toast.on{transform:translateX(-50%) translateY(0);}
+
+/* ── Insights ── */
+.verdict-card{
+  border-radius:16px;padding:18px 20px;margin-bottom:13px;
+  border:1px solid;
+}
+.verdict-icon{font-size:28px;margin-bottom:8px;}
+.verdict-title{font-size:16px;font-weight:300;letter-spacing:.04em;margin-bottom:8px;}
+.verdict-desc{font-size:13px;color:var(--muted);line-height:1.65;}
+.signal-list{margin-top:12px;display:flex;flex-direction:column;gap:6px;}
+.signal-item{
+  display:flex;align-items:flex-start;gap:8px;
+  font-size:12px;color:var(--muted);line-height:1.5;
+}
+.signal-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--rose);flex-shrink:0;margin-top:5px;
+}
+.phase-table{width:100%;border-collapse:collapse;}
+.phase-table th{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--faint);padding:6px 10px;text-align:center;font-weight:400;
+}
+.phase-table td{
+  font-size:14px;font-weight:200;padding:8px 10px;
+  text-align:center;border-top:1px solid var(--border);
+}
+.phase-table .row-lbl{font-size:11px;color:var(--muted);text-align:left;font-weight:400;}
+.phase-better{color:#7ED3A0;}
+.phase-worse{color:#E87FA0;}
+.insight-disclaimer{
+  font-size:11px;color:var(--faint);line-height:1.6;
+  padding:12px 14px;background:rgba(255,255,255,.02);
+  border-radius:10px;border:1px solid var(--border);margin-top:4px;
+}
+.need-more{
+  text-align:center;padding:32px 20px;
+  font-size:13px;color:var(--muted);line-height:1.8;
+}
+.need-more .big{font-size:32px;margin-bottom:10px;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.empty{text-align:center;color:var(--faint);padding:40px 20px;font-size:13px;line-height:2;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <div>
+    <div class="logo">Sydni's Mood Tracker</div>
+    <div class="logo-sub">PMDD · Xulane Tracker</div>
+  </div>
+  <div class="streak" id="streak"></div>
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <button class="nb on" onclick="showTab('today',this)">Today</button>
+  <button class="nb" onclick="showTab('calendar',this)">Calendar</button>
+  <button class="nb" onclick="showTab('history',this)">History</button>
+  <button class="nb" onclick="showTab('insights',this)">Insights</button>
+  <button class="nb" onclick="showTab('export',this)">Export</button>
+</div>
+
+<div class="main">
+
+  <!-- ══ TODAY ══ -->
+  <div id="tab-today" class="tab on">
+
+    <div class="date-block">
+      <div class="dow" id="dow"></div>
+      <div class="ddate" id="ddate"></div>
+    </div>
+
+    <div class="pbanner" id="pbanner" style="display:none">
+      <div>
+        <div class="pb-label" id="pb-label">Patch Week</div>
+        <div class="pb-sub" id="pb-sub"></div>
+      </div>
+      <div class="pb-right" id="pb-right"></div>
+    </div>
+
+    <!-- Mood -->
+    <div class="card">
+      <div class="ct">How are you feeling?</div>
+      <div class="mood-row">
+        <button class="mb" onclick="setMood('radiant')" id="m-radiant"><span class="em">✨</span>Radiant</button>
+        <button class="mb" onclick="setMood('good')" id="m-good"><span class="em">🌸</span>Good</button>
+        <button class="mb" onclick="setMood('okay')" id="m-okay"><span class="em">🌿</span>Okay</button>
+        <button class="mb" onclick="setMood('low')" id="m-low"><span class="em">🌧️</span>Low</button>
+        <button class="mb" onclick="setMood('rough')" id="m-rough"><span class="em">⛈️</span>Rough</button>
+      </div>
+    </div>
+
+    <!-- Energy & Rest -->
+    <div class="card">
+      <div class="ct">Energy & Rest</div>
+      <div class="dot-row">
+        <div class="dot-lbl">Energy</div>
+        <div class="dots" id="en-dots">
+          <button class="d" onclick="setRating('energy',1)">1</button>
+          <button class="d" onclick="setRating('energy',2)">2</button>
+          <button class="d" onclick="setRating('energy',3)">3</button>
+          <button class="d" onclick="setRating('energy',4)">4</button>
+          <button class="d" onclick="setRating('energy',5)">5</button>
+        </div>
+      </div>
+      <div class="dot-row">
+        <div class="dot-lbl">Sleep Quality</div>
+        <div class="dots" id="sl-dots">
+          <button class="d" onclick="setRating('sleep',1)">1</button>
+          <button class="d" onclick="setRating('sleep',2)">2</button>
+          <button class="d" onclick="setRating('sleep',3)">3</button>
+          <button class="d" onclick="setRating('sleep',4)">4</button>
+          <button class="d" onclick="setRating('sleep',5)">5</button>
+        </div>
+      </div>
+      <div class="num-row">
+        <div class="nrlbl">Cycle Day</div>
+        <div class="stepper">
+          <button class="step" onclick="stepCycle(-1)">−</button>
+          <div class="sval" id="cyc-val">—</div>
+          <button class="step" onclick="stepCycle(1)">+</button>
+          <span class="sunit">/ 28</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Emotional symptoms -->
+    <div class="card">
+      <div class="ct">Emotions & Mental</div>
+      <div class="sg" id="pmdd-e"></div>
+      <div class="add-custom-row">
+        <button class="add-custom-toggle" onclick="toggleAddCustom('e')">+ Add your own</button>
+      </div>
+      <div class="custom-input-wrap" id="ciw-e">
+        <div class="sl">More to choose from</div>
+        <div class="suggest-sg" id="suggest-e"></div>
+        <div class="custom-type-row">
+          <input class="cin" id="cin-e" placeholder="Don't see it? Type your own…" maxlength="30"
+            onkeydown="if(event.key==='Enter') addCustom('e','pmdd-e')">
+          <button class="cadd" onclick="addCustom('e','pmdd-e')">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Physical symptoms -->
+    <div class="card">
+      <div class="ct">Physical Symptoms</div>
+      <div class="sg" id="pmdd-p"></div>
+      <div class="add-custom-row">
+        <button class="add-custom-toggle" onclick="toggleAddCustom('p')">+ Add your own</button>
+      </div>
+      <div class="custom-input-wrap" id="ciw-p">
+        <div class="sl">More to choose from</div>
+        <div class="suggest-sg" id="suggest-p"></div>
+        <div class="custom-type-row">
+          <input class="cin" id="cin-p" placeholder="Don't see it? Type your own…" maxlength="30"
+            onkeydown="if(event.key==='Enter') addCustom('p','pmdd-p')">
+          <button class="cadd" onclick="addCustom('p','pmdd-p')">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Xulane -->
+    <div class="card">
+      <div class="ct">Xulane Patch</div>
+      <div class="sl">Which patch week are you in?</div>
+      <div class="pw-grid">
+        <button class="pwb" onclick="setPW(1)" id="pw1"><span class="wn">1</span>On Patch</button>
+        <button class="pwb" onclick="setPW(2)" id="pw2"><span class="wn">2</span>On Patch</button>
+        <button class="pwb" onclick="setPW(3)" id="pw3"><span class="wn">3</span>On Patch</button>
+        <button class="pwb free" onclick="setPW(4)" id="pw4"><span class="wn">4</span>Patch-Free</button>
+      </div>
+      <div class="divider"></div>
+      <div class="sl">Patch-related symptoms</div>
+      <div class="sg" id="xul-s"></div>
+      <div class="add-custom-row">
+        <button class="add-custom-toggle" onclick="toggleAddCustom('x')">+ Add your own</button>
+      </div>
+      <div class="custom-input-wrap" id="ciw-x">
+        <div class="sl">More to choose from</div>
+        <div class="suggest-sg" id="suggest-x"></div>
+        <div class="custom-type-row">
+          <input class="cin" id="cin-x" placeholder="Don't see it? Type your own…" maxlength="30"
+            onkeydown="if(event.key==='Enter') addCustom('x','xul-s')">
+          <button class="cadd" onclick="addCustom('x','xul-s')">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sexual Desire -->
+    <div class="card">
+      <div class="ct">Sexual Desire</div>
+      <div class="dot-row">
+        <div class="dot-lbl">Desire Level</div>
+        <div class="dots" id="desire-dots">
+          <button class="d" onclick="setDesire(0)">0</button>
+          <button class="d" onclick="setDesire(1)">1</button>
+          <button class="d" onclick="setDesire(2)">2</button>
+          <button class="d" onclick="setDesire(3)">3</button>
+          <button class="d" onclick="setDesire(4)">4</button>
+          <button class="d" onclick="setDesire(5)">5</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin:-7px 0 13px 102px;font-size:9px;color:var(--faint);letter-spacing:.04em;">
+        <span>None</span>
+        <span id="desire-label" style="color:var(--rose-l);font-size:10px;letter-spacing:.08em;text-transform:uppercase;"></span>
+        <span>Very High</span>
+      </div>
+      <div class="sl">Mental / Emotional</div>
+      <div class="sg" id="desire-mental"></div>
+      <div class="add-custom-row">
+        <button class="add-custom-toggle" onclick="toggleAddCustom('dm')">+ Add your own</button>
+      </div>
+      <div class="custom-input-wrap" id="ciw-dm">
+        <div class="sl">More to choose from</div>
+        <div class="suggest-sg" id="suggest-dm"></div>
+        <div class="custom-type-row">
+          <input class="cin" id="cin-dm" placeholder="Don't see it? Type your own…" maxlength="30"
+            onkeydown="if(event.key==='Enter') addCustom('dm','desire-mental')">
+          <button class="cadd" onclick="addCustom('dm','desire-mental')">Add</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="sl">Physical</div>
+      <div class="sg" id="desire-physical"></div>
+      <div class="add-custom-row">
+        <button class="add-custom-toggle" onclick="toggleAddCustom('dp')">+ Add your own</button>
+      </div>
+      <div class="custom-input-wrap" id="ciw-dp">
+        <div class="sl">More to choose from</div>
+        <div class="suggest-sg" id="suggest-dp"></div>
+        <div class="custom-type-row">
+          <input class="cin" id="cin-dp" placeholder="Don't see it? Type your own…" maxlength="30"
+            onkeydown="if(event.key==='Enter') addCustom('dp','desire-physical')">
+          <button class="cadd" onclick="addCustom('dp','desire-physical')">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Symptom Timing -->
+    <div class="card" id="time-card" style="display:none">
+      <div class="ct">When Did You Notice These?</div>
+      <div id="time-list"></div>
+    </div>
+
+    <!-- Go Deeper -->
+    <div class="card" id="deepdive-card" style="display:none">
+      <div class="ct">Let's Go Deeper</div>
+      <div class="sl" style="margin-bottom:14px;">You logged some emotional symptoms today — a few more questions to help spot patterns</div>
+      <div id="deepdive-body"></div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card">
+      <div class="ct">Notes & Reflections</div>
+      <textarea class="ntxt" id="notes" placeholder="How was today? Any triggers, wins, or things to remember…"></textarea>
+    </div>
+
+    <button class="sbtn" onclick="save()">Save Today's Entry</button>
+  </div>
+
+  <!-- ══ CALENDAR ══ -->
+  <div id="tab-calendar" class="tab">
+    <div class="card">
+      <div class="cal-nav">
+        <button class="cnb" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-lbl" id="cal-lbl"></div>
+        <button class="cnb" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cg" id="cal-grid"></div>
+    </div>
+
+    <div class="stats" id="cal-stats"></div>
+
+    <!-- Pattern analysis -->
+    <div class="card" id="pat-card" style="display:none">
+      <div class="ct">This Month's Patterns</div>
+      <div id="pat-symptoms"></div>
+      <div id="pat-patchweeks"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card">
+      <div class="ct">Legend</div>
+      <div class="lg">
+        <div class="li"><div class="ldot" style="background:#7ED3A0"></div>Radiant</div>
+        <div class="li"><div class="ldot" style="background:#A8D4E6"></div>Good</div>
+        <div class="li"><div class="ldot" style="background:#F0D080"></div>Okay</div>
+        <div class="li"><div class="ldot" style="background:#E87FA0"></div>Low</div>
+        <div class="li"><div class="ldot" style="background:#C4587A"></div>Rough</div>
+        <div class="li"><div class="ldot" style="background:var(--faint)"></div>Symptoms logged</div>
+      </div>
+      <div style="font-size:10px;color:var(--faint);margin-top:10px;">Tap any logged day to see details.</div>
+    </div>
+  </div>
+
+  <!-- ══ HISTORY ══ -->
+  <div id="tab-history" class="tab">
+    <div id="hist-list"></div>
+  </div>
+
+  <!-- ══ INSIGHTS ══ -->
+  <div id="tab-insights" class="tab">
+    <div id="insights-body"></div>
+  </div>
+
+  <!-- ══ EXPORT ══ -->
+  <div id="tab-export" class="tab">
+    <div class="card">
+      <div class="ct">What to Include</div>
+      <div class="export-check-grid" id="export-checks">
+        <label class="exp-check"><input type="checkbox" checked data-key="moodRatings"><span>Mood, Energy & Sleep</span></label>
+        <label class="exp-check"><input type="checkbox" checked data-key="cycle"><span>Cycle Day & Patch Week</span></label>
+        <label class="exp-check"><input type="checkbox" checked data-key="pmddSyms"><span>Emotional & Physical Symptoms</span></label>
+        <label class="exp-check"><input type="checkbox" checked data-key="xulaneSyms"><span>Xulane Patch Symptoms</span></label>
+        <label class="exp-check"><input type="checkbox" checked data-key="desire"><span>Sexual Desire</span></label>
+        <label class="exp-check"><input type="checkbox" checked data-key="deepdive"><span>Go Deeper Answers</span></label>
+        <label class="exp-check"><input type="checkbox" checked data-key="notes"><span>Personal Notes</span></label>
+        <div class="divider"></div>
+        <label class="exp-check"><input type="checkbox" checked data-key="dailyLog"><span>Full day-by-day log (uncheck for summary only)</span></label>
+      </div>
+      <div class="exp-check-actions">
+        <button class="eb" onclick="setAllExportChecks(true)">Select All</button>
+        <button class="eb" onclick="setAllExportChecks(false)">Clear All</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Generate Report</div>
+      <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:13px;">Generate a formatted report to paste into Claude, ChatGPT, or share with your doctor.</p>
+      <div class="ebrow">
+        <select class="esel" id="erange">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="60">Last 60 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="all">All time</option>
+        </select>
+        <button class="eb pri" onclick="genReport()">Generate Report</button>
+      </div>
+    </div>
+
+    <div class="card" id="rcard" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;">
+        <div class="ct" style="margin-bottom:0">Report</div>
+        <div style="display:flex;gap:7px;">
+          <button class="eb" onclick="copyReport()" id="cpybtn">Copy</button>
+          <button class="eb" onclick="dlReport()">Download</button>
+        </div>
+      </div>
+      <div class="ea" id="rout"></div>
+    </div>
+
+    <div class="card">
+      <div class="ct">How to use with AI</div>
+      <span class="aihintlbl">Paste this prompt + your report into Claude or ChatGPT:</span>
+      <div class="aihint">"Here is my PMDD & Xulane tracker data. Please analyze my patterns and tell me: (1) when my worst symptom days cluster in my cycle, (2) whether my Xulane patch week correlates with mood or symptom shifts, (3) which emotions and physical symptoms repeat most, and (4) what I should bring up with my doctor."</div>
+      <span class="aihintlbl" style="margin-top:12px;">For your doctor:</span>
+      <div class="aihint" style="font-style:normal;">Copy the report → paste into Notes → print or email before your appointment.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Day Detail Modal -->
+<div class="modal-overlay" id="day-modal" onclick="closeModal(event)">
+  <div class="modal-card" id="modal-card">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);margin-bottom:4px;">Daily Entry</div>
+        <div class="modal-date" id="modal-date"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────
+const MC={radiant:'#7ED3A0',good:'#A8D4E6',okay:'#F0D080',low:'#E87FA0',rough:'#C4587A'};
+const ME={radiant:'✨',good:'🌸',okay:'🌿',low:'🌧️',rough:'⛈️'};
+const MS={radiant:5,good:4,okay:3,low:2,rough:1};
+
+const DEF_E=['Irritability','Sadness','Anxiety','Anger','Mood Swings','Hopelessness','Brain Fog','Social Withdrawal','Crying Spells','Overwhelm','Tension','Feeling Invisible','Rage','Numbness'];
+const DEF_P=['Bloating','Cramps','Breast Tenderness','Headache','Fatigue','Backache','Food Cravings','Insomnia','Joint Pain','Acne','Nausea','Hot Flashes','Low Appetite','Pelvic Pain'];
+const DEF_X=['Nausea (patch)','Skin Irritation','Spotting','Breast Soreness','Headache (patch)','Mood Shift','Dizziness','Weight Gain','Low Libido','Patch Fell Off'];
+const DEF_DM=['Romantic Interest','Sexual Thoughts','Desire for Closeness','Fantasies','Disinterest','Touch-Averse','Self-Conscious','Mentally Checked Out'];
+const DEF_DP=['Physical Arousal','Vaginal Dryness','Slow to Arouse','Pain/Discomfort','Low Sensation','Increased Sensitivity','Body Fatigue','Numbness'];
+const DESIRE_LABELS=['None','Very Low','Low','Moderate','High','Very High'];
+
+// Extended "more to choose from" suggestion lists
+const EXT_E=['Guilt','Shame','Jealousy','Resentment','Loneliness','Fear','Confusion','Restlessness','Apathy','Paranoia','Emotional Numbness','Heightened Sensitivity','Self-Doubt','Despair','Frustration','Impatience','Disconnection','Worthlessness','Panic','Shutting Down'];
+const EXT_P=['Migraine','Muscle Aches','Heart Palpitations','Tingling','Hives','Constipation','Diarrhea','Hair Loss','Skin Sensitivity','Cold Flashes','Tremors','Vision Changes','Ringing in Ears','Dry Skin','Swelling','Night Sweats'];
+const EXT_X=['Itching at Site','Redness at Site','Blistering','Patch Edge Lifting','Heavy Bleeding','Light Bleeding','Yeast Infection Symptoms','UTI Symptoms','Hormonal Acne','Breast Swelling'];
+const EXT_DM=['Guilt About Low Desire','Pressure to Perform','Resentment','Avoidance','Curiosity','Nervousness','Wanting Reassurance','Emotional Shutdown','Comparing to Past Self'];
+const EXT_DP=['Quick to Arouse','Delayed Orgasm','Difficulty Climaxing','Cramping During Intimacy','Bleeding During/After','Tightness','Relaxation','Heightened Sensitivity to Touch'];
+const EXT_MAP={e:[EXT_E,'pmdd-e'],p:[EXT_P,'pmdd-p'],x:[EXT_X,'xul-s'],dm:[EXT_DM,'desire-mental'],dp:[EXT_DP,'desire-physical']};
+
+// Symptom timing + "go deeper" follow-ups
+const TIME_OPTS=['Morning','Afternoon','Evening','Night','On & Off All Day'];
+const DEEP_TRIGGERS=['Irritability','Anger','Rage','Sadness','Anxiety','Overwhelm','Crying Spells','Tension','Mood Swings','Hopelessness'];
+const BODY_LOCATIONS=['Jaw / Neck','Shoulders','Chest','Stomach','Lower Back','Hands / Fists','Whole Body'];
+
+const now=new Date();
+const TODAY=fmtKey(now);
+let calY=now.getFullYear(),calM=now.getMonth();
+
+let entry={mood:null,energy:null,sleep:null,cycleDay:null,patchWeek:null,desire:null,symptoms:{},symptomTimes:{},deepDive:{},notes:''};
+
+// ── Storage ────────────────────────────────────────────────
+function fmtKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function getData(){return JSON.parse(localStorage.getItem('luna-v2')||'{}');}
+function saveData(d){localStorage.setItem('luna-v2',JSON.stringify(d));}
+function getCustom(){
+  const c=JSON.parse(localStorage.getItem('luna-custom')||'{}');
+  return{e:c.e||[],p:c.p||[],x:c.x||[],dm:c.dm||[],dp:c.dp||[]};
+}
+function saveCustom(c){localStorage.setItem('luna-custom',JSON.stringify(c));}
+
+function ddYesNoLabel(val){
+  return val==='yes'?'Yes':val==='neutral'?'Neutral':val==='no'?'No':val;
+}
+
+function escAttr(str){
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),2600);
+}
+
+// ── Tabs ───────────────────────────────────────────────────
+function showTab(id,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  btn.classList.add('on');
+  if(id==='calendar') renderCal();
+  if(id==='history') renderHist();
+  if(id==='insights') renderInsights();
+}
+
+// ── Today init ─────────────────────────────────────────────
+function initToday(){
+  const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('dow').textContent=DAYS[now.getDay()];
+  document.getElementById('ddate').textContent=`${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
+  // Build default tags
+  buildTags('pmdd-e',DEF_E);
+  buildTags('pmdd-p',DEF_P);
+  buildTags('xul-s',DEF_X);
+  buildTags('desire-mental',DEF_DM);
+  buildTags('desire-physical',DEF_DP);
+
+  // Load saved custom tags
+  const c=getCustom();
+  c.e.forEach(s=>buildOneTag('pmdd-e',s));
+  c.p.forEach(s=>buildOneTag('pmdd-p',s));
+  c.x.forEach(s=>buildOneTag('xul-s',s));
+  c.dm.forEach(s=>buildOneTag('desire-mental',s));
+  c.dp.forEach(s=>buildOneTag('desire-physical',s));
+
+  // Restore today's saved entry if exists
+  const data=getData();
+  if(data[TODAY]){
+    const e=data[TODAY];
+    entry={...entry,...e,symptoms:{...(e.symptoms||{})},
+      symptomTimes:{...(e.symptomTimes||{})},deepDive:{...(e.deepDive||{})}};
+    if(e.mood) setMood(e.mood,true);
+    if(e.energy){applyDots('en-dots',e.energy);}
+    if(e.sleep){applyDots('sl-dots',e.sleep);}
+    if(e.desire!=null) setDesire(e.desire);
+    if(e.cycleDay) document.getElementById('cyc-val').textContent=e.cycleDay;
+    if(e.patchWeek) setPW(e.patchWeek,true);
+    // Mark selected symptoms
+    Object.keys(e.symptoms||{}).forEach(s=>{
+      const el=document.querySelector(`[data-sym="${CSS.escape(s)}"]`);
+      if(el) el.classList.add('on');
+    });
+    renderSymptomTimes();
+    renderDeepDive();
+    if(e.notes) document.getElementById('notes').value=e.notes;
+  }
+
+  updateStreak();
+  updateBanner();
+}
+
+function updateStreak(){
+  const data=getData();
+  let s=0,d=new Date(now);
+  while(data[fmtKey(d)]){s++;d.setDate(d.getDate()-1);}
+  document.getElementById('streak').textContent=s>1?`${s} day streak 🌸`:s===1?'1 day streak 🌸':'';
+}
+
+function updateBanner(){
+  const data=getData();
+  const keys=Object.keys(data).sort().reverse();
+  for(const k of keys){
+    if(data[k]&&data[k].patchWeek){
+      const pw=data[k].patchWeek;
+      document.getElementById('pbanner').style.display='flex';
+      document.getElementById('pb-label').textContent=pw===4?'Patch-Free Week':`Patch Week ${pw}`;
+      document.getElementById('pb-sub').textContent=pw===4?'No patch this week':'Wearing patch · change every 7 days';
+      document.getElementById('pb-right').textContent=pw===4?'Week 4':'Week '+pw;
+      break;
+    }
+  }
+}
+
+// ── Mood ───────────────────────────────────────────────────
+function setMood(m,silent=false){
+  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('m-'+m).classList.add('on');
+  entry.mood=m;
+}
+
+// ── Dot ratings ────────────────────────────────────────────
+function setRating(type,val){
+  entry[type]=val;
+  applyDots(type==='energy'?'en-dots':'sl-dots',val);
+}
+function applyDots(id,val){
+  document.getElementById(id).querySelectorAll('.d')
+    .forEach((d,i)=>d.classList.toggle('on',i<val));
+}
+
+// ── Desire level (0–5 scale) ───────────────────────────────
+function setDesire(val){
+  entry.desire=val;
+  document.querySelectorAll('#desire-dots .d').forEach((d,i)=>d.classList.toggle('on',i<=val));
+  const lbl=document.getElementById('desire-label');
+  if(lbl) lbl.textContent=DESIRE_LABELS[val]||'';
+}
+
+// ── Cycle day ──────────────────────────────────────────────
+function stepCycle(delta){
+  const cur=entry.cycleDay||0;
+  const nv=Math.max(1,Math.min(35,cur+delta));
+  entry.cycleDay=nv;
+  document.getElementById('cyc-val').textContent=nv;
+}
+
+// ── Patch week ─────────────────────────────────────────────
+function setPW(w,silent=false){
+  document.querySelectorAll('.pwb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pw'+w).classList.add('on');
+  entry.patchWeek=w;
+}
+
+// ── Symptom tags ───────────────────────────────────────────
+function buildTags(cid,list){list.forEach(s=>buildOneTag(cid,s));}
+
+function buildOneTag(cid,s){
+  const c=document.getElementById(cid);
+  if(!c) return;
+  if(c.querySelector(`[data-sym="${s}"]`)) return; // no duplicates
+  const b=document.createElement('button');
+  b.className='st';b.textContent=s;b.dataset.sym=s;
+  b.onclick=()=>{
+    b.classList.toggle('on');
+    if(b.classList.contains('on')) entry.symptoms[s]=true;
+    else{ delete entry.symptoms[s]; if(entry.symptomTimes) delete entry.symptomTimes[s]; }
+    renderSymptomTimes();
+    renderDeepDive();
+  };
+  c.appendChild(b);
+  // If in current entry, mark on
+  if(entry.symptoms[s]) b.classList.add('on');
+}
+
+// ── Custom add (suggestion list + type-your-own) ────────────
+function toggleAddCustom(cat){
+  const wrap=document.getElementById('ciw-'+cat);
+  const isOpen=wrap.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.custom-input-wrap').forEach(w=>w.classList.remove('open'));
+  if(!isOpen){
+    wrap.classList.add('open');
+    renderSuggestPanel(cat);
+    document.getElementById('cin-'+cat).focus();
+  }
+}
+
+function renderSuggestPanel(cat){
+  const [list,cid]=EXT_MAP[cat];
+  const existing=new Set(Array.from(document.querySelectorAll(`#${cid} [data-sym]`)).map(b=>b.dataset.sym));
+  const remaining=list.filter(s=>!existing.has(s));
+  const el=document.getElementById('suggest-'+cat);
+  if(!el) return;
+  if(!remaining.length){
+    el.innerHTML=`<div style="font-size:11px;color:var(--faint);padding:4px 0;">You've added all the suggestions — type your own below.</div>`;
+    return;
+  }
+  el.innerHTML=remaining.map(s=>`<button class="st" data-pick="${escAttr(s)}" onclick="pickSuggestion('${cat}',this.dataset.pick)">${escAttr(s)}</button>`).join('');
+}
+
+function pickSuggestion(cat,name){
+  const cid=EXT_MAP[cat][1];
+  const c=getCustom();
+  if(!c[cat].includes(name)){ c[cat].push(name); saveCustom(c); }
+  buildOneTag(cid,name);
+  const el=document.querySelector(`#${cid} [data-sym="${CSS.escape(name)}"]`);
+  if(el&&!el.classList.contains('on')){
+    el.classList.add('on');
+    entry.symptoms[name]=true;
+  }
+  renderSymptomTimes();
+  renderDeepDive();
+  renderSuggestPanel(cat);
+  toast(`"${name}" added ✓`);
+}
+
+function addCustom(cat,cid){
+  const input=document.getElementById('cin-'+cat);
+  const val=input.value.trim();
+  if(!val||val.length<2){input.focus();return;}
+
+  // Save to custom storage
+  const c=getCustom();
+  if(!c[cat].includes(val)){
+    c[cat].push(val);
+    saveCustom(c);
+  }
+
+  // Add tag to DOM
+  buildOneTag(cid,val);
+
+  input.value='';
+  renderSuggestPanel(cat);
+  toast(`"${val}" added ✓`);
+}
+
+// ── Symptom timing ─────────────────────────────────────────
+function renderSymptomTimes(){
+  const syms=Object.keys(entry.symptoms||{});
+  const card=document.getElementById('time-card');
+  if(!syms.length){card.style.display='none';return;}
+  card.style.display='block';
+  entry.symptomTimes=entry.symptomTimes||{};
+  document.getElementById('time-list').innerHTML=syms.map(s=>{
+    const cur=entry.symptomTimes[s]||[];
+    return `
+      <div class="time-row">
+        <div class="time-sym-name">${escAttr(s)}</div>
+        <div class="time-chips">
+          ${TIME_OPTS.map(t=>`<button class="time-chip ${cur.includes(t)?'on':''}" data-sym="${escAttr(s)}" data-t="${escAttr(t)}" onclick="toggleSymptomTime(this.dataset.sym,this.dataset.t)">${t}</button>`).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleSymptomTime(sym,t){
+  entry.symptomTimes=entry.symptomTimes||{};
+  const arr=entry.symptomTimes[sym]||[];
+  const idx=arr.indexOf(t);
+  if(idx>=0) arr.splice(idx,1); else arr.push(t);
+  entry.symptomTimes[sym]=arr;
+  renderSymptomTimes();
+}
+
+// ── Go Deeper ──────────────────────────────────────────────
+function renderDeepDive(){
+  const syms=Object.keys(entry.symptoms||{});
+  const hasTrigger=syms.some(s=>DEEP_TRIGGERS.includes(s));
+  const card=document.getElementById('deepdive-card');
+  if(!hasTrigger){card.style.display='none';return;}
+  card.style.display='block';
+  const dd=entry.deepDive||{};
+  const tensionLoc=dd.tensionLocation||[];
+
+  document.getElementById('deepdive-body').innerHTML=`
+    <div class="dd-q">
+      <div class="dd-q-text">Did you feel tension in your body?</div>
+      <div class="dd-chips">
+        <button class="dd-chip ${dd.tension==='yes'?'on':''}" onclick="setDeepDive('tension','yes')">Yes</button>
+        <button class="dd-chip ${dd.tension==='neutral'?'on':''}" onclick="setDeepDive('tension','neutral')">Neutral / A Little</button>
+        <button class="dd-chip ${dd.tension==='no'?'on':''}" onclick="setDeepDive('tension','no')">No</button>
+      </div>
+      ${dd.tension==='yes'||dd.tension==='neutral'?`
+        <div class="sl" style="margin-top:11px;">Where?</div>
+        <div class="sg">${BODY_LOCATIONS.map(loc=>`<button class="st ${tensionLoc.includes(loc)?'on':''}" data-loc="${escAttr(loc)}" onclick="toggleTensionLoc(this.dataset.loc)">${loc}</button>`).join('')}</div>
+      `:''}
+    </div>
+    <div class="dd-q">
+      <div class="dd-q-text">Appetite today?</div>
+      <div class="dd-chips">
+        <button class="dd-chip ${dd.appetite==='more'?'on':''}" onclick="setDeepDive('appetite','more')">Wanted More</button>
+        <button class="dd-chip ${dd.appetite==='neutral'?'on':''}" onclick="setDeepDive('appetite','neutral')">Neutral / So-so</button>
+        <button class="dd-chip ${dd.appetite==='less'?'on':''}" onclick="setDeepDive('appetite','less')">Wanted Less</button>
+        <button class="dd-chip ${dd.appetite==='same'?'on':''}" onclick="setDeepDive('appetite','same')">No Change</button>
+      </div>
+    </div>
+    <div class="dd-q">
+      <div class="dd-q-text">Did you feel a pull to pray or seek God?</div>
+      <div class="dd-chips">
+        <button class="dd-chip ${dd.prayer==='yes'?'on':''}" onclick="setDeepDive('prayer','yes')">Yes</button>
+        <button class="dd-chip ${dd.prayer==='okay'?'on':''}" onclick="setDeepDive('prayer','okay')">It was okay / So-so</button>
+        <button class="dd-chip ${dd.prayer==='distant'?'on':''}" onclick="setDeepDive('prayer','distant')">Felt Distant</button>
+        <button class="dd-chip ${dd.prayer==='no'?'on':''}" onclick="setDeepDive('prayer','no')">Didn't Think About It</button>
+      </div>
+    </div>
+    <div class="dd-q">
+      <div class="dd-q-text">Wanted to withdraw or be alone?</div>
+      <div class="dd-chips">
+        <button class="dd-chip ${dd.withdraw==='yes'?'on':''}" onclick="setDeepDive('withdraw','yes')">Yes</button>
+        <button class="dd-chip ${dd.withdraw==='neutral'?'on':''}" onclick="setDeepDive('withdraw','neutral')">Neutral / Okay Either Way</button>
+        <button class="dd-chip ${dd.withdraw==='no'?'on':''}" onclick="setDeepDive('withdraw','no')">No</button>
+      </div>
+    </div>
+  `;
+}
+
+function setDeepDive(key,val){
+  entry.deepDive=entry.deepDive||{};
+  entry.deepDive[key]=val;
+  renderDeepDive();
+}
+
+function toggleTensionLoc(loc){
+  entry.deepDive=entry.deepDive||{};
+  entry.deepDive.tensionLocation=entry.deepDive.tensionLocation||[];
+  const arr=entry.deepDive.tensionLocation;
+  const idx=arr.indexOf(loc);
+  if(idx>=0) arr.splice(idx,1); else arr.push(loc);
+  renderDeepDive();
+}
+
+// ── Save entry ─────────────────────────────────────────────
+function save(){
+  entry.notes=document.getElementById('notes').value;
+  entry.saved=new Date().toISOString();
+  const data=getData();
+  data[TODAY]={...entry,symptoms:{...entry.symptoms},
+    symptomTimes:{...(entry.symptomTimes||{})},deepDive:{...(entry.deepDive||{})}};
+  saveData(data);
+  toast('Entry saved ✓');
+  updateStreak();
+  updateBanner();
+}
+
+// ── Calendar ───────────────────────────────────────────────
+function renderCal(){
+  const MNAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const data=getData();
+  document.getElementById('cal-lbl').textContent=`${MNAMES[calM]} ${calY}`;
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML='';
+
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{
+    const h=document.createElement('div');h.className='ch';h.textContent=d;grid.appendChild(h);
+  });
+
+  const first=new Date(calY,calM,1).getDay();
+  for(let i=0;i<first;i++){
+    const e=document.createElement('div');e.className='cd emp';grid.appendChild(e);
+  }
+
+  const dim=new Date(calY,calM+1,0).getDate();
+  let tracked=0,goodDays=0,hardDays=0;
+
+  for(let d=1;d<=dim;d++){
+    const key=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const e=data[key];
+    const el=document.createElement('div');
+    el.className='cd'+(key===TODAY?' td':'');
+
+    if(e){
+      if(e.mood){
+        tracked++;
+        // Subtle mood tint on cell
+        el.style.background=MC[e.mood]+'18';
+        if(e.mood==='radiant'||e.mood==='good') goodDays++;
+        if(e.mood==='low'||e.mood==='rough') hardDays++;
+        el.classList.add('has-data');
+        el.onclick=()=>showDayDetail(key);
+      } else if(Object.keys(e.symptoms||{}).length||e.notes){
+        el.classList.add('has-data');
+        el.onclick=()=>showDayDetail(key);
+      }
+    }
+
+    const dn=document.createElement('div');
+    dn.className='dn';dn.textContent=d;
+    el.appendChild(dn);
+
+    if(e&&e.mood){
+      const dot=document.createElement('div');
+      dot.className='mdot';dot.style.background=MC[e.mood];
+      el.appendChild(dot);
+    }
+
+    const symCount=Object.keys((e&&e.symptoms)||{}).length;
+    if(symCount>0){
+      const pip=document.createElement('div');
+      pip.className='sym-pip';
+      pip.title=`${symCount} symptom${symCount>1?'s':''} logged`;
+      el.appendChild(pip);
+    }
+
+    grid.appendChild(el);
+  }
+
+  // Stats
+  document.getElementById('cal-stats').innerHTML=`
+    <div class="sc"><div class="sv">${tracked}</div><div class="slb">Days Tracked</div></div>
+    <div class="sc"><div class="sv" style="color:#7ED3A0">${goodDays}</div><div class="slb">Good Days</div></div>
+    <div class="sc"><div class="sv" style="color:#E87FA0">${hardDays}</div><div class="slb">Hard Days</div></div>
+  `;
+
+  renderPatterns(data);
+}
+
+function changeMonth(d){
+  calM+=d;
+  if(calM>11){calM=0;calY++;}
+  if(calM<0){calM=11;calY--;}
+  renderCal();
+}
+
+// ── Pattern analysis ───────────────────────────────────────
+function renderPatterns(data){
+  // Collect this month's entries
+  const dim=new Date(calY,calM+1,0).getDate();
+  const entries=[];
+  for(let d=1;d<=dim;d++){
+    const key=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if(data[key]) entries.push(data[key]);
+  }
+  if(entries.length===0){
+    document.getElementById('pat-card').style.display='none';
+    return;
+  }
+
+  document.getElementById('pat-card').style.display='block';
+
+  // Symptom frequency
+  const symCount={};
+  entries.forEach(e=>Object.keys(e.symptoms||{}).forEach(s=>{
+    symCount[s]=(symCount[s]||0)+1;
+  }));
+
+  const topSyms=Object.entries(symCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxSym=topSyms.length?topSyms[0][1]:1;
+
+  let symHTML='';
+  if(topSyms.length){
+    symHTML=`<div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--faint);margin-bottom:10px;">Most Frequent Symptoms</div>`;
+    symHTML+=topSyms.map(([s,c])=>`
+      <div class="pat-row">
+        <div class="pat-name">${s}</div>
+        <div class="pat-bar-wrap">
+          <div class="pat-bar-fill" style="width:${Math.round(c/maxSym*100)}%"></div>
+        </div>
+        <div class="pat-count">${c}d</div>
+      </div>
+    `).join('');
+  } else {
+    symHTML='<div style="font-size:12px;color:var(--faint);margin-bottom:14px;">No symptoms logged yet this month.</div>';
+  }
+  document.getElementById('pat-symptoms').innerHTML=symHTML;
+
+  // Patch week mood breakdown
+  const pwData={1:[],2:[],3:[],4:[]};
+  entries.forEach(e=>{
+    if(e.patchWeek&&e.mood) pwData[e.patchWeek].push(MS[e.mood]);
+  });
+
+  const hasPW=Object.values(pwData).some(v=>v.length>0);
+  let pwHTML='';
+  if(hasPW){
+    const MNAMES2=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    pwHTML=`<div class="divider"></div><div style="font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--faint);margin-bottom:10px;">Mood by Patch Week</div>`;
+    [1,2,3,4].forEach(w=>{
+      const vals=pwData[w];
+      if(!vals.length) return;
+      const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+      const label=w===4?'Patch-Free':'Week '+w;
+      let moodLabel='',moodColor='';
+      if(avg>=4.5){moodLabel='Radiant';moodColor='#7ED3A0';}
+      else if(avg>=3.5){moodLabel='Good';moodColor='#A8D4E6';}
+      else if(avg>=2.5){moodLabel='Okay';moodColor='#F0D080';}
+      else if(avg>=1.5){moodLabel='Low';moodColor='#E87FA0';}
+      else{moodLabel='Rough';moodColor='#C4587A';}
+      pwHTML+=`
+        <div class="pw-stat-row">
+          <div>
+            <div class="pw-label">${label}</div>
+            <div class="pw-mood-bar" style="width:${Math.round(avg/5*80)+20}px;background:${moodColor}40;margin-top:5px;">
+              <div style="height:4px;width:${Math.round(avg/5*100)}%;background:${moodColor};border-radius:2px;"></div>
+            </div>
+          </div>
+          <div class="pw-avg" style="color:${moodColor}">${avg.toFixed(1)}/5 · ${moodLabel}</div>
+        </div>
+      `;
+    });
+  }
+  document.getElementById('pat-patchweeks').innerHTML=pwHTML;
+}
+
+// ── Day detail modal ───────────────────────────────────────
+function showDayDetail(key){
+  const data=getData();
+  const e=data[key];
+  if(!e) return;
+
+  const dt=new Date(key+'T12:00:00');
+  const dstr=dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('modal-date').textContent=dstr;
+
+  const syms=Object.keys(e.symptoms||{});
+  const rows=[];
+
+  if(e.mood){
+    rows.push(`<div class="modal-row">
+      <div class="modal-lbl">Mood</div>
+      <div class="modal-val">${ME[e.mood]||''} <span style="text-transform:capitalize">${e.mood}</span></div>
+    </div>`);
+  }
+  if(e.patchWeek){
+    rows.push(`<div class="modal-row">
+      <div class="modal-lbl">Patch</div>
+      <div class="modal-val" style="color:var(--gold)">${e.patchWeek===4?'Patch-Free Week':'Week '+e.patchWeek}</div>
+    </div>`);
+  }
+  if(e.cycleDay){
+    rows.push(`<div class="modal-row">
+      <div class="modal-lbl">Cycle Day</div>
+      <div class="modal-val">Day ${e.cycleDay}</div>
+    </div>`);
+  }
+  if(e.energy||e.sleep||e.desire!=null){
+    const parts=[];
+    if(e.energy) parts.push(`Energy ${e.energy}/5`);
+    if(e.sleep) parts.push(`Sleep ${e.sleep}/5`);
+    if(e.desire!=null) parts.push(`Desire ${e.desire}/5`);
+    rows.push(`<div class="modal-row">
+      <div class="modal-lbl">Ratings</div>
+      <div class="modal-val">${parts.join(' · ')}</div>
+    </div>`);
+  }
+  if(syms.length){
+    const times=e.symptomTimes||{};
+    rows.push(`<div style="margin-bottom:10px;">
+      <div class="modal-lbl" style="margin-bottom:7px;">Symptoms</div>
+      <div class="modal-chips">${syms.map(s=>`<span class="mchip">${s}${times[s]&&times[s].length?` · ${times[s].join('/')}`:''}</span>`).join('')}</div>
+    </div>`);
+  }
+  if(e.deepDive&&Object.keys(e.deepDive).length){
+    const dd=e.deepDive,parts=[];
+    if(dd.tension) parts.push(`Body tension: ${ddYesNoLabel(dd.tension)}${(dd.tension==='yes'||dd.tension==='neutral')&&dd.tensionLocation&&dd.tensionLocation.length?' ('+dd.tensionLocation.join(', ')+')':''}`);
+    if(dd.appetite) parts.push(`Appetite: ${dd.appetite==='more'?'Wanted more':dd.appetite==='neutral'?'Neutral / So-so':dd.appetite==='less'?'Wanted less':'No change'}`);
+    if(dd.prayer) parts.push(`Pull to pray: ${dd.prayer==='yes'?'Yes':dd.prayer==='okay'?'It was okay / So-so':dd.prayer==='distant'?'Felt distant':"Didn't think about it"}`);
+    if(dd.withdraw) parts.push(`Wanted to withdraw: ${ddYesNoLabel(dd.withdraw)}`);
+    if(parts.length){
+      rows.push(`<div style="margin-bottom:10px;">
+        <div class="modal-lbl" style="margin-bottom:7px;">Go Deeper</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.8;">${parts.join('<br>')}</div>
+      </div>`);
+    }
+  }
+  if(e.notes&&e.notes.trim()){
+    rows.push(`<div>
+      <div class="modal-lbl" style="margin-bottom:6px;">Notes</div>
+      <div class="modal-notes">"${e.notes.trim()}"</div>
+    </div>`);
+  }
+  if(!rows.length){
+    rows.push(`<div style="font-size:13px;color:var(--faint);">Entry saved with no details.</div>`);
+  }
+
+  document.getElementById('modal-body').innerHTML=rows.join('');
+  document.getElementById('day-modal').classList.add('open');
+}
+
+function closeModal(evt){
+  if(evt&&evt.target!==document.getElementById('day-modal')) return;
+  document.getElementById('day-modal').classList.remove('open');
+}
+
+// ── History ────────────────────────────────────────────────
+function renderHist(){
+  const data=getData();
+  const list=document.getElementById('hist-list');
+  list.innerHTML='';
+  const keys=Object.keys(data).sort().reverse();
+  if(!keys.length){
+    list.innerHTML='<div class="empty">No entries yet.<br>Start logging today!</div>';
+    return;
+  }
+  keys.forEach(key=>{
+    const e=data[key];
+    const dt=new Date(key+'T12:00:00');
+    const dstr=dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    const syms=Object.keys(e.symptoms||{});
+    const show=syms.slice(0,4);
+    const more=syms.length-4;
+    const el=document.createElement('div');
+    el.className='he';
+    el.onclick=()=>showDayDetail(key);
+    el.innerHTML=`
+      <div class="hed">${dstr}${e.patchWeek?` <span style="color:var(--gold);margin-left:8px">${e.patchWeek===4?'Patch-Free':'PW'+e.patchWeek}</span>`:''}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:5px;">
+        ${e.mood?`<span style="font-size:16px">${ME[e.mood]}</span><span style="font-size:12px;color:var(--muted);text-transform:capitalize">${e.mood}</span>`:'<span style="font-size:12px;color:var(--faint)">No mood</span>'}
+        ${e.energy?`<span style="font-size:10px;color:var(--faint)">· Energy ${e.energy}/5</span>`:''}
+        ${e.sleep?`<span style="font-size:10px;color:var(--faint)">· Sleep ${e.sleep}/5</span>`:''}
+        ${e.desire!=null?`<span style="font-size:10px;color:var(--faint)">· Desire ${e.desire}/5</span>`:''}
+      </div>
+      ${syms.length?`<div class="hes">${show.map(s=>`<span class="hec">${s}</span>`).join('')}${more>0?`<span class="hec">+${more} more</span>`:''}</div>`:''}
+      ${e.notes&&e.notes.trim()?`<div class="hen">"${e.notes.slice(0,90)}${e.notes.length>90?'…':''}"</div>`:''}
+    `;
+    list.appendChild(el);
+  });
+}
+
+// ── Export ─────────────────────────────────────────────────
+let _report='';
+
+function genReport(){
+  const data=getData();
+  const range=document.getElementById('erange').value;
+  const cutoff=new Date(now);
+  if(range!=='all') cutoff.setDate(cutoff.getDate()-parseInt(range));
+  else cutoff.setFullYear(2000);
+
+  const keys=Object.keys(data).filter(k=>new Date(k+'T12:00:00')>=cutoff).sort();
+  if(!keys.length){toast('No data in this range');return;}
+
+  const symCount={},moodCount={},pwMoods={1:[],2:[],3:[],4:[]};
+  let totE=0,cE=0,totS=0,cS=0,totD=0,cD=0;
+
+  keys.forEach(k=>{
+    const e=data[k];
+    if(e.mood) moodCount[e.mood]=(moodCount[e.mood]||0)+1;
+    if(e.energy){totE+=e.energy;cE++;}
+    if(e.sleep){totS+=e.sleep;cS++;}
+    if(e.desire!=null){totD+=e.desire;cD++;}
+    Object.keys(e.symptoms||{}).forEach(s=>symCount[s]=(symCount[s]||0)+1);
+    if(e.patchWeek&&e.mood) pwMoods[e.patchWeek].push(MS[e.mood]);
+  });
+
+  const n=keys.length;
+  const avgMood=(Object.entries(moodCount).reduce((a,[m,c])=>a+(MS[m]||3)*c,0)/n).toFixed(1);
+  const topSyms=Object.entries(symCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const pwAvg=Object.fromEntries(
+    Object.entries(pwMoods).filter(([,v])=>v.length)
+      .map(([w,v])=>[w,(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1)])
+  );
+
+  const rng=range==='all'?'All time':`Last ${range} days`;
+  const d1=new Date(keys[0]+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const d2=new Date(keys[keys.length-1]+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+  let r=`╔══════════════════════════════════════════╗
+║   SYDNI'S MOOD TRACKER — PMDD & XULANE  ║
+╚══════════════════════════════════════════╝
+
+Generated  : ${now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}
+Period     : ${rng} (${d1} – ${d2})
+Days Tracked: ${n}
+
+━━━ OVERALL SUMMARY ━━━━━━━━━━━━━━━━━━━━━━
+
+Average Mood Score : ${avgMood} / 5.0
+Average Energy     : ${cE?(totE/cE).toFixed(1):'N/A'} / 5.0
+Average Sleep      : ${cS?(totS/cS).toFixed(1):'N/A'} / 5.0
+Average Desire     : ${cD?(totD/cD).toFixed(1):'N/A'} / 5.0 ${cD?`(${cD} day${cD!==1?'s':''} logged)`:''}
+
+Mood Breakdown:
+${Object.entries(moodCount).sort((a,b)=>b[1]-a[1])
+  .map(([m,c])=>`  ${ME[m]} ${m.charAt(0).toUpperCase()+m.slice(1)}: ${c} day${c!==1?'s':''} (${Math.round(c/n*100)}%)`).join('\n')}
+
+━━━ TOP EMOTIONS & SYMPTOMS ━━━━━━━━━━━━━━
+
+${topSyms.map(([s,c])=>`  • ${s}: ${c} day${c!==1?'s':''} (${Math.round(c/n*100)}% of tracked days)`).join('\n')||'  No symptoms logged'}
+
+━━━ XULANE PATCH CYCLE ━━━━━━━━━━━━━━━━━━━
+
+Avg mood by patch week (1=Rough, 5=Radiant):
+${Object.entries(pwAvg).map(([w,a])=>`  Week ${w==='4'?'Patch-Free':w}  →  ${a}/5.0`).join('\n')||'  Insufficient patch data'}
+
+━━━ DAILY LOG ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+`;
+
+  [...keys].reverse().forEach(k=>{
+    const e=data[k];
+    const dt=new Date(k+'T12:00:00');
+    const ds=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    r+=`${ds}`;
+    if(e.patchWeek) r+=` · ${e.patchWeek===4?'Patch-Free':'Patch Week '+e.patchWeek}`;
+    if(e.cycleDay) r+=` · Cycle Day ${e.cycleDay}`;
+    r+='\n';
+    const parts=[];
+    if(e.mood) parts.push(`${ME[e.mood]} ${e.mood}`);
+    if(e.energy) parts.push(`Energy ${e.energy}/5`);
+    if(e.sleep) parts.push(`Sleep ${e.sleep}/5`);
+    if(e.desire!=null) parts.push(`Desire ${e.desire}/5`);
+    if(parts.length) r+=`  ${parts.join(' · ')}\n`;
+    const syms=Object.keys(e.symptoms||{});
+    if(syms.length){
+      const times=e.symptomTimes||{};
+      const symStrs=syms.map(s=>times[s]&&times[s].length?`${s} (${times[s].join('/')})`:s);
+      r+=`  Symptoms: ${symStrs.join(', ')}\n`;
+    }
+    if(e.deepDive){
+      const dd=e.deepDive,ddParts=[];
+      if(dd.tension) ddParts.push(`Tension: ${dd.tension==='yes'?'Yes'+(dd.tensionLocation&&dd.tensionLocation.length?' ('+dd.tensionLocation.join(', ')+')':''):'No'}`);
+      if(dd.appetite) ddParts.push(`Appetite: ${dd.appetite}`);
+      if(dd.prayer) ddParts.push(`Prayer pull: ${dd.prayer}`);
+      if(dd.withdraw) ddParts.push(`Wanted to withdraw: ${dd.withdraw}`);
+      if(ddParts.length) r+=`  Go Deeper: ${ddParts.join(' · ')}\n`;
+    }
+    if(e.notes&&e.notes.trim()) r+=`  Note: "${e.notes.trim()}"\n`;
+    r+='\n';
+  });
+
+  r+=`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generated by Sydni's Mood Tracker`;
+
+  _report=r;
+  document.getElementById('rout').textContent=r;
+  document.getElementById('rcard').style.display='block';
+}
+
+function copyReport(){
+  navigator.clipboard.writeText(_report).then(()=>{
+    toast('Report copied to clipboard!');
+    const b=document.getElementById('cpybtn');
+    b.textContent='Copied ✓';
+    setTimeout(()=>b.textContent='Copy',2200);
+  });
+}
+
+function dlReport(){
+  const blob=new Blob([_report],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`luna-report-${TODAY}.txt`;a.click();
+  URL.revokeObjectURL(url);
+  toast('Report downloaded');
+}
+
+// ── PMDD Analysis ──────────────────────────────────────────
+const EMOTIONAL_SYMS=['Irritability','Sadness','Anxiety','Anger','Mood Swings','Hopelessness',
+  'Brain Fog','Social Withdrawal','Crying Spells','Overwhelm','Tension','Rage','Numbness','Feeling Invisible'];
+
+function avgArr(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;}
+
+function analyzePMDD(data){
+  const entries=Object.entries(data).map(([k,v])=>({...v,date:k}));
+  const withCycle=entries.filter(e=>e.cycleDay&&e.cycleDay>0&&e.mood);
+
+  if(withCycle.length<7){
+    return{status:'insufficient',
+      message:`You've logged ${withCycle.length} day${withCycle.length!==1?'s':''} with both a cycle day and mood. Log at least 7 to unlock pattern analysis.`};
+  }
+
+  const foll=withCycle.filter(e=>e.cycleDay>=1&&e.cycleDay<=13);
+  const lut=withCycle.filter(e=>e.cycleDay>=14&&e.cycleDay<=28);
+
+  if(foll.length<2||lut.length<2){
+    return{status:'insufficient',
+      message:'Need entries from both follicular (days 1–13) and luteal (days 14–28) phases. Keep logging your cycle day each day.'};
+  }
+
+  const follMood=avgArr(foll.map(e=>MS[e.mood]||3));
+  const lutMood=avgArr(lut.map(e=>MS[e.mood]||3));
+  const follSyms=avgArr(foll.map(e=>Object.keys(e.symptoms||{}).length));
+  const lutSyms=avgArr(lut.map(e=>Object.keys(e.symptoms||{}).length));
+  const moodDrop=follMood-lutMood;
+  const symSurge=lutSyms-follSyms;
+
+  const lutEmotRate=lut.filter(e=>EMOTIONAL_SYMS.some(s=>(e.symptoms||{})[s])).length/lut.length;
+  const follEmotRate=foll.filter(e=>EMOTIONAL_SYMS.some(s=>(e.symptoms||{})[s])).length/foll.length;
+  const emotShift=lutEmotRate-follEmotRate;
+
+  const follDesireVals=foll.filter(e=>e.desire!=null).map(e=>e.desire);
+  const lutDesireVals=lut.filter(e=>e.desire!=null).map(e=>e.desire);
+  const hasDesireData=follDesireVals.length>=2&&lutDesireVals.length>=2;
+  const follDesire=hasDesireData?avgArr(follDesireVals):null;
+  const lutDesire=hasDesireData?avgArr(lutDesireVals):null;
+  const desireDrop=hasDesireData?follDesire-lutDesire:0;
+
+  let score=0,signals=[];
+  if(moodDrop>=1.5){score+=3;signals.push(`Mood drops ${moodDrop.toFixed(1)} points in your luteal phase (days 14–28)`);}
+  else if(moodDrop>=0.75){score+=2;signals.push(`Mood is lower in your luteal phase (−${moodDrop.toFixed(1)} pts)`);}
+  else if(moodDrop>=0.3){score+=1;signals.push(`Slight mood dip in your luteal phase`);}
+
+  if(symSurge>=3){score+=3;signals.push(`${symSurge.toFixed(1)} more symptoms per day during luteal phase`);}
+  else if(symSurge>=1.5){score+=2;signals.push(`Noticeably more symptoms during your luteal phase`);}
+  else if(symSurge>=0.5){score+=1;signals.push(`Slightly more symptoms in luteal phase`);}
+
+  if(emotShift>=0.4){score+=3;signals.push(`Emotional symptoms are ${Math.round(emotShift*100)}% more frequent in your luteal phase`);}
+  else if(emotShift>=0.2){score+=2;signals.push(`Emotional symptoms cluster in your luteal phase`);}
+  else if(emotShift>=0.1){score+=1;}
+
+  if(hasDesireData){
+    if(desireDrop>=1.5){score+=2;signals.push(`Sexual desire drops ${desireDrop.toFixed(1)} points in your luteal phase`);}
+    else if(desireDrop>=0.75){score+=1;signals.push(`Sexual desire is noticeably lower in your luteal phase`);}
+  }
+
+  let verdict,vColor,vBg,vIcon,vDesc;
+  if(score>=6){
+    verdict='Strong PMDD Pattern Detected';
+    vColor='#F5B8CC';vBg='rgba(196,88,122,0.12)';vIcon='🔴';
+    vDesc='Your data shows a clear luteal-phase pattern consistent with PMDD. Symptoms and mood shifts are significantly worse in days 14–28 compared to days 1–13. This is meaningful data to bring to your doctor or OB-GYN.';
+  } else if(score>=3){
+    verdict='Possible PMDD Pattern';
+    vColor='#F0D080';vBg='rgba(240,208,128,0.08)';vIcon='🟡';
+    vDesc='Some signals suggest a luteal-phase pattern, but the data isn\'t conclusive yet. Keep logging your cycle day consistently — a clearer picture usually emerges over 2–3 cycles.';
+  } else {
+    verdict='Pattern Not Yet Clear';
+    vColor='#A8D4E6';vBg='rgba(168,212,230,0.08)';vIcon='🔵';
+    vDesc='No strong luteal/follicular split detected yet. This could mean the pattern isn\'t present, or just needs more data. Keep tracking.';
+  }
+
+  // Top luteal symptoms
+  const lutSymCount={};
+  lut.forEach(e=>Object.keys(e.symptoms||{}).forEach(s=>{lutSymCount[s]=(lutSymCount[s]||0)+1;}));
+  const topLut=Object.entries(lutSymCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+
+  // Top follicular symptoms
+  const follSymCount={};
+  foll.forEach(e=>Object.keys(e.symptoms||{}).forEach(s=>{follSymCount[s]=(follSymCount[s]||0)+1;}));
+  const topFoll=Object.entries(follSymCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  return{status:'analyzed',verdict,vColor,vBg,vIcon,vDesc,signals,score,
+    follMood:follMood.toFixed(1),lutMood:lutMood.toFixed(1),
+    follSyms:follSyms.toFixed(1),lutSyms:lutSyms.toFixed(1),
+    moodDrop:moodDrop.toFixed(1),symSurge:symSurge.toFixed(1),
+    topLut,topFoll,follCount:foll.length,lutCount:lut.length,
+    lutEmotRate:Math.round(lutEmotRate*100),follEmotRate:Math.round(follEmotRate*100),
+    hasDesireData,follDesire:hasDesireData?follDesire.toFixed(1):null,lutDesire:hasDesireData?lutDesire.toFixed(1):null};
+}
+
+function renderInsights(){
+  const data=getData();
+  const r=analyzePMDD(data);
+  const el=document.getElementById('insights-body');
+
+  if(r.status==='insufficient'){
+    el.innerHTML=`
+      <div class="card">
+        <div class="ct">PMDD Pattern Analysis</div>
+        <div class="need-more">
+          <div class="big">📊</div>
+          <div style="color:var(--text);margin-bottom:8px;font-size:14px;font-weight:300;">Not enough data yet</div>
+          <div>${r.message}</div>
+          <div style="margin-top:16px;font-size:12px;color:var(--faint);">Make sure to log your <strong style="color:var(--rose-l)">Cycle Day</strong> each time you save an entry — that's what unlocks this analysis.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ct">How This Works</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+          PMDD symptoms typically cluster in the <strong style="color:var(--rose-l)">luteal phase</strong> (cycle days 14–28) and improve within a few days of your period starting.<br><br>
+          This tracker compares your follicular phase (days 1–13) vs your luteal phase to detect that pattern. The more days you log with a cycle day, the more accurate the analysis becomes.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const maxLut=r.topLut.length?r.topLut[0][1]:1;
+
+  el.innerHTML=`
+    <!-- Verdict -->
+    <div class="verdict-card" style="background:${r.vBg};border-color:${r.vColor}40;">
+      <div class="verdict-icon">${r.vIcon}</div>
+      <div class="verdict-title" style="color:${r.vColor}">${r.verdict}</div>
+      <div class="verdict-desc">${r.vDesc}</div>
+      ${r.signals.length?`<div class="signal-list">${r.signals.map(s=>`
+        <div class="signal-item"><div class="signal-dot" style="background:${r.vColor}"></div><span>${s}</span></div>
+      `).join('')}</div>`:''}
+    </div>
+
+    <!-- Phase comparison -->
+    <div class="card">
+      <div class="ct">Follicular vs Luteal</div>
+      <table class="phase-table">
+        <thead>
+          <tr>
+            <th style="text-align:left"></th>
+            <th>Follicular<br><span style="font-size:9px;color:var(--faint)">Days 1–13 (${r.follCount}d)</span></th>
+            <th>Luteal<br><span style="font-size:9px;color:var(--faint)">Days 14–28 (${r.lutCount}d)</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-lbl">Avg Mood</td>
+            <td class="${parseFloat(r.follMood)>=parseFloat(r.lutMood)?'phase-better':''}">${r.follMood}/5</td>
+            <td class="${parseFloat(r.lutMood)<parseFloat(r.follMood)?'phase-worse':''}">${r.lutMood}/5</td>
+          </tr>
+          <tr>
+            <td class="row-lbl">Avg Symptoms</td>
+            <td class="${parseFloat(r.follSyms)<=parseFloat(r.lutSyms)?'phase-better':''}">${r.follSyms}/day</td>
+            <td class="${parseFloat(r.lutSyms)>parseFloat(r.follSyms)?'phase-worse':''}">${r.lutSyms}/day</td>
+          </tr>
+          <tr>
+            <td class="row-lbl">Emotional Days</td>
+            <td>${r.follEmotRate}%</td>
+            <td class="${r.lutEmotRate>r.follEmotRate?'phase-worse':''}">${r.lutEmotRate}%</td>
+          </tr>
+          ${r.hasDesireData?`<tr>
+            <td class="row-lbl">Avg Desire</td>
+            <td class="${parseFloat(r.follDesire)>=parseFloat(r.lutDesire)?'phase-better':''}">${r.follDesire}/5</td>
+            <td class="${parseFloat(r.lutDesire)<parseFloat(r.follDesire)?'phase-worse':''}">${r.lutDesire}/5</td>
+          </tr>`:''}
+        </tbody>
+      </table>
+      ${!r.hasDesireData?`<div style="font-size:11px;color:var(--faint);margin-top:10px;">Log your Desire Level on a few more days in each phase to see it compared here too.</div>`:''}
+    </div>
+
+    <!-- Top luteal symptoms -->
+    ${r.topLut.length?`<div class="card">
+      <div class="ct">Your Luteal Phase Symptoms</div>
+      <div style="font-size:10px;color:var(--faint);margin-bottom:12px;letter-spacing:.1em;text-transform:uppercase;">Most frequent during days 14–28</div>
+      ${r.topLut.map(([s,c])=>`
+        <div class="pat-row">
+          <div class="pat-name">${s}</div>
+          <div class="pat-bar-wrap"><div class="pat-bar-fill" style="width:${Math.round(c/maxLut*100)}%"></div></div>
+          <div class="pat-count">${c}d</div>
+        </div>
+      `).join('')}
+      ${r.topFoll.length?`<div class="divider"></div>
+      <div style="font-size:10px;color:var(--faint);margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase;">Follicular phase (days 1–13)</div>
+      ${r.topFoll.map(([s,c])=>`<div class="pat-row">
+        <div class="pat-name" style="color:var(--faint)">${s}</div>
+        <div class="pat-bar-wrap"><div class="pat-bar-fill" style="width:${Math.round(c/maxLut*100)}%;background:linear-gradient(135deg,#7ED3A0,#5BB885)"></div></div>
+        <div class="pat-count" style="color:var(--faint)">${c}d</div>
+      </div>`).join('')}`:''}
+    </div>`:''}
+
+    <!-- Disclaimer -->
+    <div class="insight-disclaimer">
+      <strong style="color:var(--rose-l);display:block;margin-bottom:4px;">Not a medical diagnosis</strong>
+      This analysis is based on your self-reported data and is meant to help you spot patterns — not to diagnose PMDD or any other condition. Bring this data and your Export report to your doctor or OB-GYN for a proper evaluation. PMDD is real, treatable, and worth advocating for.
+    </div>
+  `;
+}
+
+// ── Boot ───────────────────────────────────────────────────
+initToday();
+</script>
+</body>
+</html>
