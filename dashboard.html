@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.10/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root{
     --burgundy:#630000; --burgundy-soft:#7a1a1a; --burgundy-tint:#f4ebe9;
@@ -288,6 +289,17 @@
   .rel a,.rel span{font-size:12px;padding:5px 11px;border-radius:8px;background:var(--burgundy-tint);color:var(--burgundy-soft);font-weight:500;border:1px solid #eeddd6;}
   .drawer .df{padding:16px 28px;border-top:1px solid var(--line);display:flex;gap:10px;}
 
+  .syncpill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:100px;font-size:12px;font-weight:600;
+    border:1px solid var(--line-strong);background:var(--card);color:var(--ink-mid);white-space:nowrap;transition:.15s;cursor:pointer;}
+  .syncpill:hover{border-color:var(--coral);}
+  .syncpill.live{border-color:#cfe0cd;background:#eef5ed;color:#4a7247;cursor:pointer;}
+  .syncpill .sd{width:7px;height:7px;border-radius:50%;background:#5b8a55;box-shadow:0 0 0 3px rgba(91,138,85,.18);}
+  .syncpill .sd.off{background:var(--ink-faint);box-shadow:none;}
+  .syncpill .sx{color:var(--ink-faint);font-weight:500;}
+  .syncpill.live .sx{color:#6f9169;}
+  .fin{width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:10px;font-size:14px;color:var(--ink);margin-bottom:11px;background:var(--card);}
+  .fin:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px rgba(217,98,72,.12);}
+  @media(max-width:860px){ .syncpill .sx{display:none;} }
   .empty{text-align:center;padding:60px 20px;color:var(--ink-faint);}
   .empty .serif{font-size:19px;color:var(--ink-soft);margin-bottom:6px;}
 
@@ -359,7 +371,7 @@ const TIER = {now:"NOW",next:"NEXT",later:"LATER",vault:"VAULT"};
 const rid = (p,i)=>p+"-"+i;
 
 // ---- APPS ----
-const apps = [
+let apps = [
   {id:"app-1",type:"app",name:"Hearing God App",category:"App",status:"active",priority:"high",pillar:"hear",tier:"now",
    progress:65,updated:"2026-08-24",location:"index.html",
    stack:["HTML","JavaScript","Supabase","Gemini Vision"],
@@ -384,7 +396,7 @@ const apps = [
 ];
 
 // ---- PRODUCTS & JOURNALS ----
-const products = [
+let products = [
   {id:"prod-1",type:"product",name:"Drawing Near Devotional",category:"Product",ptype:"Devotional",format:"Digital + Print",
    status:"progress",priority:"high",pillar:"draw",tier:"now",updated:"2026-08-28",location:"day-21-drawing-near.md",
    description:"A guided devotional on drawing near to God — the first pillar of the discipleship system and the current lead product.",
@@ -436,7 +448,7 @@ const products = [
 ];
 
 // ---- VIDEOS & CONTENT ----
-const videosPublished = [
+let videosPublished = [
   {id:"vid-1",type:"video",name:"Mountain Climbers & the Grace of God",category:"Teaching / Dream",platform:"YouTube",
    status:"published",priority:"medium",pillar:"hear",tier:"now",updated:"2024-03-04",performance:"High performer",
    location:"Drive — Mountain Climber Dream (For Video)",
@@ -449,7 +461,7 @@ const videosPublished = [
    description:"Ongoing dream-interpretation teaching drawn from the Wives / dreams community content.",
    notes:"Bulk posts already drafted.",next:"Compile into a playlist.",related:["God's Revelation Through Dreams"]},
 ];
-const videoSeries = [
+let videoSeries = [
   {id:"series-1",type:"series",name:"Revelation → Execution",pillar:"fulfill",status:"planned",priority:"high",tier:"next",
    updated:"2026-08-22",location:"Descript / YouTube — to record",
    description:"The flagship teaching series that carries the 2026 theme: moving from divine revelation all the way to execution and completion.",
@@ -463,7 +475,7 @@ const videoSeries = [
    next:"Record Episode 1 after the devotional is finished.",
    related:["Drawing Near Devotional","Revelation to Execution Workshop","Revelation to Execution Community"]},
 ];
-const contentIdeas = [
+let contentIdeas = [
   {id:"cidea-1",type:"video",name:"From Confusion to Clarity",category:"Content Idea",platform:"Reels / Shorts",
    status:"someday",priority:"low",pillar:"hear",tier:"vault",updated:"2026-08-01",location:"Idea vault",
    description:"Short-form series on the transformation flow: confusion → clarity.",next:"Draft 3 hooks.",related:["Ideas"]},
@@ -473,7 +485,7 @@ const contentIdeas = [
 ];
 
 // ---- IDEAS (Idea Vault) ----
-const ideas = [
+let ideas = [
   {id:"idea-1",type:"idea",name:"Revelation to Execution Ecosystem",category:"Strategy",bucket:"active",status:"active",priority:"high",pillar:"fulfill",tier:"now",
    updated:"2026-08-29",location:"Executive Vision Report",
    description:"The organizing idea tying teaching, tools, experiences, and community into one flow from hearing God to building what He said.",
@@ -520,7 +532,7 @@ const IDEA_BUCKETS = [
 ];
 
 // ---- COMMUNITIES ----
-const communities = [
+let communities = [
   {id:"com-1",type:"community",name:"God's Revelation Through Dreams",category:"Community",maturity:"existing",status:"existing",priority:"high",pillar:"hear",tier:"now",
    updated:"2026-08-20",location:"Facebook Group",
    description:"An established community teaching believers to understand dreams as legitimate divine communication.",
@@ -550,7 +562,7 @@ const MATURITY = ["existing","developing","nearterm","longterm"];
 const MATURITY_LABEL = {existing:"Existing",developing:"Developing",nearterm:"Near-Term",longterm:"Long-Term"};
 
 // ---- COURSES & PROGRAMS ----
-const courses = [
+let courses = [
   {id:"cor-1",type:"course",name:"New Believers",group:"Courses",status:"planned",priority:"medium",pillar:"draw",tier:"later",updated:"2026-07-01",location:"To build",
    description:"Foundational course for new believers — first steps in drawing near to God.",next:"Outline modules.",related:["Draw Near pillar"]},
   {id:"cor-2",type:"course",name:"Hearing God",group:"Courses",status:"progress",priority:"high",pillar:"hear",tier:"now",updated:"2026-08-21",location:"To build",
@@ -577,7 +589,7 @@ const courses = [
 const COURSE_GROUPS = ["Courses","Workshops","Assessments","Programs"];
 
 // ---- PLANS & DOCUMENTS ----
-const documents = [
+let documents = [
   {id:"doc-1",type:"document",name:"Dove Expressions Executive Vision Report",group:"Strategy",dtype:"Strategy",status:"existing",priority:"high",pillar:"fulfill",tier:"now",
    updated:"2026-08-01",location:"Drive — Vision Report",
    description:"The master vision document defining mission, vision, ecosystem, and the Revelation-to-Execution strategy.",next:"Reference for every product decision.",related:["2026 Plan","All pillars"]},
@@ -604,7 +616,7 @@ const DOC_GROUPS = ["Strategy","Operating","Biblical Research","Academic Researc
 const DOC_GROUP_LABEL = {Strategy:"Strategy",Operating:"Operating Documents","Biblical Research":"Biblical Research","Academic Research":"Academic Research"};
 
 // ---- DESIGNS & ASSETS ----
-const designs = [
+let designs = [
   {id:"des-1",type:"design",name:"Watercolor Corner — Top Left",category:"Brand Graphic",dtype:"Graphic",status:"existing",priority:"medium",pillar:"draw",tier:"now",
    updated:"2026-08-01",location:"watercolor-corner-top-left.png",thumb:"watercolor-corner-top-left.png",
    description:"Watercolor corner accent used across products and pages.",notes:"Part of the core brand visual language.",related:["Brand Kit"]},
@@ -656,29 +668,67 @@ const ROAD_STATUS = {notstarted:"Not Started",progress:"In Progress",waiting:"Wa
 
 const MISSION = "To build, empower, equip, and inspire believers through prophetic and practical teaching and resources, helping them fulfill their Kingdom mandate.";
 
-// All records for search + counts
-const ALL = [...apps,...products,...videosPublished,...videoSeries,...contentIdeas,...ideas,...communities,...courses,...documents,...designs];
+// All records for search + counts (a function so it always reflects live data)
+const allItems = () => [...apps,...products,...videosPublished,...videoSeries,...contentIdeas,...ideas,...communities,...courses,...documents,...designs];
+
+/* ============================================================
+   SUPABASE — optional live sync
+   The dashboard renders instantly from the bundled seed above.
+   When a session exists (shared with index.html on the same origin),
+   it loads the owner's live inventory from public.dash_items and
+   re-hydrates the arrays. Everything is defensive: any failure keeps
+   the seed so the page always renders.
+   Table shape and RLS live in supabase/migrations/.
+   ============================================================ */
+const SB_URL  = "https://jnlvvlkwskidloripvtp.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpubHZ2bGt3c2tpZGxvcmlwdnRwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2ODU4MTYsImV4cCI6MjA4OTI2MTgxNn0.R5zXv54T4LGKiZfb7903wVmG-sjGNU8JiccmLRBKt18";
+let sbClient = null;
+function getClient(){
+  if(sbClient) return sbClient;
+  if(typeof supabase==="undefined" || !supabase.createClient) return null;
+  try{ sbClient = supabase.createClient(SB_URL, SB_ANON); }catch(e){ sbClient = null; }
+  return sbClient;
+}
+// DB row -> in-app record shape used by the components
+function rowToItem(r){
+  return {
+    id:r.id, kind:r.kind, type:(r.kind==="content_idea"?"video":r.kind),
+    name:r.name, category:r.category, status:r.status, priority:r.priority, pillar:r.pillar, tier:r.tier,
+    description:r.description, location:r.location, next:r.next_action, notes:r.notes,
+    format:r.format, platform:r.platform, ptype:r.ptype, dtype:r.dtype, group:r.grp,
+    bucket:r.bucket, maturity:r.maturity, performance:r.performance, build:r.build, source:r.source,
+    progress:r.progress, stack:r.stack||[], related:r.related||[], episodes:r.episodes||[],
+    thumb:r.thumb, updated:r.updated,
+  };
+}
+function hydrate(rows){
+  const byKind=k=>rows.filter(r=>r.kind===k).sort((a,b)=>(a.sort||0)-(b.sort||0)).map(rowToItem);
+  apps=byKind("app"); products=byKind("product"); videosPublished=byKind("video");
+  videoSeries=byKind("series"); contentIdeas=byKind("content_idea"); ideas=byKind("idea");
+  communities=byKind("community"); courses=byKind("course"); documents=byKind("document"); designs=byKind("design");
+}
 
 /* ============================================================
    NAV
    ============================================================ */
+// count callbacks read the live arrays at render time
 const NAV = [
   {group:null, items:[{key:"overview",label:"Overview",icon:"grid"}]},
   {group:"Build", items:[
-    {key:"apps",label:"Apps",icon:"app",count:apps.length},
-    {key:"products",label:"Products & Journals",icon:"book",count:products.length},
-    {key:"courses",label:"Courses & Programs",icon:"cap",count:courses.length},
+    {key:"apps",label:"Apps",icon:"app",count:()=>apps.length},
+    {key:"products",label:"Products & Journals",icon:"book",count:()=>products.length},
+    {key:"courses",label:"Courses & Programs",icon:"cap",count:()=>courses.length},
   ]},
   {group:"Content", items:[
-    {key:"videos",label:"Videos & Content",icon:"play",count:videosPublished.length+videoSeries.length+contentIdeas.length},
-    {key:"ideas",label:"Ideas",icon:"spark",count:ideas.length},
+    {key:"videos",label:"Videos & Content",icon:"play",count:()=>videosPublished.length+videoSeries.length+contentIdeas.length},
+    {key:"ideas",label:"Ideas",icon:"spark",count:()=>ideas.length},
   ]},
   {group:"Community", items:[
-    {key:"communities",label:"Communities",icon:"users",count:communities.length},
+    {key:"communities",label:"Communities",icon:"users",count:()=>communities.length},
   ]},
   {group:"Library", items:[
-    {key:"documents",label:"Plans & Documents",icon:"doc",count:documents.length},
-    {key:"designs",label:"Designs & Assets",icon:"image",count:designs.length},
+    {key:"documents",label:"Plans & Documents",icon:"doc",count:()=>documents.length},
+    {key:"designs",label:"Designs & Assets",icon:"image",count:()=>designs.length},
   ]},
 ];
 
@@ -809,7 +859,7 @@ function applyFilters(items,active){
    PAGES
    ============================================================ */
 function Overview({onOpen,go}){
-  const activeWork = ALL.filter(i=>i.tier==="now").slice(0,6);
+  const activeWork = allItems().filter(i=>i.tier==="now").slice(0,6);
   const metrics=[
     {icon:"app",value:apps.length,label:"Apps",extra:apps.filter(a=>a.status==="active").length+" active"},
     {icon:"book",value:products.length,label:"Products & Journals"},
@@ -1335,7 +1385,7 @@ function QuickAdd({open,onClose}){
    ============================================================ */
 function search(q){
   q=q.trim().toLowerCase(); if(!q) return [];
-  return ALL.filter(i=>(
+  return allItems().filter(i=>(
     (i.name||"").toLowerCase().includes(q) ||
     (i.description||"").toLowerCase().includes(q) ||
     (i.category||"").toLowerCase().includes(q) ||
@@ -1349,6 +1399,64 @@ const TYPE_LABEL={app:"Apps",product:"Products",video:"Videos",series:"Series",i
 /* ============================================================
    ROOT APP
    ============================================================ */
+/* ---- Sync status pill ---- */
+function SyncPill({mode,me,onSignIn,onSignOut}){
+  if(mode==="live"){
+    return (
+      <div className="syncpill live" title={me?("Signed in as "+me):"Live"} onClick={onSignOut}>
+        <span className="sd"/>Live<span className="sx">· sign out</span>
+      </div>
+    );
+  }
+  return (
+    <button className="syncpill" onClick={onSignIn} title="Load your live inventory from Supabase">
+      <span className="sd off"/>Sample<span className="sx">· sign in to sync</span>
+    </button>
+  );
+}
+
+/* ---- Sign-in modal (reuses the existing Supabase auth) ---- */
+function AuthModal({onClose,onDone}){
+  const [email,setEmail]=useState("");
+  const [pw,setPw]=useState("");
+  const [err,setErr]=useState("");
+  const [busy,setBusy]=useState(false);
+  const submit=async(e)=>{
+    e.preventDefault(); setErr(""); setBusy(true);
+    const c=getClient();
+    if(!c){ setErr("Supabase unavailable in this environment."); setBusy(false); return; }
+    try{
+      const {error}=await c.auth.signInWithPassword({email:email.trim(),password:pw});
+      if(error){ setErr(error.message||"Sign-in failed."); setBusy(false); return; }
+      onDone();
+    }catch(e){ setErr("Sign-in failed."); setBusy(false); }
+  };
+  return (
+    <React.Fragment>
+      <div className="scrim" onClick={onClose}/>
+      <div style={{position:"fixed",zIndex:90,top:"16%",left:"50%",transform:"translateX(-50%)",width:"min(420px,92vw)"}}>
+        <div className="card" style={{padding:26}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div><div className="sec-eyebrow">Live sync</div><h2 style={{fontSize:22,marginTop:4}}>Sign in</h2></div>
+            <button className="close" onClick={onClose} style={{position:"static"}}><Icon name="x" size={18} sw={2}/></button>
+          </div>
+          <p className="muted" style={{fontSize:12.5,margin:"6px 0 16px"}}>
+            Sign in with your Dove Expressions account to load and sync your live inventory. Otherwise the dashboard shows sample data.
+          </p>
+          <form onSubmit={submit}>
+            <input className="fin" type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} autoFocus required/>
+            <input className="fin" type="password" placeholder="Password" value={pw} onChange={e=>setPw(e.target.value)} required/>
+            {err && <div style={{color:"var(--coral)",fontSize:12.5,margin:"2px 0 10px"}}>{err}</div>}
+            <button className="btn btn-primary" type="submit" disabled={busy} style={{width:"100%",justifyContent:"center",marginTop:6}}>
+              {busy?"Signing in…":"Sign in & sync"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </React.Fragment>
+  );
+}
+
 function App(){
   const [pageKey,setPageKey]=useState("overview");
   const [drawer,setDrawer]=useState(null);
@@ -1356,14 +1464,33 @@ function App(){
   const [showSearch,setShowSearch]=useState(false);
   const [menu,setMenu]=useState(false);
   const [quickAdd,setQuickAdd]=useState(false);
+  const [dataMode,setDataMode]=useState("sample"); // sample | live | loading
+  const [ver,setVer]=useState(0);                  // bump forces re-render after hydrate
+  const [me,setMe]=useState(null);
+  const [authOpen,setAuthOpen]=useState(false);
   const searchRef=useRef();
 
   const go=(k)=>{setPageKey(k);setMenu(false);window.scrollTo(0,0);};
   const onOpen=(item)=>setDrawer(item);
-  const results=useMemo(()=>search(q),[q]);
+  const results=useMemo(()=>search(q),[q,ver]);
   const grouped=useMemo(()=>{
     const g={}; results.forEach(r=>{(g[r.type]=g[r.type]||[]).push(r);}); return g;
   },[results]);
+
+  // Load live inventory when a Supabase session is present (shared with the main app).
+  const loadData=React.useCallback(async()=>{
+    const c=getClient(); if(!c){ setDataMode("sample"); return; }
+    try{
+      const {data:{session}}=await c.auth.getSession();
+      if(!session){ setMe(null); setDataMode("sample"); return; }
+      setMe(session.user && session.user.email ? session.user.email : "Signed in");
+      const {data,error}=await c.from("dash_items").select("*");
+      if(!error && data && data.length){ hydrate(data); setDataMode("live"); setVer(v=>v+1); }
+      else { setDataMode("live"); } // signed in but no rows: keep seed on screen
+    }catch(e){ setDataMode("sample"); }
+  },[]);
+  useEffect(()=>{ loadData(); },[loadData]);
+  const signOut=async()=>{ const c=getClient(); if(c){ try{ await c.auth.signOut(); }catch(e){} } setMe(null); setDataMode("sample"); };
 
   useEffect(()=>{
     const h=(e)=>{ if(searchRef.current && !searchRef.current.contains(e.target)) setShowSearch(false); };
@@ -1409,7 +1536,7 @@ function App(){
             {sec.items.map(it=>(
               <button key={it.key} className={"nav-item"+(pageKey===it.key?" active":"")} onClick={()=>go(it.key)}>
                 <Icon name={it.icon} size={17}/>{it.label}
-                {typeof it.count==="number" && <span className="nav-count">{it.count}</span>}
+                {typeof it.count==="function" && <span className="nav-count">{it.count()}</span>}
               </button>
             ))}
           </div>
@@ -1447,6 +1574,7 @@ function App(){
                   ))}
               </div>}
           </div>
+          <SyncPill mode={dataMode} me={me} onSignIn={()=>setAuthOpen(true)} onSignOut={signOut}/>
           <button className="btn btn-primary" onClick={()=>setQuickAdd(true)}><Icon name="plus" size={16} sw={2.2}/><span className="btn-txt">Add New</span></button>
           <div className="avatar" title="Sydni Howard">SH</div>
         </header>
@@ -1455,6 +1583,7 @@ function App(){
 
       {drawer && <Drawer item={drawer} onClose={()=>setDrawer(null)}/>}
       <QuickAdd open={quickAdd} onClose={()=>setQuickAdd(false)}/>
+      {authOpen && <AuthModal onClose={()=>setAuthOpen(false)} onDone={()=>{setAuthOpen(false);loadData();}}/>}
     </div>
   );
 }
