@@ -297,8 +297,20 @@
   .syncpill .sd.off{background:var(--ink-faint);box-shadow:none;}
   .syncpill .sx{color:var(--ink-faint);font-weight:500;}
   .syncpill.live .sx{color:#6f9169;}
-  .fin{width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:10px;font-size:14px;color:var(--ink);margin-bottom:11px;background:var(--card);}
+  .fin{width:100%;padding:11px 13px;border:1px solid var(--line-strong);border-radius:10px;font-size:14px;color:var(--ink);background:var(--card);}
   .fin:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px rgba(217,98,72,.12);}
+  textarea.fin{resize:vertical;line-height:1.5;}
+  select.fin.sel{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a6a6a' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer;}
+  .ff{display:block;margin-bottom:13px;}
+  .ff .fk{display:block;margin-bottom:6px;}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;}
+  @media(max-width:520px){ .fgrid{grid-template-columns:1fr;} }
+  .gate{min-height:100vh;display:grid;place-items:center;padding:24px;
+    background:radial-gradient(1200px 600px at 50% -10%,rgba(217,121,4,.10),transparent 60%),
+    linear-gradient(180deg,#fbf5f2,var(--paper));}
+  .gate-card{width:min(400px,94vw);background:var(--card);border:1px solid var(--line);border-radius:20px;
+    padding:36px 34px 30px;box-shadow:var(--shadow-lg);}
+  .formwrap{position:fixed;z-index:90;top:5vh;left:50%;transform:translateX(-50%);width:min(560px,94vw);}
   @media(max-width:860px){ .syncpill .sx{display:none;} }
   .empty{text-align:center;padding:60px 20px;color:var(--ink-faint);}
   .empty .serif{font-size:19px;color:var(--ink-soft);margin-bottom:6px;}
@@ -698,7 +710,7 @@ function rowToItem(r){
     format:r.format, platform:r.platform, ptype:r.ptype, dtype:r.dtype, group:r.grp,
     bucket:r.bucket, maturity:r.maturity, performance:r.performance, build:r.build, source:r.source,
     progress:r.progress, stack:r.stack||[], related:r.related||[], episodes:r.episodes||[],
-    thumb:r.thumb, updated:r.updated,
+    thumb:r.thumb, updated:r.updated, sort:r.sort,
   };
 }
 function hydrate(rows){
@@ -707,6 +719,36 @@ function hydrate(rows){
   videoSeries=byKind("series"); contentIdeas=byKind("content_idea"); ideas=byKind("idea");
   communities=byKind("community"); courses=byKind("course"); documents=byKind("document"); designs=byKind("design");
 }
+// The dashboard owner. The passphrase gate signs in as this account, so the
+// email is fixed and only the password (passphrase) is ever entered.
+const DASH_EMAIL = "sydnimb@gmail.com";
+
+// in-app record -> DB row (inverse of rowToItem). Only known columns are sent.
+function itemToRow(it){
+  const clean=v=>v===undefined?null:v;
+  return {
+    id:it.id, kind:it.kind, name:it.name, category:clean(it.category), status:clean(it.status),
+    priority:clean(it.priority), pillar:clean(it.pillar), tier:clean(it.tier), description:clean(it.description),
+    location:clean(it.location), next_action:clean(it.next), notes:clean(it.notes), format:clean(it.format),
+    platform:clean(it.platform), ptype:clean(it.ptype), dtype:clean(it.dtype), grp:clean(it.group),
+    bucket:clean(it.bucket), maturity:clean(it.maturity), performance:clean(it.performance), build:clean(it.build),
+    source:clean(it.source), progress:(it.progress===""||it.progress==null?null:Number(it.progress)),
+    stack:it.stack||[], related:it.related||[], episodes:it.episodes||[], thumb:clean(it.thumb),
+    sort:(it.sort==null?0:it.sort), updated:it.updated||new Date().toISOString().slice(0,10),
+  };
+}
+// CRUD — all resolve to {error} and are no-ops if the client is unavailable.
+async function dbUpsert(it){ const c=getClient(); if(!c) return {error:{message:"offline"}};
+  return await c.from("dash_items").upsert(itemToRow(it)); }
+async function dbDelete(id){ const c=getClient(); if(!c) return {error:{message:"offline"}};
+  return await c.from("dash_items").delete().eq("id",id); }
+// derive the array a given kind lives in, to compute next sort + a fresh id
+function kindArray(kind){
+  return ({app:apps,product:products,video:videosPublished,series:videoSeries,content_idea:contentIdeas,
+    idea:ideas,community:communities,course:courses,document:documents,design:designs})[kind]||[];
+}
+function nextSort(kind){ const a=kindArray(kind); return a.length?Math.max(...a.map(x=>x.sort||0))+1:0; }
+function freshId(kind){ return kind+"-"+Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4); }
 
 /* ============================================================
    NAV
@@ -1073,7 +1115,7 @@ function VideosPage({onOpen}){
               </div>
             </div>
             {s.episodes.map(e=>(
-              <div className="ep" key={e.n} onClick={()=>onOpen({...s,name:s.name+" — Ep "+e.n+": "+e.t})}>
+              <div className="ep" key={e.n} onClick={()=>onOpen({...s,name:s.name+" — Ep "+e.n+": "+e.t,_synthetic:true})}>
                 <div className="epn">{e.n}</div>
                 <div style={{flex:1}}><div className="ept">{e.t}</div></div>
                 <Badge status={e.status}/>
@@ -1295,7 +1337,7 @@ function DesignsPage({onOpen}){
 /* ============================================================
    DETAIL DRAWER
    ============================================================ */
-function Drawer({item,onClose}){
+function Drawer({item,onClose,canEdit,onEdit,onDelete}){
   useEffect(()=>{
     const h=(e)=>{if(e.key==="Escape")onClose();};
     window.addEventListener("keydown",h);
@@ -1342,7 +1384,8 @@ function Drawer({item,onClose}){
           {item.updated && <div className="field"><div className="fk">Last Updated</div><div className="fv" style={{fontSize:13.5}}><Icon name="clock" size={13} sw={2}/> {item.updated}</div></div>}
         </div>
         <div className="df">
-          {item.location && <button className="btn btn-primary" style={{flex:1,justifyContent:"center"}}><Icon name="open" size={15} sw={2}/>Open File</button>}
+          {canEdit && !item._synthetic && <button className="btn btn-primary" style={{flex:1,justifyContent:"center"}} onClick={()=>onEdit(item)}><Icon name="open" size={15} sw={2}/>Edit</button>}
+          {canEdit && !item._synthetic && <button className="btn btn-ghost" onClick={()=>onDelete(item)} title="Delete" style={{color:"var(--coral)",borderColor:"#f0cfc6"}}>Delete</button>}
           <button className="btn btn-ghost" onClick={onClose}>Close</button>
         </div>
       </aside>
@@ -1353,33 +1396,6 @@ function Drawer({item,onClose}){
 /* ============================================================
    QUICK ADD (concept)
    ============================================================ */
-function QuickAdd({open,onClose}){
-  if(!open) return null;
-  const opts=[["spark","New Idea"],["book","New Product"],["play","New Video"],["cap","New Course"],
-              ["users","New Community"],["doc","New Document"],["image","New Design"],["app","New App"]];
-  return (
-    <React.Fragment>
-      <div className="scrim" onClick={onClose}/>
-      <div style={{position:"fixed",zIndex:90,top:"14%",left:"50%",transform:"translateX(-50%)",width:"min(460px,92vw)"}}>
-        <div className="card" style={{padding:24}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-            <h2 style={{fontSize:22}}>Add New</h2>
-            <button className="close" onClick={onClose} style={{position:"static"}}><Icon name="x" size={18} sw={2}/></button>
-          </div>
-          <p className="muted" style={{fontSize:13,marginBottom:18}}>What would you like to capture? Everything routes back to a pillar and a stage.</p>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            {opts.map(([ic,l])=>(
-              <button className="chip click" key={l} style={{justifyContent:"flex-start",padding:"12px 14px",borderRadius:11}} onClick={onClose}>
-                <span style={{color:"var(--burgundy)"}}><Icon name={ic} size={16}/></span>{l}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </React.Fragment>
-  );
-}
-
 /* ============================================================
    SEARCH
    ============================================================ */
@@ -1399,12 +1415,144 @@ const TYPE_LABEL={app:"Apps",product:"Products",video:"Videos",series:"Series",i
 /* ============================================================
    ROOT APP
    ============================================================ */
-/* ---- Sync status indicator (non-interactive) ---- */
-function SyncPill({mode}){
+/* ---- Sync status indicator ---- */
+function SyncPill({mode,onLock}){
   if(mode==="live"){
-    return <div className="syncpill live" title="Loaded live from your Supabase inventory"><span className="sd"/>Live<span className="sx">· synced</span></div>;
+    return <button className="syncpill live" title="Loaded live from your Supabase inventory — click to lock" onClick={onLock}>
+      <span className="sd"/>Live<span className="sx">· lock</span></button>;
   }
   return <div className="syncpill" title="Showing bundled sample data (live inventory unavailable)"><span className="sd off"/>Sample</div>;
+}
+
+/* ---- Passphrase gate (signs in behind the scenes as the owner) ---- */
+function LockGate({onUnlock}){
+  const [pass,setPass]=useState("");
+  const [err,setErr]=useState("");
+  const [busy,setBusy]=useState(false);
+  const submit=async(e)=>{
+    e.preventDefault(); setErr(""); setBusy(true);
+    const msg=await onUnlock(pass);
+    if(msg){ setErr(msg); setBusy(false); }
+  };
+  return (
+    <div className="gate">
+      <div className="gate-card">
+        <div className="brand-glyph" style={{width:52,height:52,borderRadius:15,margin:"0 auto 20px"}}>
+          <span style={{fontFamily:"var(--serif)",fontStyle:"italic",fontWeight:600,fontSize:"30px",color:"#fff"}}>D</span>
+        </div>
+        <div className="eyebrow" style={{textAlign:"center"}}>Dove Expressions</div>
+        <h1 style={{fontSize:30,textAlign:"center",marginTop:6}}>Command Center</h1>
+        <p className="muted" style={{textAlign:"center",fontSize:13,margin:"10px 0 22px"}}>Enter your passphrase to continue.</p>
+        <form onSubmit={submit}>
+          <input className="fin" type="password" placeholder="Passphrase" value={pass}
+            onChange={e=>setPass(e.target.value)} autoFocus style={{textAlign:"center",letterSpacing:".08em",marginBottom:12}}/>
+          {err && <div style={{color:"var(--coral)",fontSize:12.5,textAlign:"center",margin:"0 0 10px"}}>{err}</div>}
+          <button className="btn btn-primary" type="submit" disabled={busy}
+            style={{width:"100%",justifyContent:"center"}}>{busy?"Unlocking…":"Unlock"}</button>
+        </form>
+        <div style={{textAlign:"center",fontSize:11,color:"var(--ink-faint)",marginTop:16,letterSpacing:".12em",textTransform:"uppercase"}}>From Revelation to Execution</div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Field primitives for the create/edit form ---- */
+const STATUS_OPTS = Object.keys(STATUS).map(k=>({value:k,label:STATUS[k].label}));
+const KIND_OPTS = [["app","App"],["product","Product / Journal"],["video","Video"],["series","Video Series"],
+  ["content_idea","Content Idea"],["idea","Idea"],["community","Community"],["course","Course / Program"],
+  ["document","Document"],["design","Design / Asset"]];
+function Field({label,children}){ return <label className="ff"><span className="fk">{label}</span>{children}</label>; }
+function Sel({value,onChange,opts,blank}){
+  return <select className="fin sel" value={value||""} onChange={e=>onChange(e.target.value||null)}>
+    {blank!==false && <option value="">—</option>}
+    {opts.map(o=>Array.isArray(o)?<option key={o[0]} value={o[0]}>{o[1]}</option>:<option key={o.value} value={o.value}>{o.label}</option>)}
+  </select>;
+}
+
+/* ---- Create / edit modal ---- */
+function FormModal({mode,item,onClose,onSaved}){
+  const init = item || {kind:"idea",status:"planned",priority:"medium",tier:"next"};
+  const [f,setF]=useState({...init,
+    stackStr:(init.stack||[]).join(", "), relatedStr:(init.related||[]).join(", ")});
+  const [busy,setBusy]=useState(false);
+  const [err,setErr]=useState("");
+  useEffect(()=>{ const h=(e)=>{if(e.key==="Escape")onClose();}; window.addEventListener("keydown",h); return ()=>window.removeEventListener("keydown",h); },[]);
+  const set=(k,v)=>setF(s=>({...s,[k]:v}));
+  const save=async(e)=>{
+    e.preventDefault(); if(!f.name){ setErr("Name is required."); return; }
+    setBusy(true); setErr("");
+    const rec={...f,
+      id:f.id||freshId(f.kind), sort:(f.sort==null?nextSort(f.kind):f.sort),
+      stack:f.stackStr.split(",").map(s=>s.trim()).filter(Boolean),
+      related:f.relatedStr.split(",").map(s=>s.trim()).filter(Boolean),
+      episodes:f.episodes||[],
+    };
+    const {error}=await dbUpsert(rec);
+    if(error){ setErr(error.message||"Save failed."); setBusy(false); return; }
+    await onSaved();
+  };
+  const k=f.kind;
+  return (
+    <React.Fragment>
+      <div className="scrim" onClick={onClose}/>
+      <div className="formwrap">
+        <div className="card" style={{display:"flex",flexDirection:"column",maxHeight:"86vh"}}>
+          <div className="dh" style={{padding:"20px 24px 16px",borderBottom:"1px solid var(--line)",position:"relative"}}>
+            <button className="close" onClick={onClose} style={{top:16,right:18}}><Icon name="x" size={18} sw={2}/></button>
+            <div className="sec-eyebrow">{mode==="edit"?"Edit":"Add new"}</div>
+            <h2 style={{fontSize:23,marginTop:4,paddingRight:30}}>{mode==="edit"?(f.name||"Item"):"New item"}</h2>
+          </div>
+          <form onSubmit={save} style={{padding:"20px 24px",overflowY:"auto"}}>
+            <Field label="Name"><input className="fin" value={f.name||""} onChange={e=>set("name",e.target.value)} autoFocus/></Field>
+            <div className="fgrid">
+              <Field label="Type"><Sel value={f.kind} onChange={v=>set("kind",v||"idea")} opts={KIND_OPTS} blank={false}/></Field>
+              <Field label="Category"><input className="fin" value={f.category||""} onChange={e=>set("category",e.target.value)}/></Field>
+            </div>
+            <div className="fgrid">
+              <Field label="Status"><Sel value={f.status} onChange={v=>set("status",v)} opts={STATUS_OPTS}/></Field>
+              <Field label="Priority"><Sel value={f.priority} onChange={v=>set("priority",v)} opts={[["high","High"],["medium","Medium"],["low","Low"]]}/></Field>
+            </div>
+            <div className="fgrid">
+              <Field label="Pillar"><Sel value={f.pillar} onChange={v=>set("pillar",v)} opts={[["draw","Draw Near"],["hear","Hear God"],["fulfill","Fulfill Mandate"]]}/></Field>
+              <Field label="Tier"><Sel value={f.tier} onChange={v=>set("tier",v)} opts={[["now","NOW"],["next","NEXT"],["later","LATER"],["vault","VAULT"]]}/></Field>
+            </div>
+            {(k==="product") && <div className="fgrid">
+              <Field label="Product type"><input className="fin" value={f.ptype||""} onChange={e=>set("ptype",e.target.value)}/></Field>
+              <Field label="Format"><input className="fin" value={f.format||""} onChange={e=>set("format",e.target.value)}/></Field></div>}
+            {(k==="video"||k==="content_idea") && <div className="fgrid">
+              <Field label="Platform"><input className="fin" value={f.platform||""} onChange={e=>set("platform",e.target.value)}/></Field>
+              <Field label="Performance"><input className="fin" value={f.performance||""} onChange={e=>set("performance",e.target.value)}/></Field></div>}
+            {k==="idea" && <div className="fgrid">
+              <Field label="Vault bucket"><Sel value={f.bucket} onChange={v=>set("bucket",v)} opts={IDEA_BUCKETS.map(b=>[b.key,b.label])}/></Field>
+              <Field label="Source / context"><input className="fin" value={f.source||""} onChange={e=>set("source",e.target.value)}/></Field></div>}
+            {k==="community" && <Field label="Maturity"><Sel value={f.maturity} onChange={v=>set("maturity",v)} opts={MATURITY.map(m=>[m,MATURITY_LABEL[m]])}/></Field>}
+            {k==="course" && <Field label="Group"><Sel value={f.group} onChange={v=>set("group",v)} opts={COURSE_GROUPS.map(g=>[g,g])}/></Field>}
+            {k==="document" && <div className="fgrid">
+              <Field label="Doc type"><input className="fin" value={f.dtype||""} onChange={e=>set("dtype",e.target.value)}/></Field>
+              <Field label="Group"><Sel value={f.group} onChange={v=>set("group",v)} opts={DOC_GROUPS.map(g=>[g,DOC_GROUP_LABEL[g]])}/></Field></div>}
+            {k==="design" && <div className="fgrid">
+              <Field label="Asset type"><input className="fin" value={f.dtype||""} onChange={e=>set("dtype",e.target.value)}/></Field>
+              <Field label="Thumbnail path"><input className="fin" value={f.thumb||""} onChange={e=>set("thumb",e.target.value)}/></Field></div>}
+            {k==="app" && <div className="fgrid">
+              <Field label="Current build"><input className="fin" value={f.build||""} onChange={e=>set("build",e.target.value)}/></Field>
+              <Field label="Progress %"><input className="fin" type="number" min="0" max="100" value={f.progress==null?"":f.progress} onChange={e=>set("progress",e.target.value)}/></Field></div>}
+            <Field label="Location"><input className="fin" value={f.location||""} onChange={e=>set("location",e.target.value)} placeholder="Where this lives"/></Field>
+            <Field label="Next action"><input className="fin" value={f.next||""} onChange={e=>set("next",e.target.value)}/></Field>
+            <Field label="Description"><textarea className="fin" rows={3} value={f.description||""} onChange={e=>set("description",e.target.value)}/></Field>
+            <Field label="Notes"><textarea className="fin" rows={2} value={f.notes||""} onChange={e=>set("notes",e.target.value)}/></Field>
+            {k==="app" && <Field label="Tech stack (comma-separated)"><input className="fin" value={f.stackStr} onChange={e=>set("stackStr",e.target.value)}/></Field>}
+            <Field label="Related (comma-separated)"><input className="fin" value={f.relatedStr} onChange={e=>set("relatedStr",e.target.value)}/></Field>
+            {err && <div style={{color:"var(--coral)",fontSize:12.5,margin:"2px 0 10px"}}>{err}</div>}
+            <div style={{display:"flex",gap:10,marginTop:8}}>
+              <button className="btn btn-primary" type="submit" disabled={busy} style={{flex:1,justifyContent:"center"}}>
+                {busy?"Saving…":(mode==="edit"?"Save changes":"Create item")}</button>
+              <button className="btn btn-ghost" type="button" onClick={onClose}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </React.Fragment>
+  );
 }
 
 function App(){
@@ -1413,9 +1561,11 @@ function App(){
   const [q,setQ]=useState("");
   const [showSearch,setShowSearch]=useState(false);
   const [menu,setMenu]=useState(false);
-  const [quickAdd,setQuickAdd]=useState(false);
+  const [form,setForm]=useState(null);            // {mode:'create'|'edit', item} | null
   const [dataMode,setDataMode]=useState("sample"); // sample | live
   const [ver,setVer]=useState(0);                  // bump forces re-render after hydrate
+  const [locked,setLocked]=useState(true);
+  const [checking,setChecking]=useState(true);     // resolving existing session
   const searchRef=useRef();
 
   const go=(k)=>{setPageKey(k);setMenu(false);window.scrollTo(0,0);};
@@ -1425,16 +1575,43 @@ function App(){
     const g={}; results.forEach(r=>{(g[r.type]=g[r.type]||[]).push(r);}); return g;
   },[results]);
 
-  // Load live inventory directly (no sign-in — personal dashboard, public read).
+  // Load the owner's live inventory (requires an active session).
   const loadData=React.useCallback(async()=>{
     const c=getClient(); if(!c){ setDataMode("sample"); return; }
     try{
       const {data,error}=await c.from("dash_items").select("*");
       if(!error && data && data.length){ hydrate(data); setDataMode("live"); setVer(v=>v+1); }
-      else { setDataMode("sample"); }
+      else { setDataMode("sample"); setVer(v=>v+1); }
     }catch(e){ setDataMode("sample"); }
   },[]);
-  useEffect(()=>{ loadData(); },[loadData]);
+
+  // On mount: if a session already exists, unlock silently and load.
+  useEffect(()=>{ (async()=>{
+    const c=getClient();
+    if(!c){ setChecking(false); return; }           // no client → gate stays; unlock will report offline
+    try{
+      const {data:{session}}=await c.auth.getSession();
+      if(session){ setLocked(false); await loadData(); }
+    }catch(e){}
+    setChecking(false);
+  })(); },[loadData]);
+
+  const unlock=async(pass)=>{
+    const c=getClient();
+    if(!c) return "Live data is unavailable in this environment.";
+    try{
+      const {error}=await c.auth.signInWithPassword({email:DASH_EMAIL,password:pass});
+      if(error) return "That passphrase didn’t work. Try again.";
+      setLocked(false); await loadData(); return "";
+    }catch(e){ return "Something went wrong. Try again."; }
+  };
+  const lock=async()=>{ const c=getClient(); if(c){ try{ await c.auth.signOut(); }catch(e){} } setLocked(true); };
+
+  const saveItem=async()=>{ await loadData(); setForm(null); };
+  const deleteItem=async(it)=>{
+    if(!window.confirm("Delete “"+it.name+"”? This cannot be undone.")) return;
+    await dbDelete(it.id); setDrawer(null); await loadData();
+  };
 
   useEffect(()=>{
     const h=(e)=>{ if(searchRef.current && !searchRef.current.contains(e.target)) setShowSearch(false); };
@@ -1462,6 +1639,9 @@ function App(){
   else if(pageKey==="communities") page=<CommunitiesPage onOpen={onOpen}/>;
   else if(pageKey==="documents") page=<DocumentsPage onOpen={onOpen}/>;
   else if(pageKey==="designs") page=<DesignsPage onOpen={onOpen}/>;
+
+  if(checking) return <div className="gate"><div className="gate-card" style={{textAlign:"center"}}><div className="muted">Loading…</div></div></div>;
+  if(locked) return <LockGate onUnlock={unlock}/>;
 
   return (
     <div className="app">
@@ -1518,15 +1698,16 @@ function App(){
                   ))}
               </div>}
           </div>
-          <SyncPill mode={dataMode}/>
-          <button className="btn btn-primary" onClick={()=>setQuickAdd(true)}><Icon name="plus" size={16} sw={2.2}/><span className="btn-txt">Add New</span></button>
+          <SyncPill mode={dataMode} onLock={lock}/>
+          <button className="btn btn-primary" onClick={()=>setForm({mode:"create",item:null})}><Icon name="plus" size={16} sw={2.2}/><span className="btn-txt">Add New</span></button>
           <div className="avatar" title="Sydni Howard">SH</div>
         </header>
         {page}
       </div>
 
-      {drawer && <Drawer item={drawer} onClose={()=>setDrawer(null)}/>}
-      <QuickAdd open={quickAdd} onClose={()=>setQuickAdd(false)}/>
+      {drawer && <Drawer item={drawer} onClose={()=>setDrawer(null)}
+        canEdit={dataMode==="live"} onEdit={(it)=>{setDrawer(null);setForm({mode:"edit",item:it});}} onDelete={deleteItem}/>}
+      {form && <FormModal mode={form.mode} item={form.item} onClose={()=>setForm(null)} onSaved={saveItem}/>}
     </div>
   );
 }
