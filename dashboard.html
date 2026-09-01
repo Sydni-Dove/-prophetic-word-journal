@@ -1399,62 +1399,12 @@ const TYPE_LABEL={app:"Apps",product:"Products",video:"Videos",series:"Series",i
 /* ============================================================
    ROOT APP
    ============================================================ */
-/* ---- Sync status pill ---- */
-function SyncPill({mode,me,onSignIn,onSignOut}){
+/* ---- Sync status indicator (non-interactive) ---- */
+function SyncPill({mode}){
   if(mode==="live"){
-    return (
-      <div className="syncpill live" title={me?("Signed in as "+me):"Live"} onClick={onSignOut}>
-        <span className="sd"/>Live<span className="sx">· sign out</span>
-      </div>
-    );
+    return <div className="syncpill live" title="Loaded live from your Supabase inventory"><span className="sd"/>Live<span className="sx">· synced</span></div>;
   }
-  return (
-    <button className="syncpill" onClick={onSignIn} title="Load your live inventory from Supabase">
-      <span className="sd off"/>Sample<span className="sx">· sign in to sync</span>
-    </button>
-  );
-}
-
-/* ---- Sign-in modal (reuses the existing Supabase auth) ---- */
-function AuthModal({onClose,onDone}){
-  const [email,setEmail]=useState("");
-  const [pw,setPw]=useState("");
-  const [err,setErr]=useState("");
-  const [busy,setBusy]=useState(false);
-  const submit=async(e)=>{
-    e.preventDefault(); setErr(""); setBusy(true);
-    const c=getClient();
-    if(!c){ setErr("Supabase unavailable in this environment."); setBusy(false); return; }
-    try{
-      const {error}=await c.auth.signInWithPassword({email:email.trim(),password:pw});
-      if(error){ setErr(error.message||"Sign-in failed."); setBusy(false); return; }
-      onDone();
-    }catch(e){ setErr("Sign-in failed."); setBusy(false); }
-  };
-  return (
-    <React.Fragment>
-      <div className="scrim" onClick={onClose}/>
-      <div style={{position:"fixed",zIndex:90,top:"16%",left:"50%",transform:"translateX(-50%)",width:"min(420px,92vw)"}}>
-        <div className="card" style={{padding:26}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div><div className="sec-eyebrow">Live sync</div><h2 style={{fontSize:22,marginTop:4}}>Sign in</h2></div>
-            <button className="close" onClick={onClose} style={{position:"static"}}><Icon name="x" size={18} sw={2}/></button>
-          </div>
-          <p className="muted" style={{fontSize:12.5,margin:"6px 0 16px"}}>
-            Sign in with your Dove Expressions account to load and sync your live inventory. Otherwise the dashboard shows sample data.
-          </p>
-          <form onSubmit={submit}>
-            <input className="fin" type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} autoFocus required/>
-            <input className="fin" type="password" placeholder="Password" value={pw} onChange={e=>setPw(e.target.value)} required/>
-            {err && <div style={{color:"var(--coral)",fontSize:12.5,margin:"2px 0 10px"}}>{err}</div>}
-            <button className="btn btn-primary" type="submit" disabled={busy} style={{width:"100%",justifyContent:"center",marginTop:6}}>
-              {busy?"Signing in…":"Sign in & sync"}
-            </button>
-          </form>
-        </div>
-      </div>
-    </React.Fragment>
-  );
+  return <div className="syncpill" title="Showing bundled sample data (live inventory unavailable)"><span className="sd off"/>Sample</div>;
 }
 
 function App(){
@@ -1464,10 +1414,8 @@ function App(){
   const [showSearch,setShowSearch]=useState(false);
   const [menu,setMenu]=useState(false);
   const [quickAdd,setQuickAdd]=useState(false);
-  const [dataMode,setDataMode]=useState("sample"); // sample | live | loading
+  const [dataMode,setDataMode]=useState("sample"); // sample | live
   const [ver,setVer]=useState(0);                  // bump forces re-render after hydrate
-  const [me,setMe]=useState(null);
-  const [authOpen,setAuthOpen]=useState(false);
   const searchRef=useRef();
 
   const go=(k)=>{setPageKey(k);setMenu(false);window.scrollTo(0,0);};
@@ -1477,20 +1425,16 @@ function App(){
     const g={}; results.forEach(r=>{(g[r.type]=g[r.type]||[]).push(r);}); return g;
   },[results]);
 
-  // Load live inventory when a Supabase session is present (shared with the main app).
+  // Load live inventory directly (no sign-in — personal dashboard, public read).
   const loadData=React.useCallback(async()=>{
     const c=getClient(); if(!c){ setDataMode("sample"); return; }
     try{
-      const {data:{session}}=await c.auth.getSession();
-      if(!session){ setMe(null); setDataMode("sample"); return; }
-      setMe(session.user && session.user.email ? session.user.email : "Signed in");
       const {data,error}=await c.from("dash_items").select("*");
       if(!error && data && data.length){ hydrate(data); setDataMode("live"); setVer(v=>v+1); }
-      else { setDataMode("live"); } // signed in but no rows: keep seed on screen
+      else { setDataMode("sample"); }
     }catch(e){ setDataMode("sample"); }
   },[]);
   useEffect(()=>{ loadData(); },[loadData]);
-  const signOut=async()=>{ const c=getClient(); if(c){ try{ await c.auth.signOut(); }catch(e){} } setMe(null); setDataMode("sample"); };
 
   useEffect(()=>{
     const h=(e)=>{ if(searchRef.current && !searchRef.current.contains(e.target)) setShowSearch(false); };
@@ -1574,7 +1518,7 @@ function App(){
                   ))}
               </div>}
           </div>
-          <SyncPill mode={dataMode} me={me} onSignIn={()=>setAuthOpen(true)} onSignOut={signOut}/>
+          <SyncPill mode={dataMode}/>
           <button className="btn btn-primary" onClick={()=>setQuickAdd(true)}><Icon name="plus" size={16} sw={2.2}/><span className="btn-txt">Add New</span></button>
           <div className="avatar" title="Sydni Howard">SH</div>
         </header>
@@ -1583,7 +1527,6 @@ function App(){
 
       {drawer && <Drawer item={drawer} onClose={()=>setDrawer(null)}/>}
       <QuickAdd open={quickAdd} onClose={()=>setQuickAdd(false)}/>
-      {authOpen && <AuthModal onClose={()=>setAuthOpen(false)} onDone={()=>{setAuthOpen(false);loadData();}}/>}
     </div>
   );
 }
